@@ -1,0 +1,25 @@
+# Hooks exposed by this repo for use with https://pre-commit.com
+# Example .pre-commit-config.yaml:
+#
+#   repos:
+#     - repo: https://github.com/wookat/agentgate
+#       rev: v0.1.0
+#       hooks:
+#         - id: agentgate-ci
+#
+# Both hooks run the published `agentgate` CLI via npx (Node 22+ required).
+- id: agentgate-ci
+  name: agentgate ci (MCP lockfile drift gate)
+  description: Fail the commit when MCP config or agentgate.lock drifts from the approved baseline.
+  entry: npx --yes agentgate ci
+  language: system
+  pass_filenames: false
+  files: '(^|/)(agentgate\.lock|\.mcp\.json|mcp\.json|claude_desktop_config\.json|\.cursor/mcp\.json|\.vscode/mcp\.json|opencode\.json|\.codex/config\.toml)$'
+
+- id: agentgate-scan
+  name: agentgate scan (MCP config security scan)
+  description: Static-scan changed MCP config files for tool poisoning, credential leaks, and other risks.
+  entry: npx --yes agentgate scan
+  language: system
+  pass_filenames: false
+  files: '(^|/)(\.mcp\.json|mcp\.json|claude_desktop_config\.json|\.cursor/mcp\.json|\.vscode/mcp\.json|opencode\.json|\.codex/config\.toml)$'
