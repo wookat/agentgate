@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wookat/agentgate.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/wookat/agentgate#readme",
+  "bugs": "https://github.com/wookat/agentgate/issues",
+  "keywords": ["mcp", "model-context-protocol", "security", "supply-chain", "lockfile", "scanner", "cli"],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "bin": {
     "agentgate": "./dist/index.js"

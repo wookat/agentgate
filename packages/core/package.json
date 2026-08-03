@@ -3,6 +3,17 @@
   "version": "0.1.0",
   "description": "AgentGate core engine: MCP scanning rule engine, lockfile spec, client config discovery",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wookat/agentgate.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/wookat/agentgate#readme",
+  "bugs": "https://github.com/wookat/agentgate/issues",
+  "keywords": ["mcp", "model-context-protocol", "security", "supply-chain", "lockfile", "scanner"],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
