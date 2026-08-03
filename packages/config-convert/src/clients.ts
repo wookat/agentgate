@@ -1,7 +1,6 @@
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 import {
   asStringRecord,
-  CanonicalConfig,
   CanonicalMcpServer,
   ClientAdapter,
   ClientId,
