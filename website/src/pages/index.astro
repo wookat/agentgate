@@ -1,0 +1,358 @@
+---
+import '../styles/global.css';
+
+const gh = 'https://github.com/wookat/agentgate';
+
+const nav = [
+  { href: '#features', label: 'Features' },
+  { href: '#quick-start', label: 'Quick start' },
+  { href: '#advisories', label: 'Advisories' },
+  { href: '/docs/introduction/', label: 'Docs' },
+];
+
+const features = [
+  {
+    cmd: 'scan',
+    icon: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v3l2 2"/>',
+    text: 'Static + live analysis: tool poisoning, hidden Unicode, credential leaks, SSRF/RCE vectors, over-privileged combos.',
+  },
+  {
+    cmd: 'lock',
+    icon: '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    text: 'Pin the exact tool surface — names, descriptions, schemas — into agentgate.lock. Rug-pulls can\u2019t hide.',
+  },
+  {
+    cmd: 'gate',
+    icon: '<path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+    text: 'CI fails on any drift from the approved baseline. Human-readable diffs, not binary allow/deny.',
+  },
+  {
+    cmd: 'advise',
+    icon: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6"/><path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3"/>',
+    text: 'Cross-check every server against a public, structured MCP advisory database — free API, CLI-integrated.',
+  },
+];
+
+const advisoryCards = [
+  {
+    id: 'CVE-2025-6514',
+    href: '/advisories/mcpa-2025-0001/',
+    sev: 'critical',
+    sevClass: 'text-ag-danger bg-ag-danger/10',
+    text: 'mcp-remote remote code execution via crafted server responses (CVSS 9.6).',
+  },
+  {
+    id: 'MCPA-2025-0002',
+    href: '/advisories/mcpa-2025-0002/',
+    sev: 'critical',
+    sevClass: 'text-ag-danger bg-ag-danger/10',
+    text: 'postmark-mcp patch release silently BCC\u2019d every outgoing email to an attacker.',
+  },
+  {
+    id: 'CVE-2026-26118',
+    href: '/advisories/mcpa-2026-0001/',
+    sev: 'high',
+    sevClass: 'text-ag-warn bg-ag-warn/10',
+    text: 'Azure MCP server-side request forgery enabling privilege elevation.',
+  },
+];
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AgentGate — Scan, lock, and gate your MCP servers</title>
+    <meta
+      name="description"
+      content="Open-source trust & supply-chain gate for MCP servers: npm audit + lockfile + CI drift gate for the MCP era."
+    />
+    <meta name="theme-color" content="#0b1120" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content="AgentGate — Scan, lock, and gate your MCP servers" />
+    <meta
+      property="og:description"
+      content="npm audit + lockfile + CI drift gate for the MCP era. Public MCP advisory database included."
+    />
+    <script is:inline>
+      const t = localStorage.getItem('starlight-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    </script>
+    <style>
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .animate-rise {
+        animation: rise 400ms var(--ag-ease, ease) both;
+      }
+      .animate-rise-1 {
+        animation-delay: 80ms;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .animate-rise,
+        .animate-rise-1 {
+          animation: none;
+        }
+      }
+      .card-shadow {
+        box-shadow: var(--ag-shadow-card);
+      }
+      .raised-shadow {
+        box-shadow: var(--ag-shadow-raised);
+      }
+      .hero-glow {
+        box-shadow: var(--ag-glow-accent);
+      }
+      .grid-bg {
+        background-image:
+          linear-gradient(var(--ag-border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--ag-border) 1px, transparent 1px);
+        background-size: 48px 48px;
+        opacity: 0.18;
+        mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 70%);
+      }
+    </style>
+  </head>
+  <body class="bg-ag-bg font-sans text-ag-text antialiased">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 border-b border-ag-border bg-ag-bg/80 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a href="/" class="flex items-center gap-2.5">
+          <span class="flex h-8 w-8 items-center justify-center rounded-ag-sm bg-ag-accent/10 text-ag-accent">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z"></path><path d="M9.5 10.5L7.5 12l2 1.5"></path><path d="M14.5 10.5l2 1.5-2 1.5"></path></svg>
+          </span>
+          <span class="text-lg font-semibold tracking-tight">AgentGate</span>
+        </a>
+        <nav class="hidden items-center gap-6 text-sm text-ag-muted md:flex">
+          {nav.map((n) => (
+            <a href={n.href} class="transition-colors duration-150 hover:text-ag-text">{n.label}</a>
+          ))}
+          <a href={gh} aria-label="GitHub" class="flex h-9 w-9 items-center justify-center rounded-ag-md border border-ag-border transition-colors duration-150 hover:border-ag-accent hover:text-ag-text">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.1c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.13v3.16c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"></path></svg>
+          </a>
+          <button id="themeToggle" aria-label="Toggle theme" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-ag-md border border-ag-border transition-colors duration-150 hover:border-ag-accent hover:text-ag-text">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"></path></svg>
+          </button>
+        </nav>
+        <button id="menuBtn" aria-label="Menu" aria-expanded="false" class="flex h-11 w-11 items-center justify-center rounded-ag-md border border-ag-border text-ag-muted md:hidden">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+        </button>
+      </div>
+      <div id="mobileNav" class="hidden border-t border-ag-border bg-ag-bg md:hidden">
+        <nav class="flex flex-col px-4 py-3 text-sm">
+          {nav.map((n) => (
+            <a href={n.href} class="rounded-ag-md px-3 py-3 text-ag-muted hover:bg-ag-subtle hover:text-ag-text">{n.label}</a>
+          ))}
+          <a href={gh} class="rounded-ag-md px-3 py-3 text-ag-muted hover:bg-ag-subtle hover:text-ag-text">GitHub</a>
+          <button id="themeToggleMobile" class="cursor-pointer rounded-ag-md px-3 py-3 text-left text-ag-muted hover:bg-ag-subtle hover:text-ag-text">Toggle theme</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="relative overflow-hidden">
+      <div class="grid-bg pointer-events-none absolute inset-0"></div>
+      <div class="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ag-accent/10 blur-3xl"></div>
+      <div class="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24 lg:px-8">
+        <div class="grid items-center gap-12 lg:grid-cols-2">
+          <div class="animate-rise">
+            <span class="inline-flex items-center gap-2 rounded-full border border-ag-border bg-ag-subtle px-3 py-1 text-xs font-medium text-ag-muted">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-ag-accent"><path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z"></path></svg>
+              Open source · Apache-2.0
+            </span>
+            <h1 class="mt-5 text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+              Scan, lock, and <span class="bg-gradient-to-r from-ag-accent to-ag-accent-strong bg-clip-text text-transparent">gate</span> your MCP servers
+            </h1>
+            <p class="mt-4 max-w-xl text-lg text-ag-muted">
+              The <code class="rounded-ag-sm bg-ag-subtle px-1.5 py-0.5 font-mono text-base">npm audit</code> + lockfile + CI drift gate for the MCP era. One command against tool poisoning, rug-pulls, credential leaks, and known advisories.
+            </p>
+            <div class="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <a href="/docs/quick-start/" class="inline-flex h-12 items-center justify-center rounded-ag-md bg-ag-accent px-6 font-semibold text-ag-accent-contrast transition-colors duration-150 hover:bg-ag-accent-strong">Get started</a>
+              <a href={gh} class="inline-flex h-12 items-center justify-center gap-2 rounded-ag-md border border-ag-border px-6 font-semibold text-ag-text transition-colors duration-150 hover:border-ag-accent">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.1c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.05.78 2.13v3.16c0 .3.21.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"></path></svg>
+                GitHub
+              </a>
+            </div>
+            <div class="mt-6 flex max-w-md items-center justify-between gap-3 rounded-ag-md border border-ag-border bg-ag-subtle px-4 py-3">
+              <code class="min-w-0 break-all font-mono text-sm text-ag-text">npm i -g agentgate</code>
+              <button id="copyInstall" aria-label="Copy install command" class="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-ag-sm text-ag-muted transition-colors duration-150 hover:text-ag-accent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="animate-rise animate-rise-1 min-w-0">
+            <div class="raised-shadow hero-glow overflow-hidden rounded-ag-lg border border-ag-border bg-ag-raised">
+              <div class="flex items-center gap-2 border-b border-ag-border px-4 py-3">
+                <span class="h-3 w-3 rounded-full bg-ag-danger/70"></span>
+                <span class="h-3 w-3 rounded-full bg-ag-warn/70"></span>
+                <span class="h-3 w-3 rounded-full bg-ag-ok/70"></span>
+                <span class="ml-2 font-mono text-xs text-ag-muted">agentgate scan</span>
+              </div>
+              <div class="overflow-x-auto p-4 font-mono text-xs leading-6 sm:text-sm">
+                <pre class="whitespace-pre text-ag-muted"><span class="text-ag-accent">$</span> agentgate scan --lock agentgate.lock
+
+<span class="text-ag-ok">✔ filesystem-server</span>      12 tools · matches lock
+<span class="text-ag-ok">✔ github-server</span>          8 tools · matches lock
+<span class="text-ag-warn">⚠ web-fetch-server</span>       SSRF vector: unrestricted URL fetch
+<span class="text-ag-danger">✖ postmark-mcp&#64;1.0.16</span>    MCPA-2025-0002 · hidden BCC backdoor
+<span class="text-ag-danger">✖ notes-server</span>           tool description drift from lock
+
+<span class="text-ag-text">2 critical · 1 warning · exit code 1</span>
+<span class="text-ag-muted">Gate closed. Review drift with `agentgate diff`.</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="border-t border-ag-border py-16 md:py-24">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold tracking-tight">One loop, four gates</h2>
+        <p class="mt-4 max-w-2xl text-lg text-ag-muted">Everything fragmented across five point tools today, in a single coherent workflow.</p>
+        <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((f) => (
+            <div class="card-shadow group rounded-ag-lg border border-ag-border bg-ag-subtle p-6 transition-all duration-150 hover:-translate-y-0.5 hover:border-ag-accent">
+              <span class="flex h-10 w-10 items-center justify-center rounded-ag-md bg-ag-accent/10 text-ag-accent">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" set:html={f.icon} />
+              </span>
+              <h3 class="mt-4 font-mono text-lg font-semibold">{f.cmd}</h3>
+              <p class="mt-2 text-sm leading-6 text-ag-muted">{f.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick start -->
+    <section id="quick-start" class="border-t border-ag-border bg-ag-subtle/50 py-16 md:py-24">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold tracking-tight">Gate your agent in three steps</h2>
+        <div class="mt-10 grid items-start gap-10 lg:grid-cols-2">
+          <ol class="space-y-8">
+            <li class="flex gap-4">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ag-accent/10 font-mono text-sm font-semibold text-ag-accent">1</span>
+              <div><h3 class="text-lg font-semibold">Install</h3><p class="mt-1 text-ag-muted">One global install; auto-discovers Claude, Cursor, VS Code, and Codex MCP configs.</p></div>
+            </li>
+            <li class="flex gap-4">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ag-accent/10 font-mono text-sm font-semibold text-ag-accent">2</span>
+              <div><h3 class="text-lg font-semibold">Scan &amp; lock</h3><p class="mt-1 text-ag-muted">Audit every configured server, then pin the approved tool surface to <code class="font-mono text-sm">agentgate.lock</code>.</p></div>
+            </li>
+            <li class="flex gap-4">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ag-accent/10 font-mono text-sm font-semibold text-ag-accent">3</span>
+              <div><h3 class="text-lg font-semibold">Gate in CI</h3><p class="mt-1 text-ag-muted">Add one CI step (or the GitHub Action). Any upstream drift turns the build red.</p></div>
+            </li>
+          </ol>
+          <div class="card-shadow min-w-0 overflow-hidden rounded-ag-lg border border-ag-border bg-ag-raised">
+            <div class="flex items-center gap-2 border-b border-ag-border px-4 py-3">
+              <span class="h-3 w-3 rounded-full bg-ag-danger/70"></span>
+              <span class="h-3 w-3 rounded-full bg-ag-warn/70"></span>
+              <span class="h-3 w-3 rounded-full bg-ag-ok/70"></span>
+              <span class="ml-2 font-mono text-xs text-ag-muted">terminal</span>
+            </div>
+            <div class="overflow-x-auto p-4 font-mono text-xs leading-6 sm:text-sm">
+              <pre class="whitespace-pre text-ag-muted"><span class="text-ag-muted"># 1. install</span>
+<span class="text-ag-accent">$</span> npm i -g agentgate
+
+<span class="text-ag-muted"># 2. scan and lock</span>
+<span class="text-ag-accent">$</span> agentgate scan
+<span class="text-ag-accent">$</span> agentgate lock
+
+<span class="text-ag-muted"># 3. gate in CI</span>
+<span class="text-ag-accent">$</span> agentgate ci --lock agentgate.lock</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Advisories -->
+    <section id="advisories" class="border-t border-ag-border py-16 md:py-24">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div class="card-shadow flex flex-col items-start gap-6 rounded-ag-lg border border-ag-border bg-ag-subtle p-6 sm:p-8 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-3xl font-bold tracking-tight">Public MCP advisory database</h2>
+            <p class="mt-3 max-w-2xl text-lg text-ag-muted">Structured JSON advisories for known-malicious and vulnerable MCP servers. Free API, automatically cross-checked on every <code class="font-mono text-base">scan</code>.</p>
+          </div>
+          <a href="/advisories/" class="inline-flex h-12 shrink-0 items-center justify-center rounded-ag-md bg-ag-accent px-6 font-semibold text-ag-accent-contrast transition-colors duration-150 hover:bg-ag-accent-strong">Browse advisories</a>
+        </div>
+        <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {advisoryCards.map((c) => (
+            <a href={c.href} class="card-shadow block rounded-ag-lg border border-ag-border bg-ag-subtle p-6 transition-all duration-150 hover:-translate-y-0.5 hover:border-ag-accent">
+              <div class="flex items-center justify-between gap-2">
+                <code class="min-w-0 break-all font-mono text-sm text-ag-text">{c.id}</code>
+                <span class={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.sevClass}`}>{c.sev}</span>
+              </div>
+              <p class="mt-3 text-sm leading-6 text-ag-muted">{c.text}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-ag-border bg-ag-subtle/50">
+      <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 gap-10 sm:grid-cols-3">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-8 w-8 items-center justify-center rounded-ag-sm bg-ag-accent/10 text-ag-accent">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z"></path><path d="M9.5 10.5L7.5 12l2 1.5"></path><path d="M14.5 10.5l2 1.5-2 1.5"></path></svg>
+              </span>
+              <span class="text-lg font-semibold tracking-tight">AgentGate</span>
+            </div>
+            <p class="mt-3 text-sm leading-6 text-ag-muted">Open-source trust &amp; supply-chain gate for MCP servers. Apache-2.0.</p>
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-ag-muted">Docs</h3>
+            <ul class="mt-3 space-y-2 text-sm">
+              <li><a href="/docs/quick-start/" class="text-ag-muted transition-colors duration-150 hover:text-ag-text">Getting started</a></li>
+              <li><a href="/docs/cli/scan/" class="text-ag-muted transition-colors duration-150 hover:text-ag-text">CLI reference</a></li>
+              <li><a href="/docs/spec/lockfile/" class="text-ag-muted transition-colors duration-150 hover:text-ag-text">Lockfile spec</a></li>
+              <li><a href="/docs/spec/advisory-schema/" class="text-ag-muted transition-colors duration-150 hover:text-ag-text">Advisory schema</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-ag-muted">Community</h3>
+            <ul class="mt-3 space-y-2 text-sm">
+              <li><a href={gh} class="text-ag-muted transition-colors duration-150 hover:text-ag-text">GitHub</a></li>
+              <li><a href={`${gh}/issues`} class="text-ag-muted transition-colors duration-150 hover:text-ag-text">Issues</a></li>
+              <li><a href="/report-viewer/" class="text-ag-muted transition-colors duration-150 hover:text-ag-text">Report viewer</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="mt-10 border-t border-ag-border pt-6 text-sm text-ag-muted">© 2026 AgentGate. Built for the MCP ecosystem.</p>
+      </div>
+    </footer>
+
+    <script>
+      function toggleTheme() {
+        const html = document.documentElement;
+        const next = html.dataset.theme === 'light' ? 'dark' : 'light';
+        html.dataset.theme = next;
+        localStorage.setItem('starlight-theme', next);
+      }
+      document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+      document.getElementById('themeToggleMobile')?.addEventListener('click', toggleTheme);
+      const menuBtn = document.getElementById('menuBtn');
+      menuBtn?.addEventListener('click', () => {
+        const nav = document.getElementById('mobileNav')!;
+        nav.classList.toggle('hidden');
+        menuBtn.setAttribute('aria-expanded', String(!nav.classList.contains('hidden')));
+      });
+      document.getElementById('copyInstall')?.addEventListener('click', () => {
+        navigator.clipboard.writeText('npm i -g agentgate');
+      });
+    </script>
+  </body>
+</html>

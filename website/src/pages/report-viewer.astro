@@ -1,0 +1,159 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Scan report viewer',
+    description: 'Visualize agentgate scan --format json output. Everything stays in your browser.',
+    tableOfContents: false,
+  }}
+>
+  <p>
+    Load the output of <code>agentgate scan --format json</code> to get a visual, filterable
+    report. Files are parsed entirely in your browser — nothing is uploaded. Format:
+    <a href="/docs/spec/scan-output/">scan output spec</a>.
+  </p>
+
+  <div id="rv-input" class="rv-drop">
+    <p><strong>Drop a report JSON file here</strong>, or</p>
+    <p>
+      <label class="rv-btn">
+        Choose file<input type="file" id="rv-file" accept=".json,application/json" hidden />
+      </label>
+      <button class="rv-btn rv-btn-ghost" id="rv-sample" type="button">Load sample report</button>
+    </p>
+    <details class="rv-paste">
+      <summary>…or paste JSON</summary>
+      <textarea id="rv-textarea" rows="8" placeholder='{"reportVersion":1, ...}'></textarea>
+      <button class="rv-btn" id="rv-parse" type="button">Render</button>
+    </details>
+    <p id="rv-error" class="rv-error" role="alert" hidden></p>
+  </div>
+
+  <div id="rv-report" hidden>
+    <div class="rv-meta" id="rv-meta"></div>
+    <div class="rv-summary" id="rv-summary"></div>
+    <div class="rv-filters" id="rv-filters" role="group" aria-label="Filter by severity"></div>
+    <div id="rv-findings"></div>
+    <p><button class="rv-btn rv-btn-ghost" id="rv-reset" type="button">Load another report</button></p>
+  </div>
+
+  <script>
+    const SEVERITIES = ['critical', 'high', 'medium', 'low'];
+    const $ = (id: string) => document.getElementById(id)!;
+    let report: any = null;
+    let active = new Set(SEVERITIES);
+
+    const esc = (s: unknown) =>
+      String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+    function fail(msg: string) {
+      const el = $('rv-error');
+      el.textContent = msg;
+      el.hidden = false;
+    }
+
+    function load(text: string) {
+      $('rv-error').hidden = true;
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return fail('Not valid JSON.');
+      }
+      if (!data || !Array.isArray(data.findings)) {
+        return fail('Not an agentgate scan report: missing "findings" array. See the scan output spec.');
+      }
+      report = data;
+      active = new Set(SEVERITIES);
+      render();
+      $('rv-input').hidden = true;
+      $('rv-report').hidden = false;
+    }
+
+    function render() {
+      const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+      for (const f of report.findings) if (counts[f.severity] !== undefined) counts[f.severity]++;
+
+      $('rv-meta').innerHTML = `
+        <span><strong>agentgate</strong> ${esc(report.agentgateVersion ?? '?')}</span>
+        <span>generated ${esc(report.generatedAt ?? '?')}</span>
+        <span>target: ${esc(report.target?.kind ?? '?')} ${esc((report.target?.paths ?? []).join(', '))}</span>`;
+
+      $('rv-summary').innerHTML = SEVERITIES.map(
+        (s) => `<div class="rv-card rv-sev-${s}"><div class="rv-card-num">${counts[s]}</div><div>${s}</div></div>`
+      ).join('') + `<div class="rv-card rv-sev-total"><div class="rv-card-num">${report.findings.length}</div><div>total</div></div>`;
+
+      $('rv-filters').innerHTML = SEVERITIES.map(
+        (s) =>
+          `<button type="button" class="rv-chip rv-sev-${s} ${active.has(s) ? 'rv-on' : ''}" data-sev="${s}" aria-pressed="${active.has(s)}">${s} (${counts[s]})</button>`
+      ).join('');
+      $('rv-filters').querySelectorAll('button').forEach((b) =>
+        b.addEventListener('click', () => {
+          const s = (b as HTMLElement).dataset.sev!;
+          active.has(s) ? active.delete(s) : active.add(s);
+          render();
+        })
+      );
+
+      const rows = report.findings
+        .filter((f: any) => active.has(f.severity))
+        .map((f: any) => {
+          const server = f.server
+            ? `${esc(f.server.name)}${f.server.package ? ` · ${esc(f.server.package)}@${esc(f.server.version ?? '?')}` : ''}`
+            : '—';
+          const advisories = (f.advisoryIds ?? [])
+            .map((id: string) => `<a href="/advisories/${esc(id).toLowerCase()}/">${esc(id)}</a>`)
+            .join(', ');
+          return `<details class="rv-finding rv-sev-${esc(f.severity)}">
+            <summary>
+              <span class="rv-chip rv-sev-${esc(f.severity)} rv-on">${esc(f.severity)}</span>
+              <span class="rv-chip">${esc(f.category ?? '')}</span>
+              <span class="rv-finding-title">${esc(f.title)}</span>
+            </summary>
+            <div class="rv-finding-body">
+              <p>${esc(f.description ?? '')}</p>
+              <dl>
+                <dt>Server</dt><dd>${server}</dd>
+                <dt>Rule</dt><dd><code>${esc(f.rule ?? '')}</code></dd>
+                ${f.evidence?.configPath ? `<dt>Config</dt><dd><code>${esc(f.evidence.configPath)}</code></dd>` : ''}
+                ${f.evidence?.snippet ? `<dt>Evidence</dt><dd><pre>${esc(f.evidence.snippet)}</pre></dd>` : ''}
+                ${advisories ? `<dt>Advisories</dt><dd>${advisories}</dd>` : ''}
+                ${f.remediation ? `<dt>Remediation</dt><dd>${esc(f.remediation)}</dd>` : ''}
+              </dl>
+            </div>
+          </details>`;
+        });
+      $('rv-findings').innerHTML =
+        rows.join('') || '<p class="rv-empty">No findings match the current filters.</p>';
+    }
+
+    $('rv-file').addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) file.text().then(load);
+    });
+    $('rv-parse').addEventListener('click', () => load(($('rv-textarea') as HTMLTextAreaElement).value));
+    $('rv-reset').addEventListener('click', () => {
+      $('rv-report').hidden = true;
+      $('rv-input').hidden = false;
+    });
+    $('rv-sample').addEventListener('click', async () => {
+      const res = await fetch('/sample-report.json');
+      load(await res.text());
+    });
+
+    const drop = $('rv-input');
+    drop.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      drop.classList.add('rv-dragging');
+    });
+    drop.addEventListener('dragleave', () => drop.classList.remove('rv-dragging'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('rv-dragging');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) file.text().then(load);
+    });
+  </script>
+</StarlightPage>

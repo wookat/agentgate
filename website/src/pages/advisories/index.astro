@@ -1,0 +1,53 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { advisories } from '../../lib/advisories';
+
+const bySeverity = { critical: 0, high: 0, medium: 0, low: 0 } as Record<string, number>;
+for (const a of advisories) bySeverity[a.severity]++;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'MCP Advisory Database',
+    description: 'Public, structured security advisories for MCP servers and tooling.',
+    tableOfContents: false,
+  }}
+>
+  <p>
+    A public, structured database of verified security advisories affecting MCP servers, clients,
+    and tooling. Every entry cites authoritative sources. Query it via the
+    <a href="/docs/spec/advisory-api/">Advisory API</a> or contribute on
+    <a href="https://github.com/wookat/agentgate/tree/main/advisories">GitHub</a>.
+  </p>
+
+  <div class="ag-adv-stats" aria-label="Advisory counts by severity">
+    <span class="ag-pill ag-sev-critical">{bySeverity.critical} critical</span>
+    <span class="ag-pill ag-sev-high">{bySeverity.high} high</span>
+    <span class="ag-pill ag-sev-medium">{bySeverity.medium} medium</span>
+    <span class="ag-pill ag-sev-low">{bySeverity.low} low</span>
+  </div>
+
+  <ul class="ag-adv-list">
+    {
+      advisories.map((a) => (
+        <li class="ag-adv-card">
+          <a href={`/advisories/${a.id.toLowerCase()}/`}>
+            <div class="ag-adv-card-head">
+              <span class={`ag-pill ag-sev-${a.severity}`}>{a.severity}</span>
+              <span class="ag-adv-id">{a.id}</span>
+              <span class="ag-pill ag-type">{a.type}</span>
+            </div>
+            <h3>{a.title}</h3>
+            <p>{a.summary}</p>
+            <div class="ag-adv-meta">
+              <span>
+                {a.packages.map((p) => `${p.ecosystem}/${p.name}`).join(', ')}
+              </span>
+              <span>published {a.timeline.published}</span>
+            </div>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</StarlightPage>
