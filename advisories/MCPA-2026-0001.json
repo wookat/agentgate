@@ -1,0 +1,46 @@
+{
+  "id": "MCPA-2026-0001",
+  "title": "Azure MCP Server server-side request forgery allows privilege elevation (CVE-2026-26118)",
+  "summary": "Server-Side Request Forgery (SSRF) in Microsoft's Azure MCP Server allows an authorized attacker to elevate privileges over a network. Affects the npm, NuGet and PyPI distributions of Azure MCP Server Tools.",
+  "details": "Assigned CWE-918 (SSRF) by Microsoft. Affected: 1.x prior to 1.0.2 and 2.0.0 pre-releases prior to 2.0.0-beta.17 (npm @azure/mcp and NuGet Azure.Mcp); PyPI msmcp-azure 2.0.0b14 to before 2.0.0b17. Patched in 1.0.2 and 2.0.0-beta.17 (PyPI 2.0.0b17).",
+  "type": "ssrf",
+  "severity": "high",
+  "cvss": {
+    "score": 8.8,
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+  },
+  "aliases": ["CVE-2026-26118", "GHSA-hhfx-wfvq-7g9c"],
+  "cwe": ["CWE-918"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@azure/mcp",
+      "ranges": [
+        { "introduced": "1.0.0", "fixed": "1.0.2" },
+        { "introduced": "2.0.0-beta.1", "fixed": "2.0.0-beta.17" }
+      ]
+    },
+    {
+      "ecosystem": "nuget",
+      "name": "Azure.Mcp",
+      "ranges": [
+        { "introduced": "1.0.0", "fixed": "1.0.2" },
+        { "introduced": "2.0.0-beta.1", "fixed": "2.0.0-beta.17" }
+      ]
+    },
+    {
+      "ecosystem": "pypi",
+      "name": "msmcp-azure",
+      "ranges": [{ "introduced": "2.0.0b14", "fixed": "2.0.0b17" }]
+    }
+  ],
+  "references": [
+    { "type": "vendor", "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-26118" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26118" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-hhfx-wfvq-7g9c" }
+  ],
+  "timeline": {
+    "published": "2026-03-10"
+  },
+  "credits": []
+}

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/wookat/agentgate/main/advisories/schema/advisory.schema.json",
+  "title": "AgentGate MCP Advisory",
+  "description": "Schema for entries in the AgentGate public MCP advisory database (advisories/*.json).",
+  "type": "object",
+  "required": ["id", "title", "summary", "type", "severity", "packages", "references", "timeline"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "AgentGate advisory ID.",
+      "pattern": "^MCPA-[0-9]{4}-[0-9]{4}$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1, "description": "One-paragraph plain-language summary." },
+    "details": { "type": "string", "description": "Extended technical details (Markdown allowed)." },
+    "type": {
+      "type": "string",
+      "description": "Advisory category, aligned with AgentGate scan rule categories.",
+      "enum": [
+        "tool-poisoning",
+        "credential-leak",
+        "overprivileged",
+        "auth-missing",
+        "ssrf",
+        "rce-vectors",
+        "supply-chain",
+        "path-traversal",
+        "malicious-package"
+      ]
+    },
+    "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+    "cvss": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 10 },
+        "vector": { "type": "string" }
+      }
+    },
+    "aliases": {
+      "type": "array",
+      "description": "Other identifiers for the same issue (CVE, GHSA, ...).",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "cwe": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^CWE-[0-9]+$" },
+      "uniqueItems": true
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["ecosystem", "name", "ranges"],
+        "additionalProperties": false,
+        "properties": {
+          "ecosystem": { "type": "string", "enum": ["npm", "pypi", "nuget", "other"] },
+          "name": { "type": "string", "minLength": 1 },
+          "ranges": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Affected version ranges as SemVer events. Each range needs 'introduced' plus either 'fixed' or 'last_affected'; omit both to mark all versions since 'introduced' as affected.",
+            "items": {
+              "type": "object",
+              "required": ["introduced"],
+              "additionalProperties": false,
+              "properties": {
+                "introduced": { "type": "string" },
+                "fixed": { "type": "string" },
+                "last_affected": { "type": "string" }
+              }
+            }
+          },
+          "note": { "type": "string", "description": "Free-text note, e.g. 'package removed from registry'." }
+        }
+      }
+    },
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "type": "string", "enum": ["advisory", "report", "article", "fix", "vendor", "web"] },
+          "url": { "type": "string", "format": "uri" }
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["published"],
+      "additionalProperties": false,
+      "properties": {
+        "discovered": { "type": "string", "format": "date" },
+        "published": { "type": "string", "format": "date" },
+        "fixed": { "type": "string", "format": "date" },
+        "withdrawn": { "type": "string", "format": "date" }
+      }
+    },
+    "credits": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    }
+  }
+}

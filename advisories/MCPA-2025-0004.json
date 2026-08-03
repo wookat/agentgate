@@ -1,0 +1,33 @@
+{
+  "id": "MCPA-2025-0004",
+  "title": "@modelcontextprotocol/server-filesystem path validation bypass via colliding path prefix (CVE-2025-53110)",
+  "summary": "The reference Filesystem MCP server used naive prefix matching to enforce its allowed-directories sandbox: any path that merely begins with an approved directory string (e.g. /private/tmp/allowed_dir_evil) bypassed the filter, allowing unrestricted listing, reading and writing outside the intended sandbox.",
+  "details": "One of the two 'EscapeRoute' vulnerabilities reported by Cymulate Research Labs in Anthropic's Filesystem MCP Server reference implementation. Breaks the server's core security boundary, opening the door to data theft and potential privilege escalation. Fixed in 0.6.4 / 2025.7.1.",
+  "type": "path-traversal",
+  "severity": "high",
+  "cvss": {
+    "score": 7.3,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:P/VC:N/VI:N/VA:H/SC:H/SI:H/SA:H"
+  },
+  "aliases": ["CVE-2025-53110", "GHSA-hc55-p739-j48w"],
+  "cwe": ["CWE-22"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@modelcontextprotocol/server-filesystem",
+      "ranges": [
+        { "introduced": "0.0.0", "last_affected": "0.6.2" },
+        { "introduced": "2025.1.14", "fixed": "2025.7.1" }
+      ]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-hc55-p739-j48w" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-53110" },
+    { "type": "report", "url": "https://cymulate.com/blog/cve-2025-53109-53110-escaperoute-anthropic/" }
+  ],
+  "timeline": {
+    "published": "2025-07-01"
+  },
+  "credits": ["Elad Beber (Cymulate Research Labs)"]
+}
