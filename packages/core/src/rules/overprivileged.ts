@@ -1,0 +1,81 @@
+import { Rule, finding, toolText } from './rule.js';
+import { ToolSurface } from '../types.js';
+
+type Capability = 'read-files' | 'write-files' | 'exec' | 'network' | 'send-messages';
+
+const CAPABILITY_PATTERNS: { cap: Capability; re: RegExp }[] = [
+  { cap: 'read-files', re: /\b(read|cat|open|load|view)\b[^.]{0,40}\b(file|files|directory|folder|path)\b|\bread[-_]?file\b/i },
+  { cap: 'write-files', re: /\b(write|save|create|modify|edit|delete|remove)\b[^.]{0,40}\b(file|files|directory|folder)\b|\bwrite[-_]?file\b/i },
+  { cap: 'exec', re: /\b(execute|run|spawn|launch)\b[^.]{0,40}\b(command|shell|script|process|code)\b|\bshell[-_ ]?(command|exec)\b|\bexec\b/i },
+  { cap: 'network', re: /\b(fetch|http|request|download|url|crawl|browse|scrape)\b/i },
+  { cap: 'send-messages', re: /\b(send|post|publish)\b[^.]{0,40}\b(email|message|slack|webhook|tweet|sms)\b/i },
+];
+
+const DANGEROUS_COMBOS: { caps: Capability[]; why: string }[] = [
+  { caps: ['read-files', 'network'], why: 'can read local files and exfiltrate them over the network' },
+  { caps: ['read-files', 'send-messages'], why: 'can read local files and exfiltrate them via messages' },
+  { caps: ['exec', 'network'], why: 'can execute commands and reach the network (download-and-run)' },
+];
+
+export function detectCapabilities(tool: ToolSurface): Capability[] {
+  const text = toolText(tool);
+  return CAPABILITY_PATTERNS.filter(({ re }) => re.test(text)).map(({ cap }) => cap);
+}
+
+const BROAD_FS_ARGS = ['/', '/home', '/Users', '~', 'C:\\', 'C:\\\\'];
+
+export const overprivilegedRule: Rule = {
+  id: 'AG-OP-001',
+  category: 'overprivileged',
+  description: 'Detects dangerous capability combinations across a server tool surface and overly broad filesystem grants',
+  checkServer(server) {
+    const findings = [];
+    const args = server.args ?? [];
+    if (/(server-filesystem|mcp-filesystem|filesystem)/i.test([server.command ?? '', ...args].join(' '))) {
+      const broad = args.filter((a) => BROAD_FS_ARGS.includes(a.replace(/\/+$/, '') || '/'));
+      if (broad.length > 0) {
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: server.name,
+            file: server.source,
+            message: `Filesystem server "${server.name}" is granted overly broad root path(s): ${broad.join(', ')} — scope it to the specific directories the agent needs`,
+          }),
+        );
+      }
+    }
+    if (args.includes('--dangerously-skip-permissions') || args.includes('--yolo')) {
+      findings.push(
+        finding(this, {
+          severity: 'high',
+          target: server.name,
+          file: server.source,
+          message: `Server "${server.name}" is launched with a permission-bypass flag`,
+        }),
+      );
+    }
+    return findings;
+  },
+  checkToolset(tools, serverName) {
+    const findings = [];
+    const capMap = new Map<Capability, string[]>();
+    for (const tool of tools) {
+      for (const cap of detectCapabilities(tool)) {
+        capMap.set(cap, [...(capMap.get(cap) ?? []), tool.name]);
+      }
+    }
+    for (const { caps, why } of DANGEROUS_COMBOS) {
+      if (caps.every((c) => capMap.has(c))) {
+        const involved = caps.map((c) => `${c}: ${capMap.get(c)!.slice(0, 3).join(', ')}`).join(' | ');
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: serverName,
+            message: `Server "${serverName}" combines capabilities that ${why} (${involved})`,
+          }),
+        );
+      }
+    }
+    return findings;
+  },
+};

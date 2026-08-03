@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wookat/agentgate/blob/main/docs/spec/agentgate.lock.schema.json",
+  "title": "agentgate.lock",
+  "description": "AgentGate lockfile: pins the exact MCP tool surface (tool names, descriptions, input schemas) an agent is approved to see. All hashes are lowercase hex SHA-256. Input schemas are hashed over their canonical JSON form (object keys sorted recursively, no whitespace).",
+  "type": "object",
+  "required": ["lockfileVersion", "generatedBy", "generatedAt", "servers"],
+  "additionalProperties": false,
+  "properties": {
+    "lockfileVersion": {
+      "const": 1,
+      "description": "Lockfile format version."
+    },
+    "generatedBy": {
+      "type": "string",
+      "description": "Tool and version that generated this lockfile, e.g. \"agentgate@0.1.0\"."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 generation timestamp. Informational only; not part of drift comparison."
+    },
+    "servers": {
+      "type": "object",
+      "description": "Locked tool surface per MCP server, keyed by the server name from the client config.",
+      "additionalProperties": { "$ref": "#/$defs/serverLock" }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "serverLock": {
+      "type": "object",
+      "required": ["surfaceHash", "tools"],
+      "additionalProperties": false,
+      "properties": {
+        "surfaceHash": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 over the canonical JSON array of [nameHash, descriptionHash, inputSchemaHash] triples of all tools, sorted by tool name."
+        },
+        "tools": {
+          "type": "array",
+          "description": "Locked tools, sorted by name.",
+          "items": { "$ref": "#/$defs/toolLock" }
+        }
+      }
+    },
+    "toolLock": {
+      "type": "object",
+      "required": ["name", "nameHash", "descriptionHash", "inputSchemaHash"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Tool name (kept in plaintext for readable diffs)." },
+        "nameHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the UTF-8 tool name." },
+        "descriptionHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the UTF-8 tool description (empty string if absent)." },
+        "inputSchemaHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the canonical JSON of the tool input schema ({} if absent)." }
+      }
+    }
+  }
+}
