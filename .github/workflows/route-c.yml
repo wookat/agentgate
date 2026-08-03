@@ -8,20 +8,7 @@ on:
     paths: ["packages/config-convert/**", "packages/action/**", ".github/workflows/route-c.yml"]
 
 jobs:
-  config-convert:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/config-convert
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
-      - run: npm run build
-      - run: npm test
-
+  # config-convert build/lint/test is covered by the workspace-wide ci.yml (pnpm).
   action-lint:
     runs-on: ubuntu-latest
     steps:
