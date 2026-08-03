@@ -26,18 +26,22 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 
 ## 快速开始
 
+需要 Node.js >= 22 和 [pnpm](https://pnpm.io)（npm 发布准备中，发布后可直接 `npx agentgate`）：
+
 ```bash
-# 扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode）
-npx agentgate scan
+git clone https://github.com/wookat/agentgate.git
+cd agentgate
+pnpm install && pnpm build
+alias agentgate="node $PWD/packages/cli/dist/index.js"
 
-# 把当前工具面固定进 agentgate.lock
-npx agentgate lock
-
-# CI 中：任何漂移即非零退出
-npx agentgate ci
+agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode）
+agentgate scan --live          # 另外连接 stdio 服务器审计实时工具面
+agentgate lock                 # 把当前工具面固定进 agentgate.lock
+agentgate diff                 # 任何工具名/描述/schema 变化即退出码 1 + 可读 diff
+agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退出
 ```
 
-> **状态：** v0.1 正在积极开发中，以上 CLI 为已承诺接口（见 [PROPOSAL](docs/PROPOSAL.md) / [ROUTES](docs/ROUTES.md)）。Watch/Star 本仓库以获取发布通知。
+扫描规则七大类，对齐真实事故：`tool-poisoning`、`credential-leak`、`overprivileged`、`auth-missing`、`ssrf`、`rce-vectors`、`supply-chain`。锁文件格式见 [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json)。
 
 ## 一步接入 CI 门禁
 
