@@ -1,0 +1,85 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { advisories, formatRange } from '../../lib/advisories';
+
+export function getStaticPaths() {
+  return advisories.map((a) => ({ params: { id: a.id.toLowerCase() }, props: { advisory: a } }));
+}
+
+const { advisory: a } = Astro.props;
+---
+
+<StarlightPage
+  frontmatter={{ title: a.id, description: a.title, tableOfContents: false }}
+>
+  <div class="ag-adv-card-head">
+    <span class={`ag-pill ag-sev-${a.severity}`}>{a.severity}</span>
+    <span class="ag-pill ag-type">{a.type}</span>
+    {a.cvss?.score !== undefined && <span class="ag-pill ag-cvss">CVSS {a.cvss.score}</span>}
+  </div>
+
+  <h2>{a.title}</h2>
+  <p>{a.summary}</p>
+  {a.details && <p>{a.details}</p>}
+
+  <h3>Affected packages</h3>
+  <table>
+    <thead>
+      <tr><th>Ecosystem</th><th>Package</th><th>Affected versions</th></tr>
+    </thead>
+    <tbody>
+      {
+        a.packages.map((p) => (
+          <tr>
+            <td>{p.ecosystem}</td>
+            <td><code>{p.name}</code></td>
+            <td>{p.ranges.map((r) => <div>{formatRange(r)}</div>)}{p.note && <div class="ag-note">{p.note}</div>}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+
+  {
+    (a.aliases?.length || a.cwe?.length) ? (
+      <>
+        <h3>Identifiers</h3>
+        <p>
+          {[...(a.aliases ?? []), ...(a.cwe ?? [])].map((x) => (
+            <span class="ag-pill ag-alias">{x}</span>
+          ))}
+        </p>
+      </>
+    ) : null
+  }
+
+  <h3>References</h3>
+  <ul>
+    {
+      a.references.map((r) => (
+        <li>
+          <span class="ag-pill ag-ref">{r.type}</span> <a href={r.url} rel="noopener">{r.url}</a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h3>Timeline</h3>
+  <ul>
+    {a.timeline.discovered && <li>Discovered: {a.timeline.discovered}</li>}
+    <li>Published: {a.timeline.published}</li>
+    {a.timeline.fixed && <li>Fixed: {a.timeline.fixed}</li>}
+    {a.timeline.withdrawn && <li>Package withdrawn: {a.timeline.withdrawn}</li>}
+  </ul>
+
+  {
+    a.credits?.length ? (
+      <>
+        <h3>Credits</h3>
+        <ul>{a.credits.map((c) => <li>{c}</li>)}</ul>
+      </>
+    ) : null
+  }
+
+  <p><a href="/advisories/">← All advisories</a></p>
+</StarlightPage>
