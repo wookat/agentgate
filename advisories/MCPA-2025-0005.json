@@ -1,0 +1,34 @@
+{
+  "id": "MCPA-2025-0005",
+  "title": "@modelcontextprotocol/server-filesystem symlink bypass enables full filesystem access (CVE-2025-53109)",
+  "summary": "A crafted symlink inside an allowed directory of the reference Filesystem MCP server could point anywhere on the filesystem and bypass access enforcement, giving attackers read/write access to critical files outside the sandbox and a path to code execution.",
+  "details": "The second 'EscapeRoute' vulnerability reported by Cymulate Research Labs in Anthropic's Filesystem MCP Server reference implementation. Versions of Filesystem prior to 0.6.4 or 2025.7.1 could allow access to unintended files via symlinks within allowed directories. Attackers can drop malicious code and fully compromise the host from an unprivileged position. Fixed in 0.6.4 / 2025.7.1.",
+  "type": "path-traversal",
+  "severity": "high",
+  "cvss": {
+    "score": 7.3,
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:P/VC:N/VI:N/VA:H/SC:H/SI:H/SA:H"
+  },
+  "aliases": ["CVE-2025-53109", "GHSA-q66q-fx2p-7w4m"],
+  "cwe": ["CWE-59"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@modelcontextprotocol/server-filesystem",
+      "ranges": [
+        { "introduced": "0.0.0", "fixed": "0.6.4" },
+        { "introduced": "2025.1.14", "fixed": "2025.7.1" }
+      ]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/modelcontextprotocol/servers/security/advisories/GHSA-q66q-fx2p-7w4m" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-53109" },
+    { "type": "report", "url": "https://cymulate.com/blog/cve-2025-53109-53110-escaperoute-anthropic/" },
+    { "type": "fix", "url": "https://github.com/modelcontextprotocol/servers/commit/d00c60df9d74dba8a3bb13113f8904407cda594f" }
+  ],
+  "timeline": {
+    "published": "2025-07-02"
+  },
+  "credits": ["Elad Beber (Cymulate Research Labs)"]
+}

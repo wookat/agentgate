@@ -1,0 +1,32 @@
+{
+  "id": "MCPA-2025-0001",
+  "title": "mcp-remote OS command injection via untrusted MCP server (CVE-2025-6514)",
+  "summary": "mcp-remote, the widely used npm proxy for connecting local MCP clients to remote MCP servers, is exposed to OS command injection when connecting to untrusted MCP servers. A malicious server can achieve remote code execution on the client machine via crafted input in the authorization_endpoint response URL during the OAuth flow.",
+  "details": "A malicious MCP server can return a crafted `authorization_endpoint` URL (e.g. a `file:` URL such as `file:/c:/windows/system32/calc.exe` on Windows) that mcp-remote passes to the OS when opening the browser for authorization, resulting in arbitrary command execution. Full parameter control is possible on Windows; arbitrary program execution with limited parameter control on macOS/Linux. Fixed in mcp-remote 0.1.16 by validating the endpoint URL.",
+  "type": "rce-vectors",
+  "severity": "critical",
+  "cvss": {
+    "score": 9.6,
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H"
+  },
+  "aliases": ["CVE-2025-6514", "GHSA-6xpm-ggf7-wc3p", "JFSA-2025-001290844"],
+  "cwe": ["CWE-78"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "mcp-remote",
+      "ranges": [{ "introduced": "0.0.5", "fixed": "0.1.16" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-6514" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-6xpm-ggf7-wc3p" },
+    { "type": "report", "url": "https://research.jfrog.com/vulnerabilities/mcp-remote-command-injection-rce-jfsa-2025-001290844/" },
+    { "type": "article", "url": "https://jfrog.com/blog/2025-6514-critical-mcp-remote-rce-vulnerability" },
+    { "type": "fix", "url": "https://github.com/geelen/mcp-remote/commit/607b226a356cb61a239ffaba2fb3db1c9dea4bac" }
+  ],
+  "timeline": {
+    "published": "2025-07-09"
+  },
+  "credits": ["Or Peles (JFrog Security Research)"]
+}
