@@ -1,0 +1,59 @@
+name: route-c
+
+on:
+  push:
+    branches: [main]
+    paths: ["packages/config-convert/**", "packages/action/**", ".github/workflows/route-c.yml"]
+  pull_request:
+    paths: ["packages/config-convert/**", "packages/action/**", ".github/workflows/route-c.yml"]
+
+jobs:
+  config-convert:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/config-convert
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  action-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate action.yml
+        run: |
+          python3 - <<'EOF'
+          import os, yaml
+          if not os.path.exists("packages/action/action.yml"):
+              print("action.yml not present yet; skipping")
+              raise SystemExit(0)
+          with open("packages/action/action.yml") as f:
+              a = yaml.safe_load(f)
+          assert a["runs"]["using"] == "composite"
+          for key in ("name", "description", "branding", "inputs", "outputs"):
+              assert key in a, f"missing {key}"
+          print("action.yml OK")
+          EOF
+      - name: Validate .pre-commit-hooks.yaml
+        run: |
+          python3 - <<'EOF'
+          import os, yaml, re
+          if not os.path.exists(".pre-commit-hooks.yaml"):
+              print(".pre-commit-hooks.yaml not present yet; skipping")
+              raise SystemExit(0)
+          with open(".pre-commit-hooks.yaml") as f:
+              hooks = yaml.safe_load(f)
+          assert isinstance(hooks, list) and hooks
+          for h in hooks:
+              for key in ("id", "name", "entry", "language"):
+                  assert key in h, f"missing {key} in {h}"
+              if "files" in h:
+                  re.compile(h["files"])
+          print(".pre-commit-hooks.yaml OK")
+          EOF
