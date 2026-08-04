@@ -10,7 +10,14 @@
   },
   "homepage": "https://agentgate.zalize.com",
   "bugs": "https://github.com/wookat/agentgate/issues",
-  "keywords": ["mcp", "model-context-protocol", "security", "supply-chain", "lockfile", "scanner"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "security",
+    "supply-chain",
+    "lockfile",
+    "scanner"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -36,6 +43,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "smol-toml": "^1.7.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

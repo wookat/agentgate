@@ -6,4 +6,8 @@ export * from './lockfile.js';
 export * from './diff.js';
 export * from './sarif.js';
 export { ALL_RULES } from './rules/index.js';
+export * from './deps/types.js';
+export * from './deps/collect.js';
+export * from './deps/registry.js';
+export * from './deps/score.js';
 export type { Rule } from './rules/rule.js';

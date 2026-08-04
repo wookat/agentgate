@@ -41,6 +41,11 @@ jobs:
           node packages/cli/dist/index.js scan .
           --ignore 'packages/core/src/rules/**' 'packages/*/test/**' 'website/**'
           --fail-on critical
+      - name: agentgate deps (hallucinated-dependency gate)
+        run: >
+          node packages/cli/dist/index.js deps .
+          --ignore 'packages/*/test/**' 'website/**'
+          --fail-on critical
       - name: agentgate lock + ci gate (live fixture server)
         run: |
           node packages/cli/dist/index.js lock --config .github/dogfood/mcp.json

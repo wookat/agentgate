@@ -5,6 +5,7 @@ import { runScan } from './commands/scan.js';
 import { runLock } from './commands/lock.js';
 import { runDiff } from './commands/diff.js';
 import { runCi } from './commands/ci.js';
+import { runDeps } from './commands/deps.js';
 import { setDebug } from './debug.js';
 
 const program = new Command();
@@ -71,6 +72,22 @@ program
   .addOption(timeoutOption)
   .action(async (opts) => {
     process.exitCode = await runCi(opts);
+  });
+
+program
+  .command('deps')
+  .description('Detect hallucinated (slopsquatted) and typosquatted dependencies across npm and PyPI')
+  .argument('[target]', 'project directory to scan; default: current directory')
+  .addOption(new Option('-f, --format <format>', 'output format').choices(['table', 'json', 'sarif']).default('table'))
+  .option('-o, --output <file>', 'write the report to a file instead of stdout')
+  .addOption(new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity').choices([...SEVERITIES]))
+  .option('--ignore <globs...>', 'glob patterns (relative to the scan root) to exclude')
+  .option('--offline', 'skip registry lookups; only run name-shape (typosquat) checks')
+  .option('--no-imports', 'skip source import extraction; check manifests only')
+  .addOption(new Option('-t, --timeout <ms>', 'per-request registry timeout').default('10000'))
+  .addOption(new Option('--concurrency <n>', 'max concurrent registry lookups').default('8'))
+  .action(async (target, opts) => {
+    process.exitCode = await runDeps(target, opts);
   });
 
 program.parseAsync().catch((err) => {

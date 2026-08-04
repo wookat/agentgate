@@ -1,4 +1,5 @@
 import { ALL_RULES } from './rules/index.js';
+import { DEP_RULES } from './deps/score.js';
 import { Finding, Severity } from './types.js';
 
 const SARIF_LEVEL: Record<Severity, string> = {
@@ -29,12 +30,20 @@ export function toSarif(findings: Finding[], toolVersion = '0.1.0'): object {
             name: 'agentgate',
             informationUri: 'https://github.com/wookat/agentgate',
             version: toolVersion,
-            rules: ALL_RULES.map((rule) => ({
-              id: rule.id,
-              name: rule.category,
-              shortDescription: { text: rule.description },
-              properties: { 'security-severity': '8.0', tags: ['security', 'mcp', rule.category] },
-            })),
+            rules: [
+              ...ALL_RULES.map((rule) => ({
+                id: rule.id,
+                name: rule.category,
+                shortDescription: { text: rule.description },
+                properties: { 'security-severity': '8.0', tags: ['security', 'mcp', rule.category] },
+              })),
+              ...DEP_RULES.map((rule) => ({
+                id: rule.id,
+                name: 'supply-chain',
+                shortDescription: { text: rule.description },
+                properties: { 'security-severity': '8.0', tags: ['security', 'dependencies', 'supply-chain'] },
+              })),
+            ],
           },
         },
         results: findings.map((f) => ({

@@ -1,0 +1,128 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+  collectDependencies,
+  extractJsImports,
+  extractPyImports,
+  normalizeName,
+  npmPackageFromSpecifier,
+  parseRequirementLine,
+} from '../src/deps/collect.js';
+
+describe('npmPackageFromSpecifier', () => {
+  it('reduces subpaths and keeps scopes', () => {
+    expect(npmPackageFromSpecifier('lodash/merge')).toBe('lodash');
+    expect(npmPackageFromSpecifier('@scope/pkg/deep/path')).toBe('@scope/pkg');
+  });
+  it('rejects relative, absolute, protocol, and builtin specifiers', () => {
+    expect(npmPackageFromSpecifier('./local')).toBeUndefined();
+    expect(npmPackageFromSpecifier('/abs')).toBeUndefined();
+    expect(npmPackageFromSpecifier('#alias')).toBeUndefined();
+    expect(npmPackageFromSpecifier('node:fs')).toBeUndefined();
+    expect(npmPackageFromSpecifier('fs')).toBeUndefined();
+    expect(npmPackageFromSpecifier('path')).toBeUndefined();
+  });
+});
+
+describe('extractJsImports', () => {
+  it('handles import, require, dynamic import, export from', () => {
+    const src = [
+      "import x from 'alpha';",
+      "import { y } from '@sc/beta/sub';",
+      "const z = require('gamma');",
+      "await import('delta');",
+      "export { a } from 'epsilon';",
+      "import './relative.js';",
+      "import fs from 'node:fs';",
+    ].join('\n');
+    expect(extractJsImports(src).sort()).toEqual(['@sc/beta', 'alpha', 'delta', 'epsilon', 'gamma']);
+  });
+});
+
+describe('extractPyImports', () => {
+  it('extracts top-level modules and skips stdlib', () => {
+    const src = ['import os', 'import requests', 'from flask.helpers import x', 'import numpy.linalg', 'import json, yaml'].join('\n');
+    expect(extractPyImports(src).sort()).toEqual(['flask', 'numpy', 'requests', 'yaml']);
+  });
+});
+
+describe('parseRequirementLine', () => {
+  it('strips specifiers, extras, comments, and skips options/urls', () => {
+    expect(parseRequirementLine('requests>=2.0  # http lib')).toBe('requests');
+    expect(parseRequirementLine('uvicorn[standard]==0.30')).toBe('uvicorn');
+    expect(parseRequirementLine('-r other.txt')).toBeUndefined();
+    expect(parseRequirementLine('https://example.com/pkg.whl')).toBeUndefined();
+    expect(parseRequirementLine('# comment only')).toBeUndefined();
+  });
+});
+
+describe('normalizeName', () => {
+  it('normalizes PEP 503 names, leaves npm alone', () => {
+    expect(normalizeName('Foo_Bar.baz', 'pypi')).toBe('foo-bar-baz');
+    expect(normalizeName('Foo_Bar', 'npm')).toBe('Foo_Bar');
+  });
+});
+
+describe('collectDependencies', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-deps-'));
+  });
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('collects manifests, pyproject, and undeclared source imports', () => {
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        dependencies: { express: '^4.0.0', local: 'file:../local', ws: 'workspace:*' },
+        devDependencies: { vitest: '^1.0.0' },
+      }),
+    );
+    fs.writeFileSync(path.join(dir, 'requirements.txt'), 'requests>=2.0\n-r base.txt\n');
+    fs.writeFileSync(
+      path.join(dir, 'pyproject.toml'),
+      ['[project]', 'dependencies = ["flask>=2", "python"]', '[project.optional-dependencies]', 'dev = ["pytest"]', '[tool.poetry.dependencies]', 'numpy = "^1.0"'].join('\n'),
+    );
+    fs.writeFileSync(path.join(dir, 'app.js'), "const a = require('express'); const b = require('phantom-pkg');\n");
+    fs.writeFileSync(path.join(dir, 'app.py'), 'import requests\nimport phantom_module\n');
+    fs.mkdirSync(path.join(dir, 'node_modules', 'x'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'node_modules', 'x', 'index.js'), "require('should-not-appear');\n");
+
+    const { refs } = collectDependencies(dir);
+    const keys = refs.map((r) => `${r.ecosystem}:${r.name}:${r.origin}`).sort();
+    expect(keys).toEqual(
+      [
+        'npm:express:manifest',
+        'npm:phantom-pkg:import',
+        'npm:vitest:manifest',
+        'pypi:flask:manifest',
+        'pypi:numpy:manifest',
+        'pypi:phantom_module:import',
+        'pypi:pytest:manifest',
+        'pypi:requests:manifest',
+      ].sort(),
+    );
+    // file:/workspace: specifiers and stdlib/declared imports excluded
+    expect(refs.find((r) => r.name === 'local')).toBeUndefined();
+    expect(refs.find((r) => r.name === 'ws')).toBeUndefined();
+  });
+
+  it('respects ignore globs and --no-imports', () => {
+    fs.mkdirSync(path.join(dir, 'vendor'));
+    fs.writeFileSync(path.join(dir, 'vendor', 'requirements.txt'), 'vendored-pkg\n');
+    fs.writeFileSync(path.join(dir, 'app.js'), "require('imported-pkg');\n");
+    const { refs } = collectDependencies(dir, { ignore: ['vendor/**'], includeImports: false });
+    expect(refs).toEqual([]);
+  });
+
+  it('tolerates malformed manifests', () => {
+    fs.writeFileSync(path.join(dir, 'package.json'), '{not json');
+    fs.writeFileSync(path.join(dir, 'pyproject.toml'), '[[[broken');
+    const { refs } = collectDependencies(dir);
+    expect(refs).toEqual([]);
+  });
+});

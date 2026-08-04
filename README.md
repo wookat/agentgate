@@ -87,6 +87,9 @@ npx mcp-agentgate lock
 
 # In CI: exit non-zero if anything drifted from the lock
 npx mcp-agentgate ci
+
+# Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
+npx mcp-agentgate deps --fail-on high
 ```
 
 All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
