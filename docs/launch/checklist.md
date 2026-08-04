@@ -4,9 +4,10 @@
 
 ## Pre-launch gates (all must be true before any post)
 
-- [ ] Route A: `mcp-agentgate` published on npm; `npx mcp-agentgate scan|lock|ci` works end-to-end
+- [x] Route A: `mcp-agentgate` published on npm (`mcp-agentgate@0.1.0`, 2026-08-04);
+      `npx mcp-agentgate@0.1.0` verified working
 - [ ] Route B: docs site (https://agentgate.zalize.com) + advisory DB + Workers API live
-- [ ] README quickstart commands re-verified against the shipped CLI
+- [x] README quickstart commands re-verified against the shipped CLI (PR #29)
 - [ ] docs/COMPARISON.md re-verified against shipped v0.1 (replace "planned" markers)
 - [x] Demo GIF recorded from the real CLI (asciinema+agg) and embedded in README
       (docs/assets/demo.gif; regen steps in docs/assets/README.md)

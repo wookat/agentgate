@@ -27,8 +27,8 @@ prepared 2026-08 for submission to https://www.bestpractices.dev. Statuses:
 | `repo_public` / `repo_track` / `repo_distributed` | Met | Public GitHub repo, full history, git |
 | `repo_interim` — interim versions available | Met | main branch + from-source install documented |
 | `version_unique` / `version_semver` | Met | semver, `packageManager` pinned; publish prep in PR #11 |
-| `version_tags` — releases tagged | **Unmet** | Tag `v0.1.0` at release (route A / total lead) |
-| `release_notes` — human-readable release notes | **Unmet** | Release-notes template lands with automation PR; first notes at v0.1.0 |
+| `version_tags` — releases tagged | Met | `v0.1.0` tagged and released (2026-08-04) |
+| `release_notes` — human-readable release notes | Met | https://github.com/wookat/agentgate/releases/tag/v0.1.0 (template in .github/release.yml) |
 | `release_notes_vulns` — vulns identified in release notes | Met (policy) | Committed in SECURITY policy; applies from first advisory |
 
 ## Reporting
@@ -39,8 +39,8 @@ prepared 2026-08 for submission to https://www.bestpractices.dev. Statuses:
 | `report_responses` — respond to majority of bugs (past 2–12 mo) | Met | All issues to date triaged |
 | `enhancement_responses` | Met | Feature template + roadmap label |
 | `report_archive` — archive of reports | Met | GitHub issues |
-| `vulnerability_report_process` — how to report vulns | **Unmet** | SECURITY.md (route A, MATURITY A) + enable GitHub private vulnerability reporting (owner action) |
-| `vulnerability_report_private` — private reporting supported | **Unmet** | Same as above |
+| `vulnerability_report_process` — how to report vulns | Met | SECURITY.md (landed): private reporting link, 48h ack / 7d fix commitment |
+| `vulnerability_report_private` — private reporting supported | **Unmet** | SECURITY.md links GitHub private vulnerability reporting — the repo setting must still be enabled (owner action, checklist #3) |
 | `vulnerability_report_response` — response ≤ 14 days | Met (policy) | Committed in SECURITY.md once landed |
 
 ## Quality
@@ -66,7 +66,7 @@ prepared 2026-08 for submission to https://www.bestpractices.dev. Statuses:
 | `crypto_keylength` / `crypto_working` / `crypto_weaknesses` | Met | SHA-256; no broken algorithms |
 | `crypto_password_storage` | N/A | No password storage |
 | `crypto_random` | N/A | No security-relevant randomness |
-| `delivery_mitm` — MITM-resistant delivery | Met | npm over HTTPS; provenance planned (route A) |
+| `delivery_mitm` — MITM-resistant delivery | Met | `mcp-agentgate@0.1.0` published on npm over HTTPS |
 | `delivery_unsigned` | Met | npm integrity hashes |
 | `vulnerabilities_fixed_60_days` | Met (policy) | No known vulns; ≤60d commitment in SECURITY.md |
 | `vulnerabilities_critical_fixed` | Met (policy) | Same |
@@ -94,10 +94,11 @@ prepared 2026-08 for submission to https://www.bestpractices.dev. Statuses:
    *Dependabot alerts* (pairs with SECURITY.md; fixes `vulnerability_report_private`).
 4. **Repo settings → Code security**: enable *CodeQL default setup* (strengthens
    `static_analysis_common_vulnerabilities`).
-5. At v0.1.0: push tag, publish GitHub Release with notes (fixes `version_tags`,
-   `release_notes`).
-6. Re-check the three "Met (policy)" vulnerability rows after SECURITY.md (route A)
-   merges, then submit the form.
+5. ~~At v0.1.0: push tag, publish GitHub Release with notes~~ — done 2026-08-04
+   (`version_tags`, `release_notes` now Met).
+6. ~~Re-check vulnerability rows after SECURITY.md merges~~ — SECURITY.md landed;
+   `vulnerability_report_process` now Met. Submit the form.
 
-Unmet items are all covered by the above six actions plus route A's SECURITY.md —
-after those, the project meets 100% of passing criteria.
+Remaining Unmet items (`discussion`, `vulnerability_report_private`) are covered by
+owner actions #2 and #3 above — after those plus the bestpractices.dev submission,
+the project meets 100% of passing criteria.
