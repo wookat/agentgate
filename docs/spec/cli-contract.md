@@ -43,6 +43,30 @@ Findings are sorted by severity (critical first), then rule id, then target.
 New *optional* fields may be added without a version bump; removing or
 renaming fields, or changing semantics, requires bumping `version`.
 
+## `deps --format json` report (schema version 1)
+
+```jsonc
+{
+  "version": 1,               // report schema version (frozen)
+  "scannedAt": "ISO-8601",    // timestamp, not stable across runs
+  "scannedFiles": ["path"],   // manifests + source files that yielded references
+  "dependencies": [
+    {
+      "name": "package name as written",
+      "ecosystem": "npm | pypi",
+      "origin": "manifest | import",
+      "file": "path the reference came from"
+    }
+  ],
+  "findings": [ /* same Finding shape as `scan`; ruleIds AG-DP-001..AG-DP-005, category supply-chain */ ],
+  "warnings": ["string"]      // e.g. offline-mode notice
+}
+```
+
+`deps` exit codes follow the table above: `1` only when `--fail-on` is set and
+met, `2` when the target directory does not exist. Registry lookup failures
+degrade to `info`-severity findings and never fail the run by themselves.
+
 ## `diff --json` report
 
 ```jsonc

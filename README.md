@@ -72,6 +72,7 @@ the whole loop in one tool:
 | **Scan** | Static + opt-in live analysis of MCP servers: tool poisoning (hidden Unicode, prompt injection), credential leaks, SSRF/RCE vectors, over-privileged tool combos |
 | **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees into `agentgate.lock` — rug-pull defense |
 | **Gate** | Fail CI on any drift from the approved baseline; diff-based review, not binary allow/deny |
+| **Deps** | Catch AI-hallucinated (slopsquatted) and typosquatted dependencies — live npm/PyPI verification of manifests *and* source imports before anything installs |
 | **Advise** | Cross-check servers against a [public, structured MCP advisory database](advisories/) |
 
 ## Quick start
@@ -87,6 +88,9 @@ npx mcp-agentgate lock
 
 # In CI: exit non-zero if anything drifted from the lock
 npx mcp-agentgate ci
+
+# Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
+npx mcp-agentgate deps --fail-on high
 ```
 
 All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).

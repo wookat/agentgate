@@ -45,6 +45,7 @@ export default defineConfig({
             { label: 'agentgate lock', slug: 'docs/cli/lock' },
             { label: 'agentgate diff', slug: 'docs/cli/diff' },
             { label: 'agentgate ci', slug: 'docs/cli/ci' },
+            { label: 'agentgate deps', slug: 'docs/cli/deps' },
           ],
         },
         {

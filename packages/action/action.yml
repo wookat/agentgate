@@ -10,7 +10,8 @@ branding:
 inputs:
   command:
     description: >-
-      AgentGate command to run: `ci` (drift gate, default), `scan`, `diff`, or `lock`.
+      AgentGate command to run: `ci` (drift gate, default), `scan`, `diff`, `lock`,
+      or `deps` (hallucinated/typosquatted dependency gate).
     required: false
     default: "ci"
   args:

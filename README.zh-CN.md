@@ -25,6 +25,7 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 | **Scan 扫描** | 静态 + 可选连接式分析：工具投毒（隐藏 Unicode、提示注入）、凭证泄露、SSRF/RCE 向量、过度授权组合 |
 | **Lock 锁定** | 把 Agent 实际看到的工具面（名称、描述、输入 schema）固定进 `agentgate.lock`，防御 rug-pull |
 | **Gate 门禁** | 与已批准基线有任何漂移即 CI 红灯；基于 diff 评审，而非二元允许/拒绝 |
+| **Deps 依赖防护** | 拦截 AI 幻觉包（slopsquatting）与 typosquat 依赖 —— 安装前对 manifest *与源码 import* 做 npm/PyPI 实时核验 |
 | **Advise 通报** | 与[公开结构化 MCP 安全通报数据库](advisories/)自动比对 |
 
 ## 快速开始

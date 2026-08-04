@@ -1,0 +1,93 @@
+import { describe, expect, it } from 'vitest';
+import { editDistance, findTyposquatTarget, scoreDependencies, scoreDependency, scoreOffline } from '../src/deps/score.js';
+import { DepCheckResult, DependencyRef } from '../src/deps/types.js';
+
+function ref(partial: Partial<DependencyRef> = {}): DependencyRef {
+  return { name: 'some-pkg', ecosystem: 'npm', origin: 'manifest', file: 'package.json', ...partial };
+}
+
+describe('editDistance', () => {
+  it('computes substitutions, insertions, transpositions', () => {
+    expect(editDistance('react', 'react')).toBe(0);
+    expect(editDistance('reqests', 'requests')).toBe(1);
+    expect(editDistance('lodahs', 'lodash')).toBe(1); // transposition
+    expect(editDistance('abc', 'xyz', 2)).toBeGreaterThan(2);
+    expect(editDistance('a', 'abcd', 2)).toBe(3); // length gap short-circuit
+  });
+});
+
+describe('findTyposquatTarget', () => {
+  it('flags one-edit neighbors of popular packages', () => {
+    expect(findTyposquatTarget(ref({ name: 'lodahs' }))).toBe('lodash');
+    expect(findTyposquatTarget(ref({ name: 'reqests', ecosystem: 'pypi' }))).toBe('requests');
+  });
+  it('does not flag popular packages themselves or short names', () => {
+    expect(findTyposquatTarget(ref({ name: 'lodash' }))).toBeUndefined();
+    expect(findTyposquatTarget(ref({ name: 'abc' }))).toBeUndefined();
+  });
+});
+
+describe('scoreDependency', () => {
+  it('flags nonexistent packages as critical and stops there', () => {
+    const findings = scoreDependency({ ref: ref({ name: 'ghost-pkg', origin: 'import', file: 'app.js' }), info: { exists: false } });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-001', severity: 'critical', target: 'npm:ghost-pkg' });
+    expect(findings[0]!.message).toContain('imported in app.js');
+  });
+
+  it('reports registry errors as info, not failures', () => {
+    const findings = scoreDependency({ ref: ref(), error: 'timeout' });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-001', severity: 'info' });
+  });
+
+  it('flags young low-download packages as high', () => {
+    const findings = scoreDependency({
+      ref: ref(),
+      info: { exists: true, ageDays: 3, weeklyDownloads: 5, versionCount: 1, hasRepository: false, hasLicense: false, hasDescription: true },
+    });
+    expect(findings.map((f) => f.ruleId)).toContain('AG-DP-003');
+    expect(findings.find((f) => f.ruleId === 'AG-DP-003')!.severity).toBe('high');
+    expect(findings.map((f) => f.ruleId)).toContain('AG-DP-005');
+  });
+
+  it('flags low-adoption mature packages as medium', () => {
+    const findings = scoreDependency({
+      ref: ref(),
+      info: { exists: true, ageDays: 400, weeklyDownloads: 2, versionCount: 1, hasRepository: true, hasLicense: true, hasDescription: true },
+    });
+    expect(findings.find((f) => f.ruleId === 'AG-DP-003')!.severity).toBe('medium');
+  });
+
+  it('flags install scripts combined with other signals', () => {
+    const findings = scoreDependency({
+      ref: ref(),
+      info: { exists: true, ageDays: 2, weeklyDownloads: 0, versionCount: 1, hasInstallScripts: true, hasRepository: true, hasLicense: true, hasDescription: true },
+    });
+    expect(findings.map((f) => f.ruleId)).toContain('AG-DP-004');
+  });
+
+  it('emits nothing for healthy packages', () => {
+    const findings = scoreDependency({
+      ref: ref({ name: 'express' }),
+      info: { exists: true, ageDays: 4000, weeklyDownloads: 30000000, versionCount: 271, hasRepository: true, hasLicense: true, hasDescription: true, hasInstallScripts: false },
+    });
+    expect(findings).toEqual([]);
+  });
+});
+
+describe('scoreDependencies / scoreOffline', () => {
+  it('flattens results', () => {
+    const results: DepCheckResult[] = [
+      { ref: ref({ name: 'ghost' }), info: { exists: false } },
+      { ref: ref({ name: 'express' }), info: { exists: true, ageDays: 4000, weeklyDownloads: 1e7, versionCount: 100, hasRepository: true, hasLicense: true, hasDescription: true } },
+    ];
+    expect(scoreDependencies(results)).toHaveLength(1);
+  });
+
+  it('offline mode only does name-shape checks', () => {
+    const findings = scoreOffline([ref({ name: 'lodahs' }), ref({ name: 'totally-unknown-pkg' })]);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-002', severity: 'high' });
+  });
+});
