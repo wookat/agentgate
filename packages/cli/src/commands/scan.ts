@@ -12,6 +12,7 @@ export interface ScanOptions {
   format: 'table' | 'json' | 'sarif';
   output?: string;
   failOn?: Severity;
+  ignore?: string[];
   timeout: string;
 }
 
@@ -30,7 +31,7 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     }
     if (fs.statSync(resolved).isDirectory()) {
       projectDir = resolved;
-      const repo = scanRepo(resolved);
+      const repo = scanRepo(resolved, { ignore: opts.ignore });
       findings.push(...repo.findings);
       scannedFiles.push(...repo.scannedFiles);
     } else {

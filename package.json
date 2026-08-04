@@ -10,11 +10,15 @@
     "build": "pnpm -r build",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "changeset": "changeset",
+    "release": "pnpm build && pnpm -r publish --access public --no-git-checks"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.1",
     "@eslint/js": "^9.39.0",
     "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "4.1.10",
     "eslint": "^9.39.0",
     "globals": "^17.9.0",
     "typescript": "^5.9.3",

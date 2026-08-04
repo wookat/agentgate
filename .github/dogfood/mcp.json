@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toy": {
+      "command": "node",
+      "args": ["packages/cli/test/fixtures/toy-server.mjs"]
+    }
+  }
+}

