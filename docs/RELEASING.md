@@ -8,8 +8,8 @@ Releases are automated with [changesets](https://github.com/changesets/changeset
    (pick bump level, write a summary). CI does not require one for
    internal-only changes.
 2. On merge to `main`, the release workflow opens/updates a
-   **"chore: version packages"** PR that bumps versions (`agentgate` and
-   `@agentgate/core` are version-fixed) and updates CHANGELOGs.
+   **"chore: version packages"** PR that bumps versions (`mcp-agentgate` and
+   `mcp-agentgate-core` are version-fixed) and updates CHANGELOGs.
 3. Merging that PR triggers `pnpm release`, publishing both packages to npm
    with `--access public`.
 
@@ -22,7 +22,7 @@ attestations.
 Auth options (either works):
 
 - **Trusted publishing (preferred, token-less):** on npmjs.com, configure
-  `agentgate` and `@agentgate/core` with GitHub Actions as a trusted
+  `mcp-agentgate` and `mcp-agentgate-core` with GitHub Actions as a trusted
   publisher (repo `wookat/agentgate`, workflow `release.yml`). No secret
   needed.
 - **Token fallback:** set the `NPM_TOKEN` repository secret (automation

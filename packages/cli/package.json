@@ -1,5 +1,5 @@
 {
-  "name": "agentgate",
+  "name": "mcp-agentgate",
   "version": "0.1.0",
   "description": "Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era",
   "license": "Apache-2.0",
@@ -32,7 +32,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agentgate/core": "workspace:*",
+    "mcp-agentgate-core": "workspace:*",
     "cli-table3": "^0.6.5",
     "commander": "^15.0.0",
     "picocolors": "^1.1.1"

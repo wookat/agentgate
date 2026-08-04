@@ -10,7 +10,7 @@ The schema is also published at <https://agentgate.zalize.com/spec/agentgate.loc
 ```jsonc
 {
   "lockfileVersion": 1,          // integer, REQUIRED, exactly 1 for this spec
-  "generatedBy": "agentgate@x.y.z",
+  "generatedBy": "mcp-agentgate@x.y.z",
   "generatedAt": "ISO-8601 timestamp",
   "servers": {
     "<server name>": {

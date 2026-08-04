@@ -71,7 +71,7 @@ call). Until then the action is usable via the subdirectory reference above.
 
 ## CLI contract (route A interface)
 
-The action shells out to `npx agentgate@<version> <command>` and relies on:
+The action shells out to `npx mcp-agentgate@<version> <command>` and relies on:
 
 - `agentgate ci --lock <file>`: exit non-zero on any drift from the lockfile;
 - `agentgate scan`: exit non-zero on findings at/above the failure threshold;

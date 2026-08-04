@@ -28,7 +28,7 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 
 ## 快速开始
 
-需要 Node.js >= 22 和 [pnpm](https://pnpm.io)（npm 发布准备中，发布后可直接 `npx agentgate`）：
+需要 Node.js >= 22 和 [pnpm](https://pnpm.io)（npm 发布准备中，发布后可直接 `npx mcp-agentgate`）：
 
 ```bash
 git clone https://github.com/wookat/agentgate.git
@@ -74,7 +74,7 @@ repos:
 在各 MCP 客户端之间迁移配置，无需手工重写 JSON/TOML（官方 MCP 2026 路线图明确点名配置可移植性缺口）：
 
 ```bash
-npx agentgate-config-convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
+npx mcp-agentgate-config-convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
 支持 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode，任何有损转换都会显式告警。详见 [packages/config-convert](packages/config-convert/)，后续并入 CLI 为 `agentgate config convert`。

@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { Severity, formatDiff, scanServers, sortFindings } from '@agentgate/core';
+import { Severity, formatDiff, scanServers, sortFindings } from 'mcp-agentgate-core';
 import { gatherServers } from '../context.js';
 import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
 import { computeDrift } from './diff.js';

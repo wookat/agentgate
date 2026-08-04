@@ -32,7 +32,7 @@ agentgate ci [options]
 ## CI integration
 
 ```yaml
-- run: npx agentgate ci --fail-on high
+- run: npx mcp-agentgate ci --fail-on high
 ```
 
 Full per-platform recipes (GitHub Actions, GitLab CI, CircleCI, Jenkins, Azure Pipelines): [CI integration guide](/docs/guides/ci/).

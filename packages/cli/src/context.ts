@@ -7,7 +7,7 @@ import {
   discoverConfigFiles,
   fetchToolSurface,
   parseConfigFile,
-} from '@agentgate/core';
+} from 'mcp-agentgate-core';
 import pc from 'picocolors';
 import { debugLog } from './debug.js';
 

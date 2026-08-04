@@ -22,7 +22,7 @@ otherwise.
 
 ## Scope
 
-- `agentgate` (CLI) and `@agentgate/core` npm packages
+- `mcp-agentgate` (CLI) and `mcp-agentgate-core` npm packages
 - The GitHub Actions workflows in this repository
 
 False negatives in the scanning rules (a threat we should detect but do not)

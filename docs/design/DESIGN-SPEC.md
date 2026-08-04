@@ -114,7 +114,7 @@ Starlight 映射（放 `website/src/styles/custom.css`）：`--sl-color-accent: 
 ### 3.2 Hero
 
 - 桌面：两栏 12 列网格，左 6 列文案、右 6 列终端演示窗口；移动：单列，终端窗口置于文案下方。
-- 左栏：pill 徽标（"Open source · Apache-2.0"）→ H1（两行内，关键词 accent 渐变色）→ 一句副标（`npm audit + lockfile + CI gate for MCP` 类比）→ 双 CTA（实心 accent "Get started" + 描边 "GitHub"）→ 下方一行 mono 安装命令 `npm i -g agentgate`（带复制按钮）。
+- 左栏：pill 徽标（"Open source · Apache-2.0"）→ H1（两行内，关键词 accent 渐变色）→ 一句副标（`npm audit + lockfile + CI gate for MCP` 类比）→ 双 CTA（实心 accent "Get started" + 描边 "GitHub"）→ 下方一行 mono 安装命令 `npm i -g mcp-agentgate`（带复制按钮）。
 - 右栏：模拟终端窗口（`--ag-bg-raised`、红黄绿窗口点、mono 字体），展示 `agentgate scan` 输出：数行检查结果（ok 绿 / warn 琥珀 / danger 红）+ 退出摘要，体现 gate 语义三色。
 - 背景装饰：顶部中央径向光晕（`--ag-glow-accent`）+ 细网格线，`pointer-events-none`，**必须 `overflow-hidden` 防横向滚动**。
 
