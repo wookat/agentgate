@@ -11,6 +11,8 @@
 
 English | [简体中文](README.zh-CN.md)
 
+<img src="docs/assets/demo.gif" alt="agentgate demo: scan finds a hardcoded credential and unpinned package, lock pins the tool surface, and diff catches an upstream rug-pull" width="900">
+
 </div>
 
 <details><summary>Quick start details (from source, until npm release)</summary>
