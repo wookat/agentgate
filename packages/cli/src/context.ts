@@ -47,7 +47,7 @@ export function gatherServers(opts: GatherOptions): { servers: McpServerConfig[]
     } catch (err) {
       const message = `failed to parse ${location.path}: ${err instanceof Error ? err.message : err}`;
       if (location.client === 'explicit') {
-        throw new Error(message);
+        throw new Error(message, { cause: err });
       }
       console.error(pc.yellow(`warning: ${message}`));
     }
