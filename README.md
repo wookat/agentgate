@@ -72,6 +72,7 @@ the whole loop in one tool:
 | **Scan** | Static + opt-in live analysis of MCP servers: tool poisoning (hidden Unicode, prompt injection), credential leaks, SSRF/RCE vectors, over-privileged tool combos |
 | **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees into `agentgate.lock` — rug-pull defense |
 | **Gate** | Fail CI on any drift from the approved baseline; diff-based review, not binary allow/deny |
+| **Deps** | Catch AI-hallucinated (slopsquatted) and typosquatted dependencies — live npm/PyPI verification of manifests *and* source imports before anything installs |
 | **Advise** | Cross-check servers against a [public, structured MCP advisory database](advisories/) |
 
 ## Quick start
