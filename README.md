@@ -4,9 +4,9 @@
 
 **Scan, lock, and gate your MCP servers — `npm audit` + lockfile + CI drift gate for the MCP era.**
 
-[![CI](https://github.com/wookat/agentgate/actions/workflows/route-c.yml/badge.svg)](https://github.com/wookat/agentgate/actions)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/wookat/agentgate/actions/workflows/ci.yml/badge.svg)](https://github.com/wookat/agentgate/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mcp-agentgate)](https://www.npmjs.com/package/mcp-agentgate)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-compatible-8A2BE2)](https://modelcontextprotocol.io)
 
@@ -16,12 +16,17 @@ English | [简体中文](README.zh-CN.md)
 
 </div>
 
-<details><summary>Quick start details</summary>
+<details><summary>Developing from source (contributors)</summary>
 
-Requires Node.js >= 22. Install from npm ([`mcp-agentgate`](https://www.npmjs.com/package/mcp-agentgate); the command is `agentgate`):
+Requires Node.js >= 22 and [pnpm](https://pnpm.io).
 
 ```bash
-npm i -g mcp-agentgate    # or: npx mcp-agentgate scan
+git clone https://github.com/wookat/agentgate.git
+cd agentgate
+pnpm install
+pnpm build
+
+alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
 Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode) are configured to use — config paths are discovered automatically:
@@ -84,9 +89,8 @@ npx mcp-agentgate lock
 npx mcp-agentgate ci
 ```
 
-> **Status:** under active development toward v0.1 — the CLI above is the committed
-> interface ([PROPOSAL](docs/PROPOSAL.md) / [ROUTES](docs/ROUTES.md)). Watch/star the
-> repo to catch the release.
+All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
+Docs, rule reference, and report viewer: **https://agentgate.zalize.com**.
 
 ## CI gate in one step
 
@@ -94,7 +98,7 @@ npx mcp-agentgate ci
 # .github/workflows/mcp-gate.yml
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@main
+  - uses: wookat/agentgate/packages/action@v0.1.0
     with:
       command: ci
 ```
