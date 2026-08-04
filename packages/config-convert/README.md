@@ -1,4 +1,4 @@
-# @agentgate/config-convert
+# mcp-agentgate-config-convert
 
 Convert MCP server configuration between client formats — the "config portability" gap
 called out in the official MCP 2026 roadmap.
@@ -29,7 +29,7 @@ field is reported as a `warning:` line on stderr.
 ## API
 
 ```ts
-import { convert } from "@agentgate/config-convert";
+import { convert } from "mcp-agentgate-config-convert";
 
 const { content, warnings } = convert("cursor", "codex", jsonText);
 ```

@@ -62,7 +62,7 @@ runs:
         AGENTGATE_ARGS: ${{ inputs.args }}
       run: |
         set -uo pipefail
-        cmd=(npx --yes "agentgate@${AGENTGATE_VERSION}" "${AGENTGATE_COMMAND}")
+        cmd=(npx --yes "mcp-agentgate@${AGENTGATE_VERSION}" "${AGENTGATE_COMMAND}")
         case "${AGENTGATE_COMMAND}" in
           ci|diff|lock) cmd+=(--lock "${AGENTGATE_LOCKFILE}") ;;
         esac

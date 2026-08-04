@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import pc from 'picocolors';
-import { LockDiff, createLockfile, diffLockfiles, formatDiff, parseLockfile } from '@agentgate/core';
+import { LockDiff, createLockfile, diffLockfiles, formatDiff, parseLockfile } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 import { GENERATED_BY } from './lock.js';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@agentgate/core",
+  "name": "mcp-agentgate-core",
   "version": "0.1.0",
   "description": "AgentGate core engine: MCP scanning rule engine, lockfile spec, client config discovery",
   "license": "Apache-2.0",

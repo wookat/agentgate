@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command, Option } from 'commander';
-import { SEVERITIES } from '@agentgate/core';
+import { SEVERITIES } from 'mcp-agentgate-core';
 import { runScan } from './commands/scan.js';
 import { runLock } from './commands/lock.js';
 import { runDiff } from './commands/diff.js';

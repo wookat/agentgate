@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import pc from 'picocolors';
-import { LOCKFILE_NAME, createLockfile, serializeLockfile } from '@agentgate/core';
+import { LOCKFILE_NAME, createLockfile, serializeLockfile } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 
 export interface LockOptions {
@@ -10,7 +10,7 @@ export interface LockOptions {
   timeout: string;
 }
 
-export const GENERATED_BY = 'agentgate@0.1.0';
+export const GENERATED_BY = 'mcp-agentgate@0.1.0';
 
 export async function runLock(opts: LockOptions): Promise<number> {
   const { servers } = gatherServers({ config: opts.config, server: opts.server });

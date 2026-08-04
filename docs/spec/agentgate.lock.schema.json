@@ -13,7 +13,7 @@
     },
     "generatedBy": {
       "type": "string",
-      "description": "Tool and version that generated this lockfile, e.g. \"agentgate@0.1.0\"."
+      "description": "Tool and version that generated this lockfile, e.g. \"mcp-agentgate@0.1.0\"."
     },
     "generatedAt": {
       "type": "string",

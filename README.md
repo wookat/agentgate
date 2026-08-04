@@ -75,15 +75,17 @@ the whole loop in one tool:
 
 ## Quick start
 
+The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
+
 ```bash
 # Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode auto-discovered)
-npx agentgate scan
+npx mcp-agentgate scan
 
 # Pin the current tool surface into agentgate.lock
-npx agentgate lock
+npx mcp-agentgate lock
 
 # In CI: exit non-zero if anything drifted from the lock
-npx agentgate ci
+npx mcp-agentgate ci
 ```
 
 > **Status:** under active development toward v0.1 — the CLI above is the committed
@@ -120,7 +122,7 @@ Move your MCP server config between clients without retyping JSON/TOML by hand
 (the official MCP 2026 roadmap names config portability as an open gap):
 
 ```bash
-npx agentgate-config-convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
+npx mcp-agentgate-config-convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
 Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, and OpenCode, with

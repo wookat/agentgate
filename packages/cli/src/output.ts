@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import pc from 'picocolors';
-import { Finding, Severity, sortFindings } from '@agentgate/core';
+import { Finding, Severity, sortFindings } from 'mcp-agentgate-core';
 
 const SEVERITY_COLOR: Record<Severity, (s: string) => string> = {
   critical: (s) => pc.bold(pc.red(s)),

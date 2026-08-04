@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
-import { Finding, Severity, scanRepo, scanServers, scanTools, sortFindings, toSarif } from '@agentgate/core';
+import { Finding, Severity, scanRepo, scanServers, scanTools, sortFindings, toSarif } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
 

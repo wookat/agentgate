@@ -34,7 +34,7 @@ export function lockServer(tools: ToolSurface[]): ServerLock {
   return { surfaceHash, tools: locked };
 }
 
-export function createLockfile(surfaces: Record<string, ToolSurface[]>, generatedBy = 'agentgate@0.1.0'): Lockfile {
+export function createLockfile(surfaces: Record<string, ToolSurface[]>, generatedBy = 'mcp-agentgate@0.1.0'): Lockfile {
   const servers: Record<string, ServerLock> = {};
   for (const name of Object.keys(surfaces).sort()) {
     servers[name] = lockServer(surfaces[name]!);
