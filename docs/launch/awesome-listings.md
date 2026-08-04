@@ -1,7 +1,8 @@
 # Awesome-list / directory listing plan
 
-> ⚠️ DO NOT SUBMIT — content package only. PRs to external repos are opened by the
-> total lead per SOP-03, after v0.1 ships (most lists reject pre-release tools).
+> Status 2026-08-04: submission EXECUTING per total-lead instruction (npm release
+> shipped). Fork branches `add-agentgate` prepared for targets 1/2/6/8; targets
+> 3–5 skipped (server-only lists, no tools section — per the caveat below).
 > Star counts verified via GitHub API on 2026-08-03.
 
 ## Target lists (priority order)

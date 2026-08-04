@@ -17,11 +17,11 @@
 - [ ] 站点切换主域 https://agentgate.zalize.com （已生效），全站内链与 canonical 更新
 
 ## C · 社区治理与增长（路线 C）
-- [ ] 治理文件：CONTRIBUTING.md、CODE_OF_CONDUCT.md、GOVERNANCE.md、SUPPORT.md、issue/PR 模板、ROADMAP.md（公开）
-- [ ] OpenSSF Best Practices Badge：逐条自评并提交 bestpractices.dev，README 挂徽章
-- [ ] 自动化：Dependabot/Renovate、stale bot 策略、release notes 模板
-- [ ] 演示资产:终端演示 GIF（vhs/asciinema）、README hero 图
-- [ ] 发布执行：npm 发布后刷新 Show HN/Reddit/V2EX 稿件与 awesome-mcp 收录 PR 清单（发布动作等总负责人指令）
+- [x] 治理文件：CONTRIBUTING.md、CODE_OF_CONDUCT.md、GOVERNANCE.md、SUPPORT.md、issue/PR 模板、ROADMAP.md（公开）（PR #16）
+- [x] OpenSSF Best Practices Badge：逐条自评完成（docs/OPENSSF-SELF-ASSESSMENT.md）；bestpractices.dev 提交与 README 挂徽章待总负责人账号操作
+- [x] 自动化：Dependabot（含 toolchain major 忽略规则）、stale bot 策略、release notes 模板（PR #18/#31）
+- [x] 演示资产：终端演示 GIF（asciinema+agg）、README hero 图（PR #23）
+- [x] 发布执行：稿件已刷新（PR #26）；awesome 列表收录 PR 按总负责人指令执行中（docs/launch/awesome-listings.md）
 
 ## 公共
 - 一切走 PR + CI 绿后合并；跨路线接口以 docs/spec/ 为准。
