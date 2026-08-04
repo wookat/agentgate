@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Usage question
+    url: https://github.com/wookat/agentgate/discussions
+    about: Ask "how do I…" questions in Discussions
+  - name: Security vulnerability in AgentGate
+    url: https://github.com/wookat/agentgate/security/policy
+    about: Please report vulnerabilities privately — never in a public issue
+  - name: Documentation
+    url: https://agentgate.zalize.com
+    about: Guides, rule reference, and the report viewer
