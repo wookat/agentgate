@@ -4,7 +4,8 @@
 
 **扫描、锁定、门禁你的 MCP 服务器 —— MCP 时代的 `npm audit` + lockfile + CI 漂移门禁。**
 
-[![CI](https://github.com/wookat/agentgate/actions/workflows/route-c.yml/badge.svg)](https://github.com/wookat/agentgate/actions)
+[![CI](https://github.com/wookat/agentgate/actions/workflows/ci.yml/badge.svg)](https://github.com/wookat/agentgate/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/mcp-agentgate)](https://www.npmjs.com/package/mcp-agentgate)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-compatible-8A2BE2)](https://modelcontextprotocol.io)
@@ -28,13 +29,10 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 
 ## 快速开始
 
-需要 Node.js >= 22 和 [pnpm](https://pnpm.io)（npm 发布准备中，发布后可直接 `npx mcp-agentgate`）：
+npm 包名为 **`mcp-agentgate`**（`agentgate` 被占用），安装后命令仍是 **`agentgate`**：
 
 ```bash
-git clone https://github.com/wookat/agentgate.git
-cd agentgate
-pnpm install && pnpm build
-alias agentgate="node $PWD/packages/cli/dist/index.js"
+npm i -g mcp-agentgate   # 或直接 npx mcp-agentgate <命令>
 
 agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode）
 agentgate scan --live          # 另外连接 stdio 服务器审计实时工具面
@@ -42,6 +40,8 @@ agentgate lock                 # 把当前工具面固定进 agentgate.lock
 agentgate diff                 # 任何工具名/描述/schema 变化即退出码 1 + 可读 diff
 agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退出
 ```
+
+从源码开发：`git clone` 后 `pnpm install && pnpm build`，然后 `node packages/cli/dist/index.js`。文档站：**https://agentgate.zalize.com**。
 
 扫描规则七大类，对齐真实事故：`tool-poisoning`、`credential-leak`、`overprivileged`、`auth-missing`、`ssrf`、`rce-vectors`、`supply-chain`。锁文件格式见 [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json)。
 
@@ -51,7 +51,7 @@ agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退�
 # .github/workflows/mcp-gate.yml
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@main
+  - uses: wookat/agentgate/packages/action@v0.1.0
     with:
       command: ci
 ```
