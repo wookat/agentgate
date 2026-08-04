@@ -45,12 +45,37 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
+/** Convert a simple glob (supports `**`, `*`, `?`) to a RegExp over posix-style relative paths. */
+export function globToRegExp(glob: string): RegExp {
+  const escaped = glob
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .split('**/')
+    .map((part) =>
+      part
+        .split('**')
+        .map((p) => p.replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]'))
+        .join('.*'),
+    )
+    .join('(?:.*/)?');
+  return new RegExp(`^${escaped}$`);
+}
+
+export interface ScanRepoOptions {
+  rules?: Rule[];
+  /** Glob patterns (relative to the scan root) to exclude. */
+  ignore?: string[];
+}
+
 /** Run source-level rules over a repository directory. */
-export function scanRepo(dir: string, rules: Rule[] = ALL_RULES): ScanResult {
+export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
+  const rules = opts.rules ?? ALL_RULES;
+  const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const findings: Finding[] = [];
   const scannedFiles: string[] = [];
   for (const file of walk(dir)) {
     if (!SOURCE_EXTENSIONS.has(path.extname(file))) continue;
+    const relPosix = path.relative(dir, file).split(path.sep).join('/');
+    if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
       stat = fs.statSync(file);

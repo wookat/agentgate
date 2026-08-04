@@ -5,13 +5,18 @@ import { runScan } from './commands/scan.js';
 import { runLock } from './commands/lock.js';
 import { runDiff } from './commands/diff.js';
 import { runCi } from './commands/ci.js';
+import { setDebug } from './debug.js';
 
 const program = new Command();
 
 program
   .name('agentgate')
   .description('Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era')
-  .version('0.1.0');
+  .version('0.1.0')
+  .option('--debug', 'print diagnostic details to stderr')
+  .hook('preAction', (thisCommand) => {
+    setDebug(Boolean(thisCommand.opts().debug));
+  });
 
 const configOption = new Option('-c, --config <file>', 'explicit MCP client config file (skips auto-discovery)');
 const serverOption = new Option('-s, --server <names...>', 'restrict to specific server names');
@@ -27,6 +32,7 @@ program
   .addOption(new Option('-f, --format <format>', 'output format').choices(['table', 'json', 'sarif']).default('table'))
   .option('-o, --output <file>', 'write the report to a file instead of stdout')
   .addOption(new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity').choices([...SEVERITIES]))
+  .option('--ignore <globs...>', 'glob patterns (relative to the scan root) to exclude from repo scans')
   .addOption(timeoutOption)
   .action(async (target, opts) => {
     process.exitCode = await runScan(target, opts);

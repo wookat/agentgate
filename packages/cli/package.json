@@ -8,7 +8,7 @@
     "url": "git+https://github.com/wookat/agentgate.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/wookat/agentgate#readme",
+  "homepage": "https://agentgate.zalize.com",
   "bugs": "https://github.com/wookat/agentgate/issues",
   "keywords": ["mcp", "model-context-protocol", "security", "supply-chain", "lockfile", "scanner", "cli"],
   "publishConfig": {

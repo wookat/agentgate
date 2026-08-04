@@ -34,7 +34,10 @@ agentgate scan --live          # also connect to stdio servers and audit their l
 agentgate scan --format json   # machine-readable report
 agentgate scan --format sarif -o report.sarif   # for GitHub code scanning
 agentgate scan path/to/repo    # scan an MCP server repo for source-level issues
+agentgate scan path/to/repo --ignore 'vendor/**' 'test/**'   # exclude paths from repo scans
 ```
+
+Add `--debug` to any command for diagnostics on stderr. Exit codes: `0` clean, `1` gate failure (drift / findings at `--fail-on`), `2` usage or environment error — see [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
 
 Pin the tool surface your agent sees, then gate on drift:
 
@@ -48,7 +51,7 @@ Point at a specific config instead of auto-discovery with `--config path/to/mcp.
 
 Seven scan rule categories, aligned with real-world MCP incidents: `tool-poisoning` (hidden Unicode, prompt injection), `credential-leak`, `overprivileged` (dangerous capability combos), `auth-missing`, `ssrf`, `rce-vectors`, `supply-chain` (unpinned `npx -y pkg@latest` rug-pull exposure).
 
-The lockfile format is specified in [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json).
+The lockfile format is frozen as v1: [docs/spec/lockfile-v1.md](docs/spec/lockfile-v1.md) / [JSON Schema](docs/spec/agentgate.lock.schema.json).
 
 </details>
 
@@ -142,6 +145,12 @@ advisories/              # public MCP advisory database (structured JSON)[route 
 website/                 # docs site + report viewer (Cloudflare Pages)  [route B]
 docs/                    # specs and project docs
 ```
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the vulnerability disclosure process. CI actions are
+SHA-pinned, dependencies are frozen-lockfile installed, releases ship with npm
+provenance, and AgentGate scans itself in CI ([dogfood job](.github/workflows/ci.yml)).
 
 ## Contributing
 

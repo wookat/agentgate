@@ -51,6 +51,21 @@ export function serializeLockfile(lockfile: Lockfile): string {
   return `${JSON.stringify(lockfile, null, 2)}\n`;
 }
 
+export const SUPPORTED_LOCKFILE_VERSION = 1;
+
 export function parseLockfile(raw: string): Lockfile {
-  return LockfileSchema.parse(JSON.parse(raw));
+  const data: unknown = JSON.parse(raw);
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'lockfileVersion' in data &&
+    (data as { lockfileVersion: unknown }).lockfileVersion !== SUPPORTED_LOCKFILE_VERSION
+  ) {
+    throw new Error(
+      `unsupported lockfileVersion ${JSON.stringify((data as { lockfileVersion: unknown }).lockfileVersion)}; ` +
+        `this agentgate supports version ${SUPPORTED_LOCKFILE_VERSION}. ` +
+        'Upgrade agentgate, or regenerate the lockfile with `agentgate lock`.',
+    );
+  }
+  return LockfileSchema.parse(data);
 }

@@ -74,3 +74,11 @@ describe('lockfile round-trip', () => {
     expect(() => parseLockfile('{"lockfileVersion":2,"servers":{}}')).toThrow();
   });
 });
+
+describe('lockfile version gate', () => {
+  it('rejects unsupported versions with clear guidance', () => {
+    expect(() => parseLockfile('{"lockfileVersion":99,"generatedBy":"x","generatedAt":"x","servers":{}}')).toThrow(
+      /unsupported lockfileVersion 99/,
+    );
+  });
+});

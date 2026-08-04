@@ -1,0 +1,70 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scan --format json output contract > matches the frozen diff --json shape (snapshot) 1`] = `
+{
+  "drifted": true,
+  "entries": [
+    {
+      "detail": "tool "add" description changed (bfbfd9dc072b → 5398af4da820) — review for injected instructions",
+      "kind": "description-changed",
+      "server": "toy",
+      "tool": "add",
+    },
+    {
+      "detail": "tool "exfiltrate" appeared on server "toy"",
+      "kind": "tool-added",
+      "server": "toy",
+      "tool": "exfiltrate",
+    },
+  ],
+}
+`;
+
+exports[`scan --format json output contract > matches the frozen report shape (snapshot) 1`] = `
+{
+  "findings": [
+    {
+      "category": "auth-missing",
+      "file": "contract.json",
+      "message": "Remote server "remote" uses plain HTTP (mcp.example.com) — traffic (including any tokens) is unencrypted",
+      "ruleId": "AG-AM-001",
+      "severity": "high",
+      "target": "remote",
+    },
+    {
+      "category": "auth-missing",
+      "file": "contract.json",
+      "message": "Remote server "remote" (mcp.example.com) is configured without any authentication header — verify the endpoint enforces auth (e.g. OAuth) out of band",
+      "ruleId": "AG-AM-001",
+      "severity": "medium",
+      "target": "remote",
+    },
+    {
+      "category": "supply-chain",
+      "file": "contract.json",
+      "message": "Server "risky" runs unpinned package "unpinned-server@latest" — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. unpinned-server@1.2.3) and lock the tool surface with \`agentgate lock\`",
+      "ruleId": "AG-SC-001",
+      "severity": "medium",
+      "target": "risky",
+    },
+    {
+      "category": "supply-chain",
+      "file": "contract.json",
+      "message": "Server "risky" auto-confirms package installation (-y) — combined with an unpinned spec this installs new upstream code silently",
+      "ruleId": "AG-SC-001",
+      "severity": "low",
+      "target": "risky",
+    },
+  ],
+  "scannedAt": "<timestamp>",
+  "scannedFiles": [
+    "contract.json",
+  ],
+  "scannedServers": [
+    "risky",
+    "remote",
+  ],
+  "version": 1,
+  "warnings": [],
+}
+`;

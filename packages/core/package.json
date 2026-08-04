@@ -8,7 +8,7 @@
     "url": "git+https://github.com/wookat/agentgate.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/wookat/agentgate#readme",
+  "homepage": "https://agentgate.zalize.com",
   "bugs": "https://github.com/wookat/agentgate/issues",
   "keywords": ["mcp", "model-context-protocol", "security", "supply-chain", "lockfile", "scanner"],
   "publishConfig": {
@@ -32,7 +32,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }

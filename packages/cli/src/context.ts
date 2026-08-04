@@ -9,6 +9,7 @@ import {
   parseConfigFile,
 } from '@agentgate/core';
 import pc from 'picocolors';
+import { debugLog } from './debug.js';
 
 export interface GatherOptions {
   /** Explicit config file path (skips discovery). */
@@ -40,10 +41,15 @@ export function gatherServers(opts: GatherOptions): { servers: McpServerConfig[]
   const files: string[] = [];
   for (const location of locations) {
     files.push(location.path);
+    debugLog(`parsing ${location.client} config: ${location.path} (${location.format})`);
     try {
       servers.push(...parseConfigFile(location));
     } catch (err) {
-      console.error(pc.yellow(`warning: failed to parse ${location.path}: ${err instanceof Error ? err.message : err}`));
+      const message = `failed to parse ${location.path}: ${err instanceof Error ? err.message : err}`;
+      if (location.client === 'explicit') {
+        throw new Error(message);
+      }
+      console.error(pc.yellow(`warning: ${message}`));
     }
   }
   const filter = opts.server;
@@ -60,7 +66,9 @@ export async function gatherSurfaces(servers: McpServerConfig[], timeoutMs: numb
       continue;
     }
     try {
+      debugLog(`connecting to "${server.name}" (${server.command}) with timeout ${timeoutMs}ms`);
       surfaces[server.name] = await fetchToolSurface(server, { timeoutMs });
+      debugLog(`"${server.name}" exposed ${surfaces[server.name]?.length ?? 0} tool(s)`);
     } catch (err) {
       errors.push({ server: server.name, error: err instanceof Error ? err.message : String(err) });
     }
