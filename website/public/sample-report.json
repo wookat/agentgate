@@ -1,75 +1,65 @@
 {
-  "$schema": "https://agentgate-1ep.pages.dev/schemas/scan-report.v1.json",
-  "reportVersion": 1,
-  "agentgateVersion": "0.1.0",
-  "generatedAt": "2026-08-03T12:00:00Z",
-  "target": { "kind": "auto-discovery", "paths": ["~/.claude.json", "~/.cursor/mcp.json"] },
-  "summary": { "critical": 2, "high": 2, "medium": 1, "low": 1, "total": 6 },
+  "version": 1,
+  "scannedAt": "2026-08-03T12:00:00.000Z",
+  "scannedServers": ["remote-proxy", "docs-helper", "filesystem", "notes", "mail"],
+  "scannedFiles": ["~/.claude.json", "~/.cursor/mcp.json"],
   "findings": [
     {
-      "id": "F-0001",
-      "rule": "advisory-match",
+      "ruleId": "AG-SC-001",
       "category": "supply-chain",
       "severity": "critical",
-      "title": "mcp-remote 0.1.10 matches advisory MCPA-2025-0001 (CVE-2025-6514)",
-      "description": "OS command injection when connecting to untrusted MCP servers due to crafted input from the authorization_endpoint response URL. A malicious server can execute arbitrary commands on this machine.",
-      "server": { "name": "remote-proxy", "package": "mcp-remote", "version": "0.1.10", "ecosystem": "npm", "transport": "stdio" },
-      "evidence": { "configPath": "~/.claude.json" },
-      "advisoryIds": ["MCPA-2025-0001"],
-      "remediation": "Upgrade to mcp-remote >= 0.1.16."
+      "message": "Server \"remote-proxy\" runs mcp-remote@0.1.10, which matches advisory MCPA-2025-0001 (CVE-2025-6514): OS command injection when connecting to untrusted MCP servers. Upgrade to mcp-remote >= 0.1.16.",
+      "target": "remote-proxy",
+      "file": "~/.claude.json"
     },
     {
-      "id": "F-0002",
-      "rule": "hidden-unicode",
+      "ruleId": "AG-TP-001",
       "category": "tool-poisoning",
       "severity": "critical",
-      "title": "Tool description of 'search_docs' contains zero-width Unicode characters",
-      "description": "The description of tool 'search_docs' on server 'docs-helper' contains 4 zero-width characters (U+200B) hiding the instruction fragment 'ignore previous instructions'. Hidden text in tool descriptions is injected into the model context invisibly to human reviewers.",
-      "server": { "name": "docs-helper", "package": "docs-helper-mcp", "version": "2.1.0", "ecosystem": "npm", "transport": "stdio" },
-      "evidence": { "toolName": "search_docs", "snippet": "Search the docs\\u200bignore previous instructions\\u200b..." },
-      "remediation": "Remove this server or pin a reviewed version with `agentgate lock` after vendor fix."
+      "message": "Tool \"search_docs\" contains hidden/invisible Unicode characters (possible hidden instructions): 4 zero-width characters (U+200B) hide the fragment \"ignore previous instructions\".",
+      "target": "docs-helper/search_docs",
+      "detail": "Search the docs\\u200bignore previous instructions\\u200b..."
     },
     {
-      "id": "F-0003",
-      "rule": "env-secret",
+      "ruleId": "AG-CL-001",
       "category": "credential-leak",
       "severity": "high",
-      "title": "API token exposed in plain text in client config env block",
-      "description": "The env block for server 'github' contains what appears to be a live GitHub personal access token (ghp_...). Any process able to read this config can exfiltrate the token.",
-      "server": { "name": "github", "package": "@modelcontextprotocol/server-github", "version": "2025.4.8", "ecosystem": "npm", "transport": "stdio" },
-      "evidence": { "configPath": "~/.cursor/mcp.json", "snippet": "\"env\": { \"GITHUB_TOKEN\": \"ghp_****\" }" },
-      "remediation": "Move the token to an OS keychain or environment manager; rotate the exposed token."
+      "message": "Server \"mail\" has a hardcoded secret in env var \"SMTP_PASSWORD\" — move it to an environment reference or OS keychain.",
+      "target": "mail",
+      "file": "~/.cursor/mcp.json"
     },
     {
-      "id": "F-0004",
-      "rule": "capability-combo",
+      "ruleId": "AG-OP-001",
       "category": "overprivileged",
       "severity": "high",
-      "title": "File read + unrestricted network egress across configured servers",
-      "description": "Server 'filesystem' grants read access to $HOME while server 'fetch' allows requests to arbitrary URLs. Combined, a single prompt injection can exfiltrate any readable file.",
-      "server": { "name": "filesystem", "package": "@modelcontextprotocol/server-filesystem", "version": "2025.7.1", "ecosystem": "npm", "transport": "stdio" },
-      "remediation": "Restrict filesystem roots to project directories, or restrict fetch to an allowlist."
+      "message": "Filesystem server \"filesystem\" is granted overly broad root path(s): /home — scope it to the specific directories the agent needs.",
+      "target": "filesystem",
+      "file": "~/.claude.json"
     },
     {
-      "id": "F-0005",
-      "rule": "unpinned-version",
+      "ruleId": "AG-SC-001",
       "category": "supply-chain",
       "severity": "medium",
-      "title": "Server 'docs-helper' runs via npx without a pinned version",
-      "description": "The config launches 'npx docs-helper-mcp' with no version, so every start may execute a different (potentially rug-pulled) release.",
-      "server": { "name": "docs-helper", "package": "docs-helper-mcp", "ecosystem": "npm", "transport": "stdio" },
-      "evidence": { "configPath": "~/.claude.json", "snippet": "\"command\": \"npx\", \"args\": [\"docs-helper-mcp\"]" },
-      "remediation": "Pin an exact version (npx docs-helper-mcp@2.1.0) and lock with `agentgate lock`."
+      "message": "Server \"docs-helper\" runs unpinned package \"docs-helper-mcp\" — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. docs-helper-mcp@2.1.0) and lock the tool surface with `agentgate lock`.",
+      "target": "docs-helper",
+      "file": "~/.claude.json"
     },
     {
-      "id": "F-0006",
-      "rule": "http-no-auth",
+      "ruleId": "AG-AM-001",
       "category": "auth-missing",
+      "severity": "medium",
+      "message": "Remote server \"notes\" (notes.example.com) is configured without any authentication header — verify the endpoint enforces auth (e.g. OAuth) out of band.",
+      "target": "notes",
+      "file": "~/.cursor/mcp.json"
+    },
+    {
+      "ruleId": "AG-SC-001",
+      "category": "supply-chain",
       "severity": "low",
-      "title": "Local SSE server accepts connections without authentication",
-      "description": "Server 'notes' listens on http://localhost:8765/sse with no Authorization header configured. Other local processes can connect to it.",
-      "server": { "name": "notes", "transport": "sse" },
-      "remediation": "Enable token authentication if the server supports it."
+      "message": "Server \"docs-helper\" auto-confirms package installation (-y) — combined with an unpinned spec this installs new upstream code silently.",
+      "target": "docs-helper",
+      "file": "~/.claude.json"
     }
-  ]
+  ],
+  "warnings": ["live scan skipped for \"notes\": connect timeout"]
 }

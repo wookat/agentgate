@@ -1,0 +1,23 @@
+name: advisories
+
+on:
+  push:
+    branches: [main]
+    paths: ["advisories/**", "api/**", ".github/workflows/advisories.yml"]
+  pull_request:
+    paths: ["advisories/**", "api/**", ".github/workflows/advisories.yml"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+        working-directory: api
+      - run: npm run validate
+        working-directory: api
+      - run: npm test
+        working-directory: api

@@ -3,81 +3,91 @@ title: Quick start
 description: Scan, lock, and gate your MCP servers in five minutes.
 ---
 
+## Requirements
+
+- Node.js **22+**
+- [pnpm](https://pnpm.io) (for the from-source install below)
+
+## Install
+
 :::note
-AgentGate is under active development. Commands below reflect the CLI interface specification (see [docs/ROUTES.md](https://github.com/wookat/agentgate/blob/main/docs/ROUTES.md)); the npm package is published by route A once the core engine lands.
+The npm release is being prepared. Until it lands, run AgentGate from source:
 :::
 
-## 1. Install
-
 ```bash
-npm install -g agentgate
-# or run without installing
-npx agentgate scan
+git clone https://github.com/wookat/agentgate.git
+cd agentgate
+pnpm install
+pnpm build
+
+alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
-Requires Node.js 22+.
+## 1. Scan
 
-## 2. Scan your MCP servers
-
-AgentGate auto-discovers MCP server configurations from common client config paths (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode):
+Audit every MCP server your clients (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode) are configured to run — config paths are discovered automatically:
 
 ```bash
-agentgate scan
+agentgate scan                 # static config analysis, terminal table
+agentgate scan --live          # also connect to stdio servers and audit their live tool surface
 ```
 
-Static analysis inspects configs and packages. Add `--live` to also connect to each server over stdio and inspect the *actual* tool surface it exposes:
+Machine-readable output:
 
 ```bash
-agentgate scan --live
+agentgate scan --format json -o report.json     # open it in the report viewer
+agentgate scan --format sarif -o report.sarif   # for GitHub code scanning
 ```
 
-Each finding is categorized (`tool-poisoning`, `credential-leak`, `overprivileged`, `auth-missing`, `ssrf`, `rce-vectors`, `supply-chain`) and cross-checked against the [advisory database](/advisories/). Output as a terminal table by default, or:
+Drop `report.json` into the [report viewer](/report-viewer/) for a visual, filterable report.
+
+You can also scan an MCP server repo for source-level issues:
 
 ```bash
-agentgate scan --format json  > report.json   # for the report viewer
-agentgate scan --format sarif > report.sarif  # for GitHub code scanning
+agentgate scan path/to/repo
 ```
 
-Drop `report.json` into the [report viewer](/report-viewer/) for a shareable visual report.
+## 2. Lock
 
-## 3. Lock the approved tool surface
-
-Once you've reviewed the scan, pin what your agent is allowed to see:
+Pin the tool surface your agent sees — every tool's name, description, and input schema — into `agentgate.lock`:
 
 ```bash
 agentgate lock
+git add agentgate.lock
 ```
 
-This writes [`agentgate.lock`](/docs/spec/lockfile/) — SHA-256 hashes over each server's tool names, descriptions, and input schemas. Commit it:
+Commit the lockfile. It is your reviewed, approved baseline (format: [lockfile spec](/docs/spec/lockfile/)).
+
+## 3. Gate
+
+Fail the build when anything drifts from the baseline or a severe finding appears:
 
 ```bash
-git add agentgate.lock && git commit -m "Lock MCP tool surface"
+agentgate diff                 # exit 1 + human-readable diff on any drift
+agentgate ci --fail-on high    # drift OR high-severity findings → non-zero exit
 ```
 
-## 4. Gate CI on drift
-
-```bash
-agentgate ci
-```
-
-Exits non-zero if the current tool surface drifts from `agentgate.lock` — a renamed tool, a changed description (prompt-injection vector), a widened input schema. Review the diff, then re-approve deliberate changes with `agentgate lock`.
+GitHub Actions:
 
 ```yaml
-# .github/workflows/agentgate.yml
-name: agentgate
+name: mcp-gate
 on: [push, pull_request]
 jobs:
   gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: npx agentgate ci
+      - uses: wookat/agentgate/packages/action@main
+        with:
+          command: ci
+          args: --fail-on high
 ```
+
+Recipes for GitLab CI, CircleCI, Jenkins, and Azure Pipelines: [CI integration guide](/docs/guides/ci/).
 
 ## Next steps
 
-- [CLI reference](/docs/cli/scan/) for all flags.
-- [Threat model](/docs/threat-model/) for what each rule category defends against.
-- [Advisory API](/docs/spec/advisory-api/) to query the advisory database programmatically.
+- [CLI reference](/docs/cli/scan/) — every command and flag.
+- [Rule reference](/docs/rules/) — what each of the seven rules detects.
+- [Threat model](/docs/threat-model/) — what AgentGate defends against, with real incidents.
+- [Advisory database](/advisories/) — known-bad MCP packages, cross-checked on every scan.

@@ -1,0 +1,24 @@
+{
+  "id": "MCPA-2025-0010",
+  "title": "adb-mcp command injection in inspect_ui tool (CVE-2025-59834)",
+  "summary": "adb-mcp through 0.1.0 builds adb shell command lines from unvalidated tool input (e.g. the `device` argument) and executes them via Node.js `child_process.exec`, allowing shell metacharacter injection and remote code execution on the host running the server. No fixed release was available at publication.",
+  "type": "rce-vectors",
+  "severity": "critical",
+  "aliases": ["CVE-2025-59834", "GHSA-54j7-grvr-9xwg"],
+  "cwe": ["CWE-78"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "adb-mcp",
+      "ranges": [{ "introduced": "0", "last_affected": "0.1.0" }],
+      "note": "No patched version at time of advisory publication; remove the server or restrict it to trusted input."
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-54j7-grvr-9xwg" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-59834" }
+  ],
+  "timeline": {
+    "published": "2025-09-24"
+  }
+}
