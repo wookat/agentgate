@@ -34,6 +34,7 @@ docs/COMPARISON.md。
 OpenCode 的 MCP 配置互转（官方 MCP 2026 路线图点名的配置可移植性缺口）。
 
 TypeScript + Node 22，Apache-2.0 开源：https://github.com/wookat/agentgate
+文档站（规则参考 + 报告查看器）：https://agentgate.zalize.com
 
 中文 README 也有。欢迎拍砖，尤其想听大家对 lockfile schema 的意见（docs/spec/ 下有
 JSON Schema，希望和其他工具收敛成通用格式而不是各搞一套）。

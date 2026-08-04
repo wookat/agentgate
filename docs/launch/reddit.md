@@ -39,6 +39,7 @@ Bonus: `config convert` moves server configs between Claude Desktop/Code, Cursor
 VS Code, Codex, and OpenCode formats.
 
 Apache-2.0, TypeScript/Node 22. Repo: https://github.com/wookat/agentgate
+Docs: https://agentgate.zalize.com
 
 Would love feedback on the lockfile schema (docs/spec/) — it's a documented JSON
 Schema, and I'd rather converge with other tools than fragment the format.
@@ -56,7 +57,7 @@ happened).
 
 AgentGate scans your MCP configs for poisoning/credential leaks, pins the approved tool
 surface into a lockfile, and fails CI (or a pre-commit hook) when anything drifts.
-Free, open source, Apache-2.0: https://github.com/wookat/agentgate
+Free, open source, Apache-2.0: https://github.com/wookat/agentgate (docs: https://agentgate.zalize.com)
 
 Happy to answer questions — author here.
 

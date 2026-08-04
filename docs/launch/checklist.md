@@ -5,11 +5,11 @@
 ## Pre-launch gates (all must be true before any post)
 
 - [ ] Route A: `agentgate` published on npm; `npx agentgate scan|lock|ci` works end-to-end
-- [ ] Route B: docs site + advisory DB + Workers API live
+- [ ] Route B: docs site (https://agentgate.zalize.com) + advisory DB + Workers API live
 - [ ] README quickstart commands re-verified against the shipped CLI
 - [ ] docs/COMPARISON.md re-verified against shipped v0.1 (replace "planned" markers)
-- [ ] Demo GIF/screenshot recorded from the real CLI and embedded in README
-      (blocked on route A; use `vhs` or `asciinema` for the terminal recording)
+- [x] Demo GIF recorded from the real CLI (asciinema+agg) and embedded in README
+      (docs/assets/demo.gif; regen steps in docs/assets/README.md)
 - [ ] Tag `v0.1.0` release with release notes
 - [ ] GitHub Action marketplace decision executed (root action.yml copy vs dedicated repo)
       and Action published to Marketplace
