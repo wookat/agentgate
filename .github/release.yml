@@ -1,0 +1,20 @@
+# Template for auto-generated GitHub release notes
+changelog:
+  exclude:
+    labels: [dependencies, stale]
+    authors: ["dependabot[bot]"]
+  categories:
+    - title: "🔒 Security"
+      labels: [security]
+    - title: "🚨 Breaking changes"
+      labels: [breaking]
+    - title: "✨ Features"
+      labels: [enhancement, feature]
+    - title: "🐛 Fixes"
+      labels: [bug, fix]
+    - title: "📚 Advisories"
+      labels: [advisory]
+    - title: "📝 Docs"
+      labels: [documentation]
+    - title: "🧰 Other changes"
+      labels: ["*"]
