@@ -1,0 +1,59 @@
+name: Bug report
+description: Something in AgentGate doesn't work as documented
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security vulnerability in AgentGate itself? **Do not file it here** — see [SECURITY.md](../../SECURITY.md).
+        Reporting a malicious/vulnerable MCP server? Open a PR against `advisories/` instead.
+  - type: input
+    id: version
+    attributes:
+      label: AgentGate version
+      description: Output of `agentgate --version`
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS + Node version (`node --version`)
+      placeholder: macOS 15 / Node 22.12.0
+    validations:
+      required: true
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP client config involved
+      multiple: true
+      options:
+        - Claude Desktop
+        - Claude Code
+        - Cursor
+        - VS Code
+        - Codex
+        - OpenCode
+        - Not config-related
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact command(s) run and a minimal config that triggers the bug (redact secrets!)
+      placeholder: |
+        1. `agentgate scan --config ./mcp.json`
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: debug
+    attributes:
+      label: "--debug output"
+      description: Re-run the failing command with `--debug` and paste the output (redact secrets)
+      render: shell
