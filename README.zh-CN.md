@@ -11,6 +11,8 @@
 
 [English](README.md) | 简体中文
 
+<img src="docs/assets/demo.gif" alt="agentgate 演示：scan 发现硬编码凭证与未锁定包，lock 固定工具面，diff 捕获上游 rug-pull" width="900">
+
 </div>
 
 ---
