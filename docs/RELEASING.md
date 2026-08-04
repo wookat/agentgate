@@ -13,6 +13,15 @@ Releases are automated with [changesets](https://github.com/changesets/changeset
 3. Merging that PR triggers `pnpm release`, publishing both packages to npm
    with `--access public`.
 
+## Tag-triggered publish
+
+Pushing a `v*` tag (e.g. `git tag v0.2.0 && git push origin v0.2.0`) also runs
+the release workflow: it builds, tests, and runs `pnpm release` directly,
+publishing every workspace package at its current `package.json` version.
+Use this to (re)publish an exact revision outside the changesets PR flow —
+make sure versions were already bumped (e.g. via the version PR) before
+tagging, since npm rejects re-publishing an existing version.
+
 ## npm auth & provenance
 
 The release workflow runs with `id-token: write` and
