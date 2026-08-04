@@ -1,0 +1,23 @@
+{
+  "id": "MCPA-2026-0002",
+  "title": "n8n-mcp path traversal, redirect-following SSRF, and telemetry payload exposure",
+  "summary": "n8n-mcp before 2.50.1 contained three issues affecting deployments using the n8n API integration: caller-supplied identifiers used unvalidated as URL path segments (path traversal redirecting API-key-bearing requests to other same-origin endpoints, bypassing DISABLED_TOOLS), validated trigger URLs following redirects to otherwise-rejected hosts (non-blind SSRF), and mutation telemetry uploading unredacted operation payloads that can include bearer tokens and webhook secrets. CVSS 8.3.",
+  "type": "ssrf",
+  "severity": "high",
+  "aliases": ["GHSA-8g7g-hmwm-6rv2"],
+  "cwe": ["CWE-22", "CWE-918", "CWE-201"],
+  "cvss": { "score": 8.3 },
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "n8n-mcp",
+      "ranges": [{ "introduced": "0", "fixed": "2.50.1" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-8g7g-hmwm-6rv2" }
+  ],
+  "timeline": {
+    "published": "2026-05-04"
+  }
+}

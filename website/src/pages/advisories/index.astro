@@ -16,8 +16,9 @@ for (const a of advisories) bySeverity[a.severity]++;
   <p>
     A public, structured database of verified security advisories affecting MCP servers, clients,
     and tooling. Every entry cites authoritative sources. Query it via the
-    <a href="/docs/spec/advisory-api/">Advisory API</a> or contribute on
-    <a href="https://github.com/wookat/agentgate/tree/main/advisories">GitHub</a>.
+    <a href="/docs/spec/advisory-api/">Advisory API</a>, subscribe via
+    <a href="/feeds/advisories.xml">RSS</a> or <a href="/feeds/advisories.json">JSON Feed</a>, or
+    <a href="/docs/advisories/contributing/">contribute a new advisory</a>.
   </p>
 
   <div class="ag-adv-stats" aria-label="Advisory counts by severity">
@@ -37,7 +38,7 @@ for (const a of advisories) bySeverity[a.severity]++;
               <span class="ag-adv-id">{a.id}</span>
               <span class="ag-pill ag-type">{a.type}</span>
             </div>
-            <h3>{a.title}</h3>
+            <h2>{a.title}</h2>
             <p>{a.summary}</p>
             <div class="ag-adv-meta">
               <span>

@@ -1,0 +1,24 @@
+{
+  "id": "MCPA-2025-0006",
+  "title": "@cyanheads/git-mcp-server command injection in several git tools (CVE-2025-53107)",
+  "summary": "git-mcp-server versions through 2.1.4 pass unsanitized tool input (e.g. branch names, file arguments) into `child_process.exec`, allowing shell metacharacter injection in tools such as `git_init` and `git_add`. Indirect prompt injection via crafted git commit messages can chain into arbitrary command execution on the host running the server.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": ["CVE-2025-53107", "GHSA-3q26-f695-pp76"],
+  "cwe": ["CWE-78"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@cyanheads/git-mcp-server",
+      "ranges": [{ "introduced": "0", "fixed": "2.1.5" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-3q26-f695-pp76" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-53107" },
+    { "type": "fix", "url": "https://github.com/cyanheads/git-mcp-server/releases" }
+  ],
+  "timeline": {
+    "published": "2025-06-29"
+  }
+}

@@ -1,51 +1,54 @@
 ---
 title: agentgate scan
-description: Static and live analysis of MCP servers with advisory cross-checking.
+description: Static and live analysis of MCP servers with seven built-in rule categories.
 ---
 
-Analyze MCP servers for security issues and cross-check them against the [advisory database](/advisories/).
+Scan MCP servers for security issues.
 
 ```bash
-agentgate scan [paths...] [options]
+agentgate scan [target] [options]
 ```
 
-Without arguments, AgentGate auto-discovers MCP server configurations from common client config locations (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode). Pass explicit config paths or package directories to scan those instead.
+Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode). Pass a directory to also run a repo/source scan over it, or a config file to scan just that config.
 
 ## Modes
 
 | Mode | What it does |
 |---|---|
-| static (default) | Inspects client configs and server packages on disk: manifest, tool definitions, source heuristics. Never executes server code. |
-| `--live` | Additionally launches each stdio server in an isolated process, performs the MCP handshake, and inspects the tool surface the server *actually* exposes. Explicit opt-in because it runs server code. |
+| static (default) | Analyzes client configs and (for a directory target) source files. Never executes server code. |
+| `--live` | Additionally connects to each stdio server, performs the MCP handshake, and analyzes the tool surface the server *actually* exposes. Explicit opt-in because it runs server code. |
 
 ## Options
 
 | Flag | Default | Description |
 |---|---|---|
-| `--live` | off | Enable connection-based scanning (stdio handshake). |
-| `--format <fmt>` | `table` | Output format: `table`, `json`, `sarif`. JSON follows the [scan output spec](/docs/spec/scan-output/). |
-| `--output <file>` | stdout | Write the report to a file. |
-| `--no-advisories` | — | Skip the advisory database cross-check (offline mode). |
-| `--advisory-api <url>` | public API | Override the [advisory API](/docs/spec/advisory-api/) endpoint. |
-| `--severity <level>` | `low` | Minimum severity to report: `low`, `medium`, `high`, `critical`. |
-| `--fail-on <level>` | `high` | Exit non-zero if any finding is at or above this severity. Use `never` to always exit 0. |
+| `--live` | off | Connect to stdio servers and analyze their live tool surface. |
+| `-c, --config <file>` | auto-discover | Explicit MCP client config file (skips auto-discovery). Codex `config.toml` and OpenCode `opencode.json` are also understood. |
+| `-s, --server <names...>` | all | Restrict to specific server names. |
+| `-f, --format <format>` | `table` | Output format: `table`, `json`, `sarif`. JSON follows the [scan output spec](/docs/spec/scan-output/). |
+| `-o, --output <file>` | stdout | Write the report to a file. |
+| `--fail-on <severity>` | off | Exit non-zero when findings reach this severity: `info`, `low`, `medium`, `high`, `critical`. |
+| `-t, --timeout <ms>` | `15000` | Per-server connect timeout for `--live`. |
 
-## Rule categories
+## Examples
 
-Findings are classified into categories shared with the advisory schema:
+```bash
+agentgate scan                                  # audit everything your clients are configured to run
+agentgate scan --live                           # also audit the live tool surface
+agentgate scan --format json -o report.json     # machine-readable report (open it in the report viewer)
+agentgate scan --format sarif -o report.sarif   # for GitHub code scanning
+agentgate scan path/to/repo                     # source-level scan of an MCP server repo
+agentgate scan -c ~/.cursor/mcp.json --fail-on high
+```
 
-- `tool-poisoning` — hidden Unicode, prompt injection in tool names/descriptions.
-- `credential-leak` — tokens or secrets exposed in configs, env blocks, or tool output paths.
-- `overprivileged` — dangerous tool combinations (e.g. file write + network egress).
-- `auth-missing` — servers or proxies reachable without authentication.
-- `ssrf` — server-side request forgery vectors.
-- `rce-vectors` — inputs that reach shell/exec sinks.
-- `supply-chain` — advisory matches, typosquats, unpinned or withdrawn packages.
+## Rules
+
+Findings come from seven rules, one per category — see the [rule reference](/docs/rules/) for what each detects: `tool-poisoning`, `credential-leak`, `overprivileged`, `auth-missing`, `ssrf`, `rce-vectors`, `supply-chain`.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| 0 | No findings at or above the `--fail-on` threshold. |
+| 0 | No findings at or above the `--fail-on` threshold (or no `--fail-on` given). |
 | 1 | Findings at or above the threshold. |
-| 2 | Scan error (bad config, unreachable server in `--live` mode). |
+| 2 | Execution error (bad target, unreadable config). |

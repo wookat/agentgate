@@ -1,37 +1,38 @@
 ---
 title: agentgate ci
-description: Fail CI on any drift from the approved MCP baseline.
+description: Fail CI on drift from the approved MCP baseline or on severe findings.
 ---
 
-The gate: compare the current tool surface against [`agentgate.lock`](/docs/spec/lockfile/) and exit non-zero on any drift.
+The gate: fail on tool-surface drift from [`agentgate.lock`](/docs/spec/lockfile/) **or** on static findings at/above a severity threshold.
 
 ```bash
 agentgate ci [options]
 ```
 
-`ci` is `diff` with teeth — same comparison, but designed for pipelines: concise output, deterministic exit codes, and an optional scan step.
+`ci` = `diff` + `scan --fail-on`, designed for pipelines: concise output and deterministic exit codes.
 
 ## Options
 
 | Flag | Default | Description |
 |---|---|---|
-| `--lockfile <file>` | `agentgate.lock` | Lockfile path. |
-| `--live` | off | Verify the live tool surface (recommended in CI for stdio servers). |
-| `--scan` | off | Also run a full `scan` and apply its `--fail-on` threshold. |
-| `--format <fmt>` | `text` | `text` or `json` (for annotating PRs). |
+| `-c, --config <file>` | auto-discover | Explicit MCP client config file. |
+| `-s, --server <names...>` | all | Restrict to specific server names. |
+| `-l, --lockfile <file>` | `agentgate.lock` | Lockfile path. |
+| `--fail-on <severity>` | `high` | Severity gate for static findings: `info`, `low`, `medium`, `high`, `critical`. |
+| `-t, --timeout <ms>` | `15000` | Per-server connect timeout. |
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| 0 | Tool surface matches the lockfile (and scan passed, if `--scan`). |
-| 1 | Drift detected, or scan findings above threshold. |
+| 0 | No drift and no findings at/above the threshold. |
+| 1 | Drift detected, or findings at/above the threshold. |
 | 2 | Execution error (missing lockfile, unreachable server). |
 
-## GitHub Actions
+## CI integration
 
 ```yaml
-- run: npx agentgate ci --live --scan
+- run: npx agentgate ci --fail-on high
 ```
 
-A dedicated GitHub Action (route C) wraps this command with annotations and PR comments.
+Full per-platform recipes (GitHub Actions, GitLab CI, CircleCI, Jenkins, Azure Pipelines): [CI integration guide](/docs/guides/ci/).

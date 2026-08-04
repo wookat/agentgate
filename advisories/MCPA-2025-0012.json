@@ -1,0 +1,28 @@
+{
+  "id": "MCPA-2025-0012",
+  "title": "@lanyer640/mcp-runcommand-server npm package backdoored with dual reverse shells",
+  "summary": "The npm MCP server @lanyer640/mcp-runcommand-server, first published as a legitimate run-command tool, was weaponized in version 1.0.6: a preinstall hook opens a reverse shell to an attacker-controlled server (45.115.38.27:2333) during `npm install`/`npx`, and a second persistent reverse shell activates whenever the MCP server runs. The functional tool behavior masked the backdoor.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["GHSA-xmqc-rm22-fxq6"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@lanyer640/mcp-runcommand-server",
+      "ranges": [{ "introduced": "1.0.6" }],
+      "note": "Malicious from 1.0.6 onward; GitHub's malware advisory marks all versions affected. Treat any installation as a full host compromise, rotate all credentials, and note the package was removed from npm on 2025-10-01 after Checkmarx's report."
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-xmqc-rm22-fxq6" },
+    { "type": "report", "url": "https://www.koi.ai/blog/mcp-malware-wave-continues-a-remote-shell-in-backdoor" },
+    { "type": "report", "url": "https://checkmarx.com/zero-post/npm-malware-alert-lanyer640-mcp-runcommand-server-with-reverse-shell/" }
+  ],
+  "timeline": {
+    "discovered": "2025-10-01",
+    "published": "2025-10-02",
+    "withdrawn": "2025-10-01"
+  },
+  "credits": ["Koi Security", "Checkmarx Zero (Bruno Dias)"]
+}

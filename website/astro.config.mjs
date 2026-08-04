@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://agentgate-1ep.pages.dev',
+  site: 'https://agentgate.zalize.com',
   integrations: [
     starlight({
       title: 'AgentGate',
@@ -48,6 +48,28 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Rule reference',
+          items: [
+            { label: 'Overview', slug: 'docs/rules' },
+            { label: 'AG-TP-001 tool-poisoning', slug: 'docs/rules/tool-poisoning' },
+            { label: 'AG-CL-001 credential-leak', slug: 'docs/rules/credential-leak' },
+            { label: 'AG-OP-001 overprivileged', slug: 'docs/rules/overprivileged' },
+            { label: 'AG-AM-001 auth-missing', slug: 'docs/rules/auth-missing' },
+            { label: 'AG-SS-001 ssrf', slug: 'docs/rules/ssrf' },
+            { label: 'AG-RC-001 rce-vectors', slug: 'docs/rules/rce-vectors' },
+            { label: 'AG-SC-001 supply-chain', slug: 'docs/rules/supply-chain' },
+          ],
+          collapsed: true,
+        },
+        {
+          label: 'Guides',
+          items: [
+            { label: 'CI integration', slug: 'docs/guides/ci' },
+            { label: 'FAQ', slug: 'docs/guides/faq' },
+            { label: 'Troubleshooting', slug: 'docs/guides/troubleshooting' },
+          ],
+        },
+        {
           label: 'Specifications',
           items: [
             { label: 'Lockfile (agentgate.lock)', slug: 'docs/spec/lockfile' },
@@ -62,7 +84,10 @@ export default defineConfig({
         },
         {
           label: 'Advisory database',
-          items: [{ label: 'Browse advisories', link: '/advisories/' }],
+          items: [
+            { label: 'Browse advisories', link: '/advisories/' },
+            { label: 'Contributing advisories', slug: 'docs/advisories/contributing' },
+          ],
         },
         {
           label: 'Tools',

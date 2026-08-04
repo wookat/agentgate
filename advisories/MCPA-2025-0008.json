@@ -1,0 +1,25 @@
+{
+  "id": "MCPA-2025-0008",
+  "title": "mcp-package-docs command injection in several tools (CVE-2025-54073)",
+  "summary": "mcp-package-docs versions through 0.1.27 pass unsanitized tool input into `child_process.exec`, enabling shell metacharacter injection and remote code execution under the server process's privileges. Fixed in 0.1.28; the package has since been deprecated on npm and the repository archived.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": ["CVE-2025-54073", "GHSA-vf9j-h32g-2764"],
+  "cwe": ["CWE-78"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "mcp-package-docs",
+      "ranges": [{ "introduced": "0", "fixed": "0.1.28" }],
+      "note": "Package deprecated on npm after the fix; prefer removing it entirely."
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-vf9j-h32g-2764" },
+    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-54073" },
+    { "type": "fix", "url": "https://github.com/sammcj/mcp-package-docs/releases/tag/v0.1.28" }
+  ],
+  "timeline": {
+    "published": "2025-07-18"
+  }
+}

@@ -25,9 +25,14 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     </p>
     <details class="rv-paste">
       <summary>…or paste JSON</summary>
-      <textarea id="rv-textarea" rows="8" placeholder='{"reportVersion":1, ...}'></textarea>
+      <textarea id="rv-textarea" rows="8" placeholder='{"version":1, "findings":[...], ...}'></textarea>
       <button class="rv-btn" id="rv-parse" type="button">Render</button>
     </details>
+    <p class="rv-hint">
+      Tip: link directly to a hosted report with <code>?url=…</code>, or use “Copy shareable
+      link” after loading one (the report is encoded in the URL fragment — it never leaves the
+      browser).
+    </p>
     <p id="rv-error" class="rv-error" role="alert" hidden></p>
   </div>
 
@@ -36,11 +41,15 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     <div class="rv-summary" id="rv-summary"></div>
     <div class="rv-filters" id="rv-filters" role="group" aria-label="Filter by severity"></div>
     <div id="rv-findings"></div>
-    <p><button class="rv-btn rv-btn-ghost" id="rv-reset" type="button">Load another report</button></p>
+    <div id="rv-warnings"></div>
+    <p>
+      <button class="rv-btn" id="rv-share" type="button">Copy shareable link</button>
+      <button class="rv-btn rv-btn-ghost" id="rv-reset" type="button">Load another report</button>
+    </p>
   </div>
 
   <script>
-    const SEVERITIES = ['critical', 'high', 'medium', 'low'];
+    const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
     const $ = (id: string) => document.getElementById(id)!;
     let report: any = null;
     let active = new Set(SEVERITIES);
@@ -72,14 +81,21 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       $('rv-report').hidden = false;
     }
 
+    /** Link MCPA advisory IDs mentioned in messages to their pages. */
+    function linkAdvisories(escaped: string): string {
+      return escaped.replace(/MCPA-\d{4}-\d{4}/g, (id) => `<a href="/advisories/${id.toLowerCase()}/">${id}</a>`);
+    }
+
     function render() {
-      const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+      const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
       for (const f of report.findings) if (counts[f.severity] !== undefined) counts[f.severity]++;
 
+      const servers = report.scannedServers ?? [];
+      const files = report.scannedFiles ?? [];
       $('rv-meta').innerHTML = `
-        <span><strong>agentgate</strong> ${esc(report.agentgateVersion ?? '?')}</span>
-        <span>generated ${esc(report.generatedAt ?? '?')}</span>
-        <span>target: ${esc(report.target?.kind ?? '?')} ${esc((report.target?.paths ?? []).join(', '))}</span>`;
+        <span>scanned ${esc(report.scannedAt ?? '?')}</span>
+        <span>${servers.length} server(s)${servers.length ? `: ${esc(servers.slice(0, 6).join(', '))}${servers.length > 6 ? '…' : ''}` : ''}</span>
+        <span>${files.length} file(s)</span>`;
 
       $('rv-summary').innerHTML = SEVERITIES.map(
         (s) => `<div class="rv-card rv-sev-${s}"><div class="rv-card-num">${counts[s]}</div><div>${s}</div></div>`
@@ -100,34 +116,68 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       const rows = report.findings
         .filter((f: any) => active.has(f.severity))
         .map((f: any) => {
-          const server = f.server
-            ? `${esc(f.server.name)}${f.server.package ? ` · ${esc(f.server.package)}@${esc(f.server.version ?? '?')}` : ''}`
-            : '—';
-          const advisories = (f.advisoryIds ?? [])
-            .map((id: string) => `<a href="/advisories/${esc(id).toLowerCase()}/">${esc(id)}</a>`)
-            .join(', ');
+          const message = linkAdvisories(esc(f.message ?? ''));
+          const where = f.file ? `<code>${esc(f.file)}${f.line ? `:${f.line}` : ''}</code>` : '';
           return `<details class="rv-finding rv-sev-${esc(f.severity)}">
             <summary>
               <span class="rv-chip rv-sev-${esc(f.severity)} rv-on">${esc(f.severity)}</span>
               <span class="rv-chip">${esc(f.category ?? '')}</span>
-              <span class="rv-finding-title">${esc(f.title)}</span>
+              <span class="rv-finding-title">${esc(f.target ?? '')}</span>
             </summary>
             <div class="rv-finding-body">
-              <p>${esc(f.description ?? '')}</p>
+              <p>${message}</p>
               <dl>
-                <dt>Server</dt><dd>${server}</dd>
-                <dt>Rule</dt><dd><code>${esc(f.rule ?? '')}</code></dd>
-                ${f.evidence?.configPath ? `<dt>Config</dt><dd><code>${esc(f.evidence.configPath)}</code></dd>` : ''}
-                ${f.evidence?.snippet ? `<dt>Evidence</dt><dd><pre>${esc(f.evidence.snippet)}</pre></dd>` : ''}
-                ${advisories ? `<dt>Advisories</dt><dd>${advisories}</dd>` : ''}
-                ${f.remediation ? `<dt>Remediation</dt><dd>${esc(f.remediation)}</dd>` : ''}
+                <dt>Rule</dt><dd><a href="/docs/rules/${esc(f.category ?? '')}/"><code>${esc(f.ruleId ?? '')}</code></a></dd>
+                <dt>Target</dt><dd><code>${esc(f.target ?? '')}</code></dd>
+                ${where ? `<dt>Location</dt><dd>${where}</dd>` : ''}
+                ${f.detail ? `<dt>Detail</dt><dd><pre>${esc(f.detail)}</pre></dd>` : ''}
               </dl>
             </div>
           </details>`;
         });
       $('rv-findings').innerHTML =
         rows.join('') || '<p class="rv-empty">No findings match the current filters.</p>';
+
+      const warnings = report.warnings ?? [];
+      $('rv-warnings').innerHTML = warnings.length
+        ? `<h3>Warnings</h3><ul>${warnings.map((w: string) => `<li>${esc(w)}</li>`).join('')}</ul>`
+        : '';
     }
+
+    // --- shareable links: #r=<base64url(gzip(json))> ---
+    const b64uEncode = (bytes: Uint8Array) =>
+      btoa(String.fromCharCode(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+    const b64uDecode = (s: string) =>
+      Uint8Array.from(atob(s.replaceAll('-', '+').replaceAll('_', '/')), (c) => c.charCodeAt(0));
+
+    async function encodeShare(json: string): Promise<string> {
+      const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+      const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+      return b64uEncode(bytes);
+    }
+    async function decodeShare(data: string): Promise<string> {
+      const stream = new Blob([b64uDecode(data) as BlobPart]).stream().pipeThrough(new DecompressionStream('gzip'));
+      return await new Response(stream).text();
+    }
+
+    $('rv-share').addEventListener('click', async () => {
+      if (!report) return;
+      const btn = $('rv-share');
+      try {
+        const encoded = await encodeShare(JSON.stringify(report));
+        const url = `${location.origin}${location.pathname}#r=${encoded}`;
+        if (url.length > 30000) {
+          btn.textContent = 'Report too large to share via URL';
+        } else {
+          history.replaceState(null, '', `#r=${encoded}`);
+          await navigator.clipboard.writeText(url);
+          btn.textContent = 'Link copied!';
+        }
+      } catch {
+        btn.textContent = 'Could not copy link';
+      }
+      setTimeout(() => (btn.textContent = 'Copy shareable link'), 2500);
+    });
 
     $('rv-file').addEventListener('change', (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
@@ -135,6 +185,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
     });
     $('rv-parse').addEventListener('click', () => load(($('rv-textarea') as HTMLTextAreaElement).value));
     $('rv-reset').addEventListener('click', () => {
+      history.replaceState(null, '', location.pathname);
       $('rv-report').hidden = true;
       $('rv-input').hidden = false;
     });
@@ -155,5 +206,29 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
       const file = e.dataTransfer?.files?.[0];
       if (file) file.text().then(load);
     });
+
+    // Auto-load from #r= fragment or ?url= parameter.
+    (async () => {
+      const hash = new URLSearchParams(location.hash.slice(1));
+      const shared = hash.get('r');
+      if (shared) {
+        try {
+          load(await decodeShare(shared));
+        } catch {
+          fail('Could not decode the shared report link.');
+        }
+        return;
+      }
+      const url = new URLSearchParams(location.search).get('url');
+      if (url) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(String(res.status));
+          load(await res.text());
+        } catch {
+          fail(`Could not fetch the report from ${url} (the host must allow CORS).`);
+        }
+      }
+    })();
   </script>
 </StarlightPage>
