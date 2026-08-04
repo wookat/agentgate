@@ -47,6 +47,8 @@ Also ships a GitHub Action, pre-commit hooks, and a config converter between
 Claude/Cursor/VS Code/Codex/OpenCode formats (config portability is a named gap in the
 official MCP 2026 roadmap).
 
+Docs, rule reference, and a shareable report viewer: https://agentgate.zalize.com
+
 TypeScript, Node 22, Apache-2.0. Happy to answer anything — especially skeptical
 questions about what a lockfile can and cannot defend against (runtime behavior is
 explicitly out of scope; that's a gateway's job).
@@ -70,5 +72,6 @@ docs/spec/ so it can converge with any future standard.
 ## Timing notes
 
 - Post Tue–Thu, 14:00–16:00 UTC (peak US morning).
-- Have the repo README, docs site, and a demo GIF live before posting.
+- Have the repo README, the docs site (https://agentgate.zalize.com), and the demo GIF
+  live before posting. README hero GIF: done. Docs site: live (route B).
 - <maintainer> must be available for the first 3 hours to answer comments.
