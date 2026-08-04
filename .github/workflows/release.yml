@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [main]
+    tags: ['v*']
 
 concurrency: release-${{ github.ref }}
 
@@ -14,9 +15,13 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      # setup-node writes an .npmrc referencing NODE_AUTH_TOKEN; keep it defined
+      # for every step so pnpm install does not warn about a missing variable.
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
@@ -25,7 +30,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
-      - name: Create release PR or publish
+      - name: Publish to npm (tag push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: pnpm release
+        env:
+          NPM_CONFIG_PROVENANCE: 'true'
+      - name: Create release PR or publish (main push)
+        if: github.ref == 'refs/heads/main'
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
           publish: pnpm release
@@ -33,8 +44,4 @@ jobs:
           commit: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # npm auth: prefer OIDC trusted publishing (no token needed once the
-          # packages are configured as trusted publishers on npmjs.com).
-          # NPM_TOKEN is a fallback until trusted publishing is enabled.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
