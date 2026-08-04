@@ -3,11 +3,11 @@
 基准：OpenSSF Best Practices Badge（passing→silver）、npm 生态发布工程惯例、头部开源工具（vllm/ollama/biome 等）的共性。目标：达到「用户敢在生产 CI 里跑」的可信度。验收以本清单逐项对照。
 
 ## A · 工程与发布（路线 A）
-- [ ] 发布工程：changesets（semver + CHANGELOG 自动化）、GitHub Actions 发布流水线、npm provenance（OIDC trusted publishing）、GitHub Release + 产物签名
-- [ ] 测试深化：核心覆盖率 ≥80% 并在 CI 强制；针对真实 MCP server（官方 SDK 示例 server）的端到端集成测试；快照测试锁定 `--json` 输出契约
-- [ ] 健壮性：损坏配置/超时/不可连接 server 的优雅报错与 exit code 约定；`--debug` 诊断；大型配置性能可接受
-- [ ] 供应链自卫：CI actions pin 到 SHA、依赖锁定、SECURITY.md（漏洞披露流程）、agentgate 自己扫自己（dogfood 在 CI 跑 agentgate ci）
-- [ ] lockfile 规范 v1 冻结：版本字段 + 迁移策略，schema 发布到网站
+- [x] 发布工程：changesets（semver + CHANGELOG 自动化）、GitHub Actions 发布流水线、npm provenance（OIDC trusted publishing）、GitHub Release + 产物签名 — #24/#33；v0.1.0 已发布；v* tag 亦可直接触发发布（docs/RELEASING.md）
+- [x] 测试深化：核心覆盖率 ≥80% 并在 CI 强制；针对真实 MCP server（官方 SDK 示例 server）的端到端集成测试；快照测试锁定 `--json` 输出契约 — #24（实际覆盖率 ~92%，e2e 用 server-everything）
+- [x] 健壮性：损坏配置/超时/不可连接 server 的优雅报错与 exit code 约定；`--debug` 诊断；大型配置性能可接受 — #24（docs/spec/cli-contract.md；CI dogfood 全仓库扫描秒级完成）
+- [x] 供应链自卫：CI actions pin 到 SHA、依赖锁定、SECURITY.md（漏洞披露流程）、agentgate 自己扫自己（dogfood 在 CI 跑 agentgate ci） — #24
+- [x] lockfile 规范 v1 冻结：版本字段 + 迁移策略，schema 发布到网站 — #24（docs/spec/lockfile-v1.md；网站 /docs/spec/lockfile/ 已上线并链接 canonical schema）
 
 ## B · 平台与文档（路线 B）
 - [ ] 文档完整性：任务导向指南（CI 集成各平台配方、威胁模型、规则参考逐条文档、FAQ、troubleshooting）；文档搜索；SEO/OG 卡片
