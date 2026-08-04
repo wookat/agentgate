@@ -10,9 +10,7 @@ Prerequisites in the repo being gated:
 1. A committed [`agentgate.lock`](/docs/spec/lockfile/) (run `agentgate lock` locally and review it in a PR).
 2. An MCP config the runner can read — pass it explicitly with `--config` for reproducible CI runs.
 
-:::note
-The `agentgate` npm release is being prepared. Until it lands, the recipes below build the CLI from source; once published, replace the build step with `npx <published-package> ci …`. The [GitHub Action](#github-actions) already wraps this for you.
-:::
+AgentGate is published on npm as [`mcp-agentgate`](https://www.npmjs.com/package/mcp-agentgate) (the installed command is still `agentgate`), so every recipe below is a one-liner with `npx mcp-agentgate`.
 
 ## GitHub Actions
 
@@ -48,12 +46,8 @@ To surface scan findings in GitHub code scanning, set `sarif-file: agentgate.sar
 ```yaml
 mcp-gate:
   image: node:22
-  before_script:
-    - corepack enable
-    - git clone --depth 1 https://github.com/wookat/agentgate.git /tmp/agentgate
-    - cd /tmp/agentgate && pnpm install --frozen-lockfile && pnpm build && cd -
   script:
-    - node /tmp/agentgate/packages/cli/dist/index.js ci --config .mcp.json --fail-on high
+    - npx mcp-agentgate ci --config .mcp.json --fail-on high
 ```
 
 ## CircleCI
@@ -67,14 +61,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Build agentgate
-          command: |
-            corepack enable
-            git clone --depth 1 https://github.com/wookat/agentgate.git /tmp/agentgate
-            cd /tmp/agentgate && pnpm install --frozen-lockfile && pnpm build
-      - run:
           name: MCP gate
-          command: node /tmp/agentgate/packages/cli/dist/index.js ci --config .mcp.json --fail-on high
+          command: npx mcp-agentgate ci --config .mcp.json --fail-on high
 workflows:
   gate:
     jobs: [mcp-gate]
@@ -88,13 +76,7 @@ pipeline {
   stages {
     stage('MCP gate') {
       steps {
-        sh '''
-          corepack enable
-          git clone --depth 1 https://github.com/wookat/agentgate.git /tmp/agentgate
-          cd /tmp/agentgate && pnpm install --frozen-lockfile && pnpm build
-          cd "$WORKSPACE"
-          node /tmp/agentgate/packages/cli/dist/index.js ci --config .mcp.json --fail-on high
-        '''
+        sh 'npx mcp-agentgate ci --config .mcp.json --fail-on high'
       }
     }
   }
@@ -110,12 +92,7 @@ steps:
   - task: UseNode@1
     inputs:
       version: 22.x
-  - script: |
-      corepack enable
-      git clone --depth 1 https://github.com/wookat/agentgate.git /tmp/agentgate
-      cd /tmp/agentgate && pnpm install --frozen-lockfile && pnpm build
-    displayName: Build agentgate
-  - script: node /tmp/agentgate/packages/cli/dist/index.js ci --config .mcp.json --fail-on high
+  - script: npx mcp-agentgate ci --config .mcp.json --fail-on high
     displayName: MCP gate
 ```
 

@@ -4,9 +4,9 @@
 
 **Scan, lock, and gate your MCP servers — `npm audit` + lockfile + CI drift gate for the MCP era.**
 
-[![CI](https://github.com/wookat/agentgate/actions/workflows/ci.yml/badge.svg)](https://github.com/wookat/agentgate/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/mcp-agentgate)](https://www.npmjs.com/package/mcp-agentgate)
+[![CI](https://github.com/wookat/agentgate/actions/workflows/route-c.yml/badge.svg)](https://github.com/wookat/agentgate/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/mcp-agentgate)](https://www.npmjs.com/package/mcp-agentgate)
 [![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-compatible-8A2BE2)](https://modelcontextprotocol.io)
 
@@ -16,17 +16,12 @@ English | [简体中文](README.zh-CN.md)
 
 </div>
 
-<details><summary>Developing from source (contributors)</summary>
+<details><summary>Quick start details</summary>
 
-Requires Node.js >= 22 and [pnpm](https://pnpm.io).
+Requires Node.js >= 22. Install from npm ([`mcp-agentgate`](https://www.npmjs.com/package/mcp-agentgate); the command is `agentgate`):
 
 ```bash
-git clone https://github.com/wookat/agentgate.git
-cd agentgate
-pnpm install
-pnpm build
-
-alias agentgate="node $PWD/packages/cli/dist/index.js"
+npm i -g mcp-agentgate    # or: npx mcp-agentgate scan
 ```
 
 Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode) are configured to use — config paths are discovered automatically:
@@ -89,8 +84,9 @@ npx mcp-agentgate lock
 npx mcp-agentgate ci
 ```
 
-All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
-Docs, rule reference, and report viewer: **https://agentgate.zalize.com**.
+> **Status:** under active development toward v0.1 — the CLI above is the committed
+> interface ([PROPOSAL](docs/PROPOSAL.md) / [ROUTES](docs/ROUTES.md)). Watch/star the
+> repo to catch the release.
 
 ## CI gate in one step
 
@@ -98,7 +94,7 @@ Docs, rule reference, and report viewer: **https://agentgate.zalize.com**.
 # .github/workflows/mcp-gate.yml
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@v0.1.0
+  - uses: wookat/agentgate/packages/action@main
     with:
       command: ci
 ```
