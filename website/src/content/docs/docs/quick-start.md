@@ -6,21 +6,15 @@ description: Scan, lock, and gate your MCP servers in five minutes.
 ## Requirements
 
 - Node.js **22+**
-- [pnpm](https://pnpm.io) (for the from-source install below)
 
 ## Install
 
-:::note
-The npm release is being prepared. Until it lands, run AgentGate from source:
-:::
+AgentGate is published on npm as [`mcp-agentgate`](https://www.npmjs.com/package/mcp-agentgate); the installed command is `agentgate`:
 
 ```bash
-git clone https://github.com/wookat/agentgate.git
-cd agentgate
-pnpm install
-pnpm build
-
-alias agentgate="node $PWD/packages/cli/dist/index.js"
+npm i -g mcp-agentgate    # installs the `agentgate` command
+# or run it without installing:
+npx mcp-agentgate scan
 ```
 
 ## 1. Scan
