@@ -1,5 +1,12 @@
 # mcp-agentgate
 
+## 0.6.1
+
+### Patch Changes
+
+- d99d857: Republish: the 0.6.0 npm artifact was published with unrewritten `workspace:*` dependencies and cannot be installed. No code changes.
+  - mcp-agentgate-core@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes
