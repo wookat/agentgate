@@ -44,6 +44,9 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
+      mcp-agentgate-config-convert:
+        specifier: workspace:*
+        version: link:../config-convert
       mcp-agentgate-core:
         specifier: workspace:*
         version: link:../core

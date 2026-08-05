@@ -9,6 +9,7 @@ import { runLock } from './commands/lock.js';
 import { runDiff } from './commands/diff.js';
 import { runCi } from './commands/ci.js';
 import { runDeps } from './commands/deps.js';
+import { clientChoices, describeClients, runConfigConvert } from './commands/config.js';
 import { setDebug } from './debug.js';
 
 const pkg = JSON.parse(
@@ -96,6 +97,19 @@ program
   .addOption(new Option('--concurrency <n>', 'max concurrent registry lookups').default('8'))
   .action(async (target, opts) => {
     process.exitCode = await runDeps(target, opts);
+  });
+
+const configCmd = program.command('config').description('MCP client configuration utilities');
+configCmd
+  .command('convert')
+  .description('Convert MCP server configuration between client formats')
+  .addOption(new Option('--from <client>', 'source client format').choices(clientChoices()).makeOptionMandatory())
+  .addOption(new Option('--to <client>', 'target client format').choices(clientChoices()).makeOptionMandatory())
+  .option('--in <file>', 'input file (default: stdin)')
+  .option('--out <file>', 'output file (default: stdout)')
+  .addHelpText('after', `\nClients:\n${describeClients()}`)
+  .action((opts) => {
+    process.exitCode = runConfigConvert(opts);
   });
 
 program.parseAsync().catch((err) => {

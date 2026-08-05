@@ -24,11 +24,11 @@ export async function fetchToolSurface(server: McpServerConfig, opts: LiveScanOp
   const client = new Client({ name: 'agentgate', version: '0.1.0' });
   const timeoutMs = opts.timeoutMs ?? 15000;
   try {
-    await withTimeout(client.connect(transport), timeoutMs, `connecting to "${server.name}"`);
+    await withTimeout(client.connect(transport, { timeout: timeoutMs }), timeoutMs, `connecting to "${server.name}"`);
     const tools: ToolSurface[] = [];
     let cursor: string | undefined;
     do {
-      const page = await withTimeout(client.listTools({ cursor }), timeoutMs, `listing tools of "${server.name}"`);
+      const page = await withTimeout(client.listTools({ cursor }, { timeout: timeoutMs }), timeoutMs, `listing tools of "${server.name}"`);
       for (const tool of page.tools) {
         tools.push({ name: tool.name, description: tool.description ?? '', inputSchema: tool.inputSchema ?? {} });
       }
