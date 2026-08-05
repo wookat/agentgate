@@ -1,0 +1,26 @@
+{
+  "id": "MCPA-2026-0008",
+  "title": "Flyto2 Core arbitrary file write via image.download output_dir bypass (CVE-2026-67429)",
+  "summary": "flyto-core (a PyPI MCP-native AI agent execution engine) versions before 2.26.7 let callers of the image.download module set both output_path and the output_dir base it is validated against, so the path-confinement check is meaningless: attacker-controlled HTTP response bytes can be written to any absolute path the process can write. Rated CVSS 10.0 (scope-changed integrity/availability impact). Fixed in 2.26.7.",
+  "type": "path-traversal",
+  "severity": "critical",
+  "aliases": ["CVE-2026-67429", "GHSA-2956-977x-2w3r"],
+  "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:H/A:H", "score": 10.0 },
+  "cwe": ["CWE-22"],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "flyto-core",
+      "ranges": [{ "introduced": "0", "fixed": "2.26.7" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-2956-977x-2w3r" },
+    { "type": "advisory", "url": "https://github.com/flytohub/flyto-core/security/advisories/GHSA-2956-977x-2w3r" },
+    { "type": "fix", "url": "https://github.com/flytohub/flyto-core/commit/d5f89d71303e3c1e6418d347c5c55fcd173cc8cc" },
+    { "type": "web", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-67429" }
+  ],
+  "timeline": {
+    "published": "2026-07-30"
+  }
+}

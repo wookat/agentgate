@@ -17,8 +17,13 @@ function extractPackageSpec(command: string | undefined, args: string[]): string
   return undefined;
 }
 
-/** Split "name@1.2.3" / "@scope/name@1.2.3" into name and pinned version. */
+/** Split "name@1.2.3" / "@scope/name@1.2.3" / PEP 508 "name==1.2.3" into name and pinned version. */
 function splitSpec(spec: string): { name: string; version?: string } {
+  const eq = spec.indexOf('==');
+  if (eq > 0) {
+    const version = spec.slice(eq + 2);
+    return /^\d/.test(version) ? { name: spec.slice(0, eq), version } : { name: spec.slice(0, eq) };
+  }
   const at = spec.lastIndexOf('@');
   if (at <= 0) return { name: spec };
   const version = spec.slice(at + 1);
@@ -48,7 +53,9 @@ export function serverPackageRef(server: McpServerConfig): (DependencyRef & { ve
 }
 
 function isPinned(spec: string): boolean {
-  // scoped: @scope/name@1.2.3 ; unscoped: name@1.2.3 ; also git+…#sha
+  // scoped: @scope/name@1.2.3 ; unscoped: name@1.2.3 ; PEP 508: name==1.2.3 ; also git+…#sha
+  const eq = spec.indexOf('==');
+  if (eq > 0) return /^\d+(\.\d+)*([-+.][\w.]+)?$/.test(spec.slice(eq + 2));
   const at = spec.lastIndexOf('@');
   if (at <= 0) return /#[0-9a-f]{7,40}$/.test(spec);
   const version = spec.slice(at + 1);

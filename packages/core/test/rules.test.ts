@@ -178,6 +178,11 @@ describe('supply-chain', () => {
     expect(findings).toHaveLength(0);
   });
 
+  it('accepts PEP 508 == pins and flags PEP 508 range specs', () => {
+    expect(supplyChainRule.checkServer!(server({ command: 'uvx', args: ['gemini-bridge==1.3.1'] }))).toHaveLength(0);
+    expect(supplyChainRule.checkServer!(server({ command: 'uvx', args: ['gemini-bridge>=1.0'] }))).toHaveLength(1);
+  });
+
   it('flags @latest and scoped unpinned specs', () => {
     expect(supplyChainRule.checkServer!(server({ command: 'npx', args: ['@scope/server@latest'] }))).toHaveLength(1);
     expect(supplyChainRule.checkServer!(server({ command: 'uvx', args: ['mcp-server-fetch'] }))).toHaveLength(1);
@@ -197,6 +202,11 @@ describe('supply-chain', () => {
     expect(serverPackageRef(server({ command: 'uvx', args: ['mcp-server-fetch'] }))).toMatchObject({
       name: 'mcp-server-fetch',
       version: undefined,
+      ecosystem: 'pypi',
+    });
+    expect(serverPackageRef(server({ command: 'uvx', args: ['gemini-bridge==1.2.0'] }))).toMatchObject({
+      name: 'gemini-bridge',
+      version: '1.2.0',
       ecosystem: 'pypi',
     });
     expect(serverPackageRef(server({ command: 'node', args: ['server.js'] }))).toBeUndefined();
