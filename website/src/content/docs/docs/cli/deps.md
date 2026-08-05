@@ -32,6 +32,16 @@ this before installation.
    packages (`AG-DP-003`), npm install scripts combined with other risk signals
    (`AG-DP-004`), and weak metadata like missing repository/license
    (`AG-DP-005`).
+4. **Checks known-malware advisories** against [OSV.dev](https://osv.dev)
+   (which aggregates the GitHub Advisory Database, PyPI, and the OSV
+   malicious-packages project). A dependency with a `MAL-*` advisory is a
+   **critical** finding (`AG-DP-006`) linking to the advisory. When the
+   advisory only covers specific compromised releases (e.g. the 2025
+   `debug`/`chalk` incident), the installed version from `node_modules` is
+   compared: unaffected = `low`, affected = `critical`, unresolvable = `high`
+   ("verify your lockfile"). Version-range CVEs are out of scope; use a
+   dependency vulnerability scanner (osv-scanner, `npm audit`) alongside.
+   Skipped with a warning when OSV.dev is unreachable or in `--offline` mode.
 
 ## Options
 

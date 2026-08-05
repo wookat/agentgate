@@ -1,5 +1,6 @@
 import { Finding } from '../types.js';
 import { normalizeName } from './collect.js';
+import { OsvAdvisory } from './osv.js';
 import { POPULAR_NPM, POPULAR_PYPI } from './popular.js';
 import { DepCheckResult, DependencyRef } from './types.js';
 
@@ -9,6 +10,7 @@ export const DEP_RULES = [
   { id: 'AG-DP-003', description: 'Dependency is a young package with near-zero downloads' },
   { id: 'AG-DP-004', description: 'npm dependency runs install scripts (preinstall/install/postinstall)' },
   { id: 'AG-DP-005', description: 'Dependency has weak registry metadata (no repository/license/description, single version)' },
+  { id: 'AG-DP-006', description: 'Dependency is a known-malicious package (OSV.dev MAL advisory)' },
 ] as const;
 
 /** Damerau-Levenshtein distance (optimal string alignment), capped early for speed. */
@@ -155,6 +157,56 @@ export function scoreDependency(result: DepCheckResult): Finding[] {
 
 export function scoreDependencies(results: DepCheckResult[]): Finding[] {
   return results.flatMap((r) => scoreDependency(r));
+}
+
+/**
+ * Turn OSV MAL advisories into findings (one per advisory). Version-scoped
+ * advisories (compromised releases of otherwise-legitimate packages, e.g. the
+ * 2025 `debug`/`chalk` incident) are compared against the resolved version when
+ * `resolveVersion` can determine it (e.g. from node_modules).
+ */
+export function scoreAdvisories(advisories: OsvAdvisory[], resolveVersion?: (ref: DependencyRef) => string | undefined): Finding[] {
+  const findings: Finding[] = [];
+  for (const { ref, id, summary, affectedVersions } of advisories) {
+    const base = {
+      ruleId: 'AG-DP-006' as const,
+      category: 'supply-chain' as const,
+      target: target(ref),
+      file: ref.file,
+      detail: `https://osv.dev/vulnerability/${id}`,
+    };
+    const label = `${id}${summary ? `: ${summary}` : ''}`;
+    if (!affectedVersions) {
+      findings.push({
+        ...base,
+        severity: 'critical',
+        message: `"${ref.name}" is a known-malicious ${ref.ecosystem} package (${label}) — remove it and rotate any secrets on machines that installed it`,
+      });
+      continue;
+    }
+    const installed = resolveVersion?.(ref);
+    const list = affectedVersions.slice(0, 8).join(', ') + (affectedVersions.length > 8 ? ', …' : '');
+    if (installed && !affectedVersions.includes(installed)) {
+      findings.push({
+        ...base,
+        severity: 'low',
+        message: `"${ref.name}" had compromised release(s) ${list} (${label}); installed version ${installed} is not affected`,
+      });
+    } else if (installed) {
+      findings.push({
+        ...base,
+        severity: 'critical',
+        message: `"${ref.name}" ${installed} is a compromised release (${label}) — remove it and rotate any secrets on machines that installed it`,
+      });
+    } else {
+      findings.push({
+        ...base,
+        severity: 'high',
+        message: `"${ref.name}" had compromised release(s) ${list} (${label}) — could not determine the resolved version; verify your lockfile pins none of them`,
+      });
+    }
+  }
+  return findings;
 }
 
 /** Offline mode: only name-shape checks (typosquat similarity), no registry data. */
