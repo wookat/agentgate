@@ -1,0 +1,66 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "advisories/**"
+      - "api/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check Cloudflare credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::CLOUDFLARE_API_TOKEN secret not set — skipping website deploy"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v7.0.0
+        if: steps.creds.outputs.present == 'true'
+        with:
+          node-version: 22
+      - name: Build website
+        if: steps.creds.outputs.present == 'true'
+        run: npm ci && npm run build
+        working-directory: website
+      - name: Deploy to Cloudflare Pages
+        if: steps.creds.outputs.present == 'true'
+        run: npx -y wrangler@4 pages deploy dist --project-name=agentgate --commit-dirty=true
+        working-directory: website
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  advisory-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check Cloudflare credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::CLOUDFLARE_API_TOKEN secret not set — skipping advisory API deploy"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v7.0.0
+        if: steps.creds.outputs.present == 'true'
+        with:
+          node-version: 22
+      - name: Deploy advisory API Worker
+        if: steps.creds.outputs.present == 'true'
+        run: npm ci && npm run deploy
+        working-directory: api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
