@@ -1,7 +1,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
-import { Finding, Severity, scanConfiguration, scanRepo, scanServers, scanTools, sortFindings, toSarif } from 'mcp-agentgate-core';
+import {
+  Finding,
+  Severity,
+  queryOsvMalware,
+  scanConfiguration,
+  scanRepo,
+  scanServers,
+  scanTools,
+  scoreAdvisories,
+  serverPackageRef,
+  sortFindings,
+  toSarif,
+} from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
 
@@ -62,6 +74,22 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   scannedFiles.push(...files);
   scannedServers.push(...servers.map((s) => s.name));
   findings.push(...scanServers(servers));
+
+  // Advisory check: server packages launched through npx/uvx-style runners
+  // against OSV.dev known-malware entries. Pinned versions in the spec are
+  // compared against version-scoped advisories.
+  const pkgRefs = servers.map(serverPackageRef).filter((r) => r !== undefined);
+  if (pkgRefs.length > 0) {
+    const osv = await queryOsvMalware(pkgRefs, { timeoutMs: Number(opts.timeout) });
+    findings.push(
+      ...scoreAdvisories(osv.advisories, (ref) => pkgRefs.find((r) => r.name === ref.name && r.ecosystem === ref.ecosystem)?.version).map(
+        (f): Finding => ({ ...f, ruleId: 'AG-SC-002', message: `${f.message} (${pkgRefs.find((r) => `${r.ecosystem}:${r.name}` === f.target)?.context ?? 'configured server'})` }),
+      ),
+    );
+    if (osv.error) {
+      warnings.push(`OSV.dev unreachable (${osv.error}): known-malware advisory check for server packages skipped`);
+    }
+  }
 
   const stdioServers = servers.filter((s) => s.command);
   if (opts.live) {

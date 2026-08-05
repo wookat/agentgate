@@ -1,6 +1,9 @@
+import { DependencyRef } from '../deps/types.js';
+import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
+const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
 
 function extractPackageSpec(command: string | undefined, args: string[]): string | undefined {
   const base = (command ?? '').split(/[\\/]/).pop() ?? '';
@@ -12,6 +15,36 @@ function extractPackageSpec(command: string | undefined, args: string[]): string
     return arg;
   }
   return undefined;
+}
+
+/** Split "name@1.2.3" / "@scope/name@1.2.3" into name and pinned version. */
+function splitSpec(spec: string): { name: string; version?: string } {
+  const at = spec.lastIndexOf('@');
+  if (at <= 0) return { name: spec };
+  const version = spec.slice(at + 1);
+  return /^\d/.test(version) ? { name: spec.slice(0, at), version } : { name: spec.slice(0, at) };
+}
+
+/**
+ * The registry package a configured MCP server launches through a package
+ * runner (npx/pnpx/bunx → npm, uvx/pipx → PyPI), if any — so it can be
+ * checked against known-malware advisories.
+ */
+export function serverPackageRef(server: McpServerConfig): (DependencyRef & { version?: string }) | undefined {
+  const spec = extractPackageSpec(server.command, server.args ?? []);
+  if (spec === undefined || spec.startsWith('.') || spec.includes('://') || /^[A-Za-z]:[\\/]/.test(spec) || spec.includes('\\')) {
+    return undefined;
+  }
+  const base = (server.command ?? '').split(/[\\/]/).pop() ?? '';
+  const { name, version } = splitSpec(spec);
+  return {
+    name,
+    version,
+    ecosystem: PYPI_RUNNERS.has(base) ? 'pypi' : 'npm',
+    origin: 'manifest',
+    file: server.source ?? server.name,
+    context: `server "${server.name}"`,
+  };
 }
 
 function isPinned(spec: string): boolean {

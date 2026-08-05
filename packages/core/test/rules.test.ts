@@ -4,7 +4,7 @@ import { credentialLeakRule } from '../src/rules/credential-leak.js';
 import { overprivilegedRule } from '../src/rules/overprivileged.js';
 import { rceVectorsRule } from '../src/rules/rce-vectors.js';
 import { ssrfRule } from '../src/rules/ssrf.js';
-import { supplyChainRule } from '../src/rules/supply-chain.js';
+import { serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
 import { toolPoisoningRule } from '../src/rules/tool-poisoning.js';
 import { toxicFlowRule, toolShadowingRule } from '../src/rules/cross-server.js';
 import { scanConfiguration, scanServers, scanTools } from '../src/scanner.js';
@@ -186,6 +186,21 @@ describe('supply-chain', () => {
   it('flags unpinned docker images', () => {
     const findings = supplyChainRule.checkServer!(server({ command: 'docker', args: ['run', '-i', 'ghcr.io/x/mcp:latest'] }));
     expect(findings).toHaveLength(1);
+  });
+
+  it('serverPackageRef extracts the launched registry package', () => {
+    expect(serverPackageRef(server({ command: 'npx', args: ['-y', '@scope/mcp-server@1.2.3'] }))).toMatchObject({
+      name: '@scope/mcp-server',
+      version: '1.2.3',
+      ecosystem: 'npm',
+    });
+    expect(serverPackageRef(server({ command: 'uvx', args: ['mcp-server-fetch'] }))).toMatchObject({
+      name: 'mcp-server-fetch',
+      version: undefined,
+      ecosystem: 'pypi',
+    });
+    expect(serverPackageRef(server({ command: 'node', args: ['server.js'] }))).toBeUndefined();
+    expect(serverPackageRef(server({ command: 'npx', args: ['./local-dir'] }))).toBeUndefined();
   });
 });
 
