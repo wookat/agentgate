@@ -1,6 +1,6 @@
 ---
-title: "AG-SC-001/002 · supply-chain"
-description: Unpinned package execution, rug-pull-prone launch patterns, and known-malicious server packages.
+title: "AG-SC-001/002/003 · supply-chain"
+description: Unpinned package execution, rug-pull-prone launch patterns, and known-bad server packages (OSV malware + AgentGate MCP advisories).
 ---
 
 Detects launch patterns where "what runs today" is decided by the package registry, not by you.
@@ -13,6 +13,7 @@ Detects launch patterns where "what runs today" is decided by the package regist
 - **Auto-confirm installs** (`low`) — `-y`/`--yes` combined with an unpinned spec installs new upstream code silently.
 - **Unpinned docker images** (`medium`) — `docker run image:latest` or tagless images without a `@sha256:` digest.
 - **Known-malicious server package** (`AG-SC-002`) — the launched package is checked against [OSV.dev](https://osv.dev) known-malware advisories (`MAL-*`). A package that is malware in every version is `critical`; an advisory scoped to specific compromised releases is compared against the pinned version in the spec (unaffected = `low`, affected = `critical`, unpinned = `high`). Skipped with a warning when OSV.dev is unreachable.
+- **MCP advisory database match** (`AG-SC-003`) — the launched package is also checked against the [AgentGate MCP advisory database](/advisories/) (`MCPA-*`), which covers vulnerabilities beyond malware (RCE, SSRF, path traversal, auth bypass in MCP servers). The database is bundled with the CLI, so this check works fully offline. A pinned version inside an advisory's affected range carries the advisory's severity; a version outside every range is not reported; an unpinned spec with a version-scoped advisory is `medium` ("pin a fixed version").
 
 ## Why it matters
 
