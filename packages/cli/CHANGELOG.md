@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.6.0
+
+### Minor Changes
+
+- 6fef750: `agentgate scan` now refreshes the MCPA advisory database from the live AgentGate advisory API before matching (AG-SC-003), so advisories published after your CLI release are still caught. The bundled copy remains the offline fallback — an unreachable API degrades to a single warning and the scan continues on bundled data. New core export `fetchLiveMcpaAdvisories()`; override the endpoint with `AGENTGATE_ADVISORY_API`.
+
+### Patch Changes
+
+- Updated dependencies [6fef750]
+- Updated dependencies [36d5469]
+  - mcp-agentgate-core@0.6.0
+
 ## 0.5.5
 
 ### Patch Changes
