@@ -45,8 +45,15 @@ export function findTyposquatTarget(ref: DependencyRef): string | undefined {
   return undefined;
 }
 
+const TEST_PATH_RE = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|docs?)\//i;
+
+/** Imports inside test/example/docs trees are often runtime-generated or sample modules, not installable deps. */
+function isTestOrExamplePath(file: string): boolean {
+  return TEST_PATH_RE.test(file);
+}
+
 function target(ref: DependencyRef): string {
-  return `${ref.ecosystem}:${ref.name}`;
+  return `${ref.ecosystem}:${ref.name}${ref.origin === 'import' ? ' (import)' : ''}`;
 }
 
 /** Turn a registry check result into zero or more findings. */
@@ -69,11 +76,14 @@ export function scoreDependency(result: DepCheckResult): Finding[] {
   if (!info) return findings;
 
   if (!info.exists) {
+    const testContext = ref.origin === 'import' && isTestOrExamplePath(ref.file);
     findings.push({
       ruleId: 'AG-DP-001',
       category: 'supply-chain',
-      severity: 'critical',
-      message: `"${ref.name}" does not exist on ${ref.ecosystem} — likely AI-hallucinated; an attacker can register it (slopsquatting)${origin}`,
+      severity: testContext ? 'low' : 'critical',
+      message: testContext
+        ? `"${ref.name}" does not exist on ${ref.ecosystem} — imported only under a test/example path (${ref.file}); likely a runtime-generated or sample module, review if unexpected`
+        : `"${ref.name}" does not exist on ${ref.ecosystem} — likely AI-hallucinated; an attacker can register it (slopsquatting)${origin}`,
       target: target(ref),
       file: ref.file,
     });

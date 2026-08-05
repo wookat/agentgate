@@ -5,6 +5,7 @@ export * from './live.js';
 export * from './lockfile.js';
 export * from './diff.js';
 export * from './sarif.js';
+export * from './docs.js';
 export { ALL_RULES } from './rules/index.js';
 export * from './deps/types.js';
 export * from './deps/collect.js';

@@ -33,14 +33,14 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
     return 2;
   }
 
-  const { refs, scannedFiles } = collectDependencies(dir, {
+  const { refs, scannedFiles, warnings: collectWarnings } = collectDependencies(dir, {
     ignore: opts.ignore,
     includeImports: opts.imports !== false,
   });
   debugLog(`collected ${refs.length} dependency ref(s) from ${scannedFiles.length} file(s)`);
 
   let findings: Finding[];
-  const warnings: string[] = [];
+  const warnings: string[] = [...collectWarnings];
   if (opts.offline) {
     findings = scoreOffline(refs);
     warnings.push('offline mode: registry existence/metadata checks skipped, name-shape checks only');
@@ -62,13 +62,13 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
     warnings,
   };
 
+  for (const w of warnings) console.error(pc.yellow(`warning: ${w}`));
   let rendered: string;
   if (opts.format === 'json') {
     rendered = JSON.stringify(report, null, 2);
   } else if (opts.format === 'sarif') {
     rendered = JSON.stringify(toSarif(sorted), null, 2);
   } else {
-    for (const w of warnings) console.error(pc.yellow(`warning: ${w}`));
     rendered = [
       pc.dim(`Checked ${refs.length} dependency reference(s) across ${scannedFiles.length} file(s)${opts.offline ? ' (offline)' : ''}`),
       renderFindingsTable(sorted),

@@ -23,7 +23,10 @@ this before installation.
    manifest, Node builtins, and the Python stdlib are excluded).
 2. **Verifies existence** against the live npm and PyPI registries. A package
    that doesn't exist is a **critical** finding (`AG-DP-001`) — it's likely
-   hallucinated and an attacker can register it.
+   hallucinated and an attacker can register it. First-party modules found in
+   the scanned tree and imports inside comments/docstrings are excluded; a
+   nonexistent name imported only under a test/example path is downgraded to
+   `low` (usually a runtime-generated or sample module).
 3. **Risk-scores existing packages** from registry metadata: name similarity to
    popular packages (`AG-DP-002`, typosquats), young/near-zero-download
    packages (`AG-DP-003`), npm install scripts combined with other risk signals
