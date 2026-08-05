@@ -56,3 +56,29 @@ function verbForms(verb: string): string {
       : `${verb}(?:s|ed|ing)?`;
   return extra.length > 0 ? `${[...extra].join('|')}|${generic}` : generic;
 }
+
+/**
+ * Regex fragment matching any of `verbs` in their common English forms
+ * ("execute" also matches "executes", "executing", "executed"). Tool
+ * descriptions are usually written in third person ("Executes shell commands"),
+ * so bare infinitive matching silently misses them.
+ */
+export function verbAlt(verbs: string[]): string {
+  return `(?:${verbs.map(verbForms).join('|')})`;
+}
+
+/** Consonant-doubling and irregular verbs that a generic suffix rule gets wrong. */
+const IRREGULAR_FORMS: Record<string, string[]> = {
+  run: ['runs', 'running', 'ran'],
+  get: ['gets', 'getting', 'got'],
+  send: ['sends', 'sending', 'sent'],
+  write: ['writes', 'writing', 'wrote', 'written'],
+  read: ['reads', 'reading'],
+  set: ['sets', 'setting'],
+};
+
+function verbForms(verb: string): string {
+  const extra = IRREGULAR_FORMS[verb] ?? [];
+  const generic = verb.endsWith('e') ? `${verb}(?:s|d)?|${verb.slice(0, -1)}ing` : `${verb}(?:s|ed|ing)?`;
+  return extra.length > 0 ? `${[...extra].join('|')}|${generic}` : generic;
+}
