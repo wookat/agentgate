@@ -1,5 +1,15 @@
 # mcp-agentgate
 
+## 0.5.0
+
+### Minor Changes
+
+- 528aecd: New `agentgate config convert` subcommand: convert MCP server configuration between client formats (Claude Desktop/Code, Cursor, VS Code, Codex, OpenCode) directly from the main CLI — same engine as the standalone `mcp-agentgate-config-convert` package, with lossy-conversion warnings on stderr.
+
+### Patch Changes
+
+- mcp-agentgate-core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
