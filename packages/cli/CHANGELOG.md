@@ -1,5 +1,23 @@
 # mcp-agentgate
 
+## 0.5.1
+
+### Patch Changes
+
+- ec46e9c: Advisory DB: add MCPA-2026-0007 (gemini-bridge arbitrary file read, CVE-2026-54785) and MCPA-2026-0008 (flyto-core arbitrary file write, CVE-2026-67429). Fix: PyPI servers pinned with PEP 508 `==` (e.g. `uvx pkg==1.2.0`) are now parsed as pinned name+version, so advisory matching and AG-SC-001 pin advice work for uvx/pipx launches.
+- Updated dependencies [ec46e9c]
+  - mcp-agentgate-core@0.5.1
+
+## 0.5.0
+
+### Minor Changes
+
+- 528aecd: New `agentgate config convert` subcommand: convert MCP server configuration between client formats (Claude Desktop/Code, Cursor, VS Code, Codex, OpenCode) directly from the main CLI — same engine as the standalone `mcp-agentgate-config-convert` package, with lossy-conversion warnings on stderr.
+
+### Patch Changes
+
+- mcp-agentgate-core@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
