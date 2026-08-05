@@ -1,0 +1,29 @@
+{
+  "id": "MCPA-2026-0006",
+  "title": "Flowise MCP environment-variable blocklist bypass via npm_config_yes (unauthenticated RCE, CVE-2026-69263)",
+  "summary": "Flowise <= 3.1.2 shipped a mitigation for CVE-2025-8943 that blocks the -y/--yes flags on npx-launched MCP servers, but its environment-variable check denies only four names by exact match. npm reads configuration from npm_config_* environment variables, so setting npm_config_yes=true reproduces --yes: npx auto-installs and executes an attacker-named package, fully bypassing the mitigation even with the MCP security check enabled. Fixed in flowise / flowise-components 3.1.3.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": ["CVE-2026-69263", "GHSA-xc48-889x-5qmw"],
+  "cwe": ["CWE-184"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "flowise",
+      "ranges": [{ "introduced": "0", "fixed": "3.1.3" }]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "flowise-components",
+      "ranges": [{ "introduced": "0", "fixed": "3.1.3" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-xc48-889x-5qmw" },
+    { "type": "advisory", "url": "https://github.com/FlowiseAI/Flowise/security/advisories/GHSA-xc48-889x-5qmw" },
+    { "type": "fix", "url": "https://github.com/FlowiseAI/Flowise/pull/6471" }
+  ],
+  "timeline": {
+    "published": "2026-08-04"
+  }
+}

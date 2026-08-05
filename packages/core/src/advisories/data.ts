@@ -341,5 +341,50 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0005",
+    "title": "mcp-search-server (PyPI) is a malicious package",
+    "type": "malicious-package",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-search-server",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0006",
+    "title": "Flowise MCP environment-variable blocklist bypass via npm_config_yes (unauthenticated RCE, CVE-2026-69263)",
+    "type": "rce-vectors",
+    "severity": "high",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
   }
 ];
