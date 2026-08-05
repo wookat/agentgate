@@ -42,6 +42,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: bundled advisory data in sync with /advisories
+        run: |
+          node packages/core/scripts/bundle-advisories.mjs
+          git diff --exit-code packages/core/src/advisories/data.ts
       - name: agentgate scan (repo, static)
         run: >
           node packages/cli/dist/index.js scan .

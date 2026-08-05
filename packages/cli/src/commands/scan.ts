@@ -4,12 +4,14 @@ import pc from 'picocolors';
 import {
   Finding,
   Severity,
+  matchMcpaAdvisories,
   queryOsvMalware,
   scanConfiguration,
   scanRepo,
   scanServers,
   scanTools,
   scoreAdvisories,
+  scoreMcpaMatches,
   serverPackageRef,
   sortFindings,
   toSarif,
@@ -79,6 +81,11 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   // against OSV.dev known-malware entries. Pinned versions in the spec are
   // compared against version-scoped advisories.
   const pkgRefs = servers.map(serverPackageRef).filter((r) => r !== undefined);
+  // Bundled AgentGate MCP advisory database (works offline).
+  for (const ref of pkgRefs) {
+    const matches = matchMcpaAdvisories(ref.name, ref.ecosystem, ref.version);
+    findings.push(...scoreMcpaMatches(matches, ref, { serverName: ref.context?.match(/"(.+)"/)?.[1] ?? ref.name, file: ref.file }));
+  }
   if (pkgRefs.length > 0) {
     const osv = await queryOsvMalware(pkgRefs, { timeoutMs: Number(opts.timeout) });
     findings.push(

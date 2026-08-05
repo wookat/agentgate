@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+import url from 'node:url';
 import { Command, Option } from 'commander';
 import { SEVERITIES } from 'mcp-agentgate-core';
 import { runScan } from './commands/scan.js';
@@ -8,12 +11,16 @@ import { runCi } from './commands/ci.js';
 import { runDeps } from './commands/deps.js';
 import { setDebug } from './debug.js';
 
+const pkg = JSON.parse(
+  fs.readFileSync(path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../package.json'), 'utf8'),
+) as { version: string };
+
 const program = new Command();
 
 program
   .name('agentgate')
   .description('Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era')
-  .version('0.1.0')
+  .version(pkg.version)
   .option('--debug', 'print diagnostic details to stderr')
   .hook('preAction', (thisCommand) => {
     setDebug(Boolean(thisCommand.opts().debug));
