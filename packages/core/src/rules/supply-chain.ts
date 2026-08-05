@@ -17,13 +17,19 @@ function extractPackageSpec(command: string | undefined, args: string[]): string
   return undefined;
 }
 
-/** Split "name@1.2.3" / "@scope/name@1.2.3" / PEP 508 "name==1.2.3" into name and pinned version. */
+/**
+ * Split "name@1.2.3" / "@scope/name@1.2.3" / PEP 508 "name==1.2.3" into name
+ * and pinned version. PEP 508 range specs (`name>=1.0`, `name~=2.1`), extras
+ * (`name[extra]`), and markers yield the bare name with no version.
+ */
 function splitSpec(spec: string): { name: string; version?: string } {
   const eq = spec.indexOf('==');
-  if (eq > 0) {
+  if (eq > 0 && !/[><!~;[]/.test(spec.slice(0, eq))) {
     const version = spec.slice(eq + 2);
     return /^\d/.test(version) ? { name: spec.slice(0, eq), version } : { name: spec.slice(0, eq) };
   }
+  const range = spec.match(/^([\w.-]+)\s*(?:[><!~;[]|==)/);
+  if (range?.[1] !== undefined) return { name: range[1] };
   const at = spec.lastIndexOf('@');
   if (at <= 0) return { name: spec };
   const version = spec.slice(at + 1);
