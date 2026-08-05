@@ -386,5 +386,41 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0007",
+    "title": "gemini-bridge arbitrary local file read via consult_gemini_with_files inline mode (CVE-2026-54785)",
+    "type": "path-traversal",
+    "severity": "medium",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "gemini-bridge",
+        "ranges": [
+          {
+            "introduced": "1.0.0",
+            "fixed": "1.3.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0008",
+    "title": "Flyto2 Core arbitrary file write via image.download output_dir bypass (CVE-2026-67429)",
+    "type": "path-traversal",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "flyto-core",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.26.7"
+          }
+        ]
+      }
+    ]
   }
 ];
