@@ -43,7 +43,7 @@ afterAll(() => {
 
 describe('end-to-end against the official MCP example server', () => {
   it('live-scans, locks, and passes the drift gate', async () => {
-    const scan = await run(['scan', '--config', configPath, '--live', '--format', 'json', '--timeout', '120000']);
+    const scan = await run(['scan', '--config', configPath, '--live', '--yes', '--format', 'json', '--timeout', '120000']);
     const report = JSON.parse(scan.stdout);
     expect(report.warnings).toEqual([]);
     expect(report.scannedServers).toEqual(['everything']);

@@ -113,9 +113,33 @@ describe('agentgate scan', () => {
         },
       }),
     );
-    const res = await run(['scan', '--config', poisonedConfig, '--live', '--format', 'json']);
+    const res = await run(['scan', '--config', poisonedConfig, '--live', '--yes', '--format', 'json']);
     const report = JSON.parse(res.stdout);
     expect(report.findings.some((f: { category: string }) => f.category === 'tool-poisoning')).toBe(true);
+  }, 30000);
+
+  it('warns that stdio servers were not inspected without --live', async () => {
+    writeConfig();
+    const res = await run(['scan', '--config', configPath, '--format', 'json']);
+    const report = JSON.parse(res.stdout);
+    expect(report.warnings.some((w: string) => w.includes('not started') && w.includes('--live'))).toBe(true);
+  });
+
+  it('does not start stdio servers under --live without consent in a non-interactive session', async () => {
+    const poisonedConfig = path.join(dir, 'poisoned-noconsent.json');
+    fs.writeFileSync(
+      poisonedConfig,
+      JSON.stringify({
+        mcpServers: {
+          toy: { command: process.execPath, args: [FIXTURE_SERVER], env: { AGENTGATE_FIXTURE_VARIANT: 'drifted' } },
+        },
+      }),
+    );
+    const res = await run(['scan', '--config', poisonedConfig, '--live', '--format', 'json']);
+    const report = JSON.parse(res.stdout);
+    expect(report.findings.some((f: { category: string }) => f.category === 'tool-poisoning')).toBe(false);
+    expect(report.warnings.some((w: string) => w.includes('live scan declined'))).toBe(true);
+    expect(res.stderr).toContain('--yes');
   }, 30000);
 });
 

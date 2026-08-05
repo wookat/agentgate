@@ -37,6 +37,7 @@ npm i -g mcp-agentgate   # 或直接 npx mcp-agentgate <命令>
 
 agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode）
 agentgate scan --live          # 另外连接 stdio 服务器审计实时工具面
+                               # （启动前会询问确认；CI 中加 --yes）
 agentgate lock                 # 把当前工具面固定进 agentgate.lock
 agentgate diff                 # 任何工具名/描述/schema 变化即退出码 1 + 可读 diff
 agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退出

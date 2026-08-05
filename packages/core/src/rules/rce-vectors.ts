@@ -1,10 +1,24 @@
-import { Rule, finding, toolText } from './rule.js';
+import { Rule, finding, toolText, verbAlt } from './rule.js';
 
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
 const REMOTE_EXEC_RE = /\b(curl|wget)\b[^|;&]*\|\s*(sh|bash|node|python)\b/;
-const EVAL_RE = /\b(eval|exec)\s*\(|new\s+Function\s*\(|child_process|execSync|spawnSync\s*\(\s*['"`](sh|bash)/;
+/**
+ * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
+ * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
+ * `child_process` import is likewise only interesting next to an actual exec/spawn call.
+ */
+const EVAL_RE =
+  /(^|[^.\w])(eval|exec)\s*\(|new\s+Function\s*\(|\bexecSync\s*\(|\bspawnSync\s*\(\s*['"`](sh|bash)|\bchild_process\b[\s\S]{0,400}?\b(exec|execFile|spawn)(Sync)?\s*\(/;
 
-const EXEC_TOOL_RE = /\b(execute|run|eval)\b[^.]{0,40}\b(shell|command|script|code|python|javascript|sql)\b|\bshell[-_ ]?(command|exec)\b/i;
+const EXEC_TOOL_RE = new RegExp(
+  `\\b${verbAlt(['execute', 'run', 'eval', 'invoke'])}\\b[^.]{0,40}\\b(shell|command|commands|script|scripts|code|python|javascript|sql)\\b|\\bshell[-_ ]?(command|exec)\\b`,
+  'i',
+);
+
+/** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
+function isExecutableFile(file: string): boolean {
+  return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file);
+}
 
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
@@ -53,13 +67,16 @@ export const rceVectorsRule: Rule = {
     const findings = [];
     if (REMOTE_EXEC_RE.test(content)) {
       const m = content.match(REMOTE_EXEC_RE)!;
+      const executable = isExecutableFile(file);
       findings.push(
         finding(this, {
-          severity: 'critical',
+          severity: executable ? 'critical' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
-          message: 'Source pipes a remote download into an interpreter (curl|sh pattern)',
+          message: executable
+            ? 'Source pipes a remote download into an interpreter (curl|sh pattern)'
+            : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }
