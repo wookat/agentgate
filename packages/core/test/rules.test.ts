@@ -180,7 +180,16 @@ describe('supply-chain', () => {
 
   it('accepts PEP 508 == pins and flags PEP 508 range specs', () => {
     expect(supplyChainRule.checkServer!(server({ command: 'uvx', args: ['gemini-bridge==1.3.1'] }))).toHaveLength(0);
-    expect(supplyChainRule.checkServer!(server({ command: 'uvx', args: ['gemini-bridge>=1.0'] }))).toHaveLength(1);
+    const findings = supplyChainRule.checkServer!(server({ command: 'uvx', args: ['gemini-bridge>=1.0'] }));
+    expect(findings).toHaveLength(1);
+    expect(findings[0].message).toContain('gemini-bridge==1.2.3');
+  });
+
+  it('suggests runner-appropriate pin syntax', () => {
+    const npm = supplyChainRule.checkServer!(server({ command: 'npx', args: ['@scope/server@latest'] }));
+    expect(npm[0].message).toContain('@scope/server@1.2.3');
+    const pypi = supplyChainRule.checkServer!(server({ command: 'uvx', args: ['mcp-server-fetch'] }));
+    expect(pypi[0].message).toContain('mcp-server-fetch==1.2.3');
   });
 
   it('flags @latest and scoped unpinned specs', () => {
