@@ -221,6 +221,22 @@ describe('supply-chain', () => {
     expect(serverPackageRef(server({ command: 'node', args: ['server.js'] }))).toBeUndefined();
     expect(serverPackageRef(server({ command: 'npx', args: ['./local-dir'] }))).toBeUndefined();
   });
+
+  it('serverPackageRef yields the bare name for PEP 508 range specs and extras', () => {
+    expect(serverPackageRef(server({ command: 'uvx', args: ['gemini-bridge>=1.0'] }))).toMatchObject({
+      name: 'gemini-bridge',
+      version: undefined,
+      ecosystem: 'pypi',
+    });
+    expect(serverPackageRef(server({ command: 'uvx', args: ['gemini-bridge~=1.2'] }))).toMatchObject({
+      name: 'gemini-bridge',
+      version: undefined,
+    });
+    expect(serverPackageRef(server({ command: 'uvx', args: ['mcp-server[extra]==1.0.0'] }))).toMatchObject({
+      name: 'mcp-server',
+      version: undefined,
+    });
+  });
 });
 
 describe('scanner integration', () => {
