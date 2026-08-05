@@ -25,7 +25,8 @@ describe('knownConfigLocations', () => {
 
   it('uses platform-specific paths', () => {
     const mac = knownConfigLocations('/Users/u', 'darwin').find((l) => l.client === 'claude-desktop')!;
-    expect(mac.path).toContain('Library/Application Support');
+    // separator-agnostic: path.join emits `\` when the suite runs on Windows
+    expect(mac.path.split(path.sep).join('/')).toContain('Library/Application Support');
     const linux = knownConfigLocations('/home/u', 'linux').find((l) => l.client === 'claude-desktop')!;
     expect(linux.path).toContain('.config');
   });
