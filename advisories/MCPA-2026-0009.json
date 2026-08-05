@@ -1,0 +1,42 @@
+{
+  "id": "MCPA-2026-0009",
+  "title": "Malicious npm packages squatting official MCP reference server names (mcp-server-fetch et al.)",
+  "summary": "A June 2026 campaign published ten unscoped npm packages squatting the names of official MCP reference servers (mcp-server-fetch, mcp-server-git, mcp-server-github, mcp-server-figma, mcp-server-notion, mcp-server-postgres, mcp-server-redis, mcp-server-sentry, mcp-server-sequential-thinking, mcp-server-supabase). Each declares a postinstall hook and uses the same file as main/bin, so the payload runs on npm install, require(), and npx invocation alike, exfiltrating host and environment data to a hardcoded workers.dev endpoint. AI coding agents and MCP client configs commonly launch these exact names via `npx mcp-server-*`; the legitimate reference servers live under the @modelcontextprotocol scope (e.g. @modelcontextprotocol/server-github) or, for fetch/git, on PyPI. Treat every version of the unscoped npm names as malicious.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "MAL-2026-5476",
+    "MAL-2026-5477",
+    "MAL-2026-5478",
+    "MAL-2026-5479",
+    "MAL-2026-5480",
+    "MAL-2026-5481",
+    "MAL-2026-5482",
+    "MAL-2026-5483",
+    "MAL-2026-5484",
+    "MAL-2026-5485"
+  ],
+  "cwe": ["CWE-506"],
+  "packages": [
+    { "ecosystem": "npm", "name": "mcp-server-fetch", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-figma", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-git", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-github", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-notion", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-postgres", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-redis", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-sentry", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-sequential-thinking", "ranges": [{ "introduced": "0" }] },
+    { "ecosystem": "npm", "name": "mcp-server-supabase", "ranges": [{ "introduced": "0" }] }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5476" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5478" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5479" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5484" },
+    { "type": "web", "url": "https://github.com/modelcontextprotocol/servers" }
+  ],
+  "timeline": {
+    "published": "2026-06-09"
+  }
+}
