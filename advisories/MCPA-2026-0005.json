@@ -1,0 +1,24 @@
+{
+  "id": "MCPA-2026-0005",
+  "title": "mcp-search-server (PyPI) is a malicious package",
+  "summary": "The PyPI package mcp-search-server contained malicious code in every published release (1.0.0, 2.0.0, 2.0.1). Identified by the OpenSSF malicious-packages project and published as GHSA-3rhm-6v7p-whrg / OSV MAL-2026-11198; documented as part of a July 2026 PyPI campaign. Machines that installed or launched it (e.g. via `uvx mcp-search-server`) should be treated as compromised: remove the package and rotate secrets.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["GHSA-3rhm-6v7p-whrg", "MAL-2026-11198"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp-search-server",
+      "ranges": [{ "introduced": "0" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-3rhm-6v7p-whrg" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-11198" },
+    { "type": "article", "url": "https://bad-packages.kam193.eu/pypi/campaign/2026-07-mcp-search-server" }
+  ],
+  "timeline": {
+    "published": "2026-07-30"
+  }
+}
