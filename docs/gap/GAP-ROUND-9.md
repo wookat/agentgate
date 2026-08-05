@@ -12,10 +12,14 @@ cross-platform. AgentGate had platform-aware config discovery
 
 ## The fix
 
-1. CI matrix: `ubuntu-latest` / `macos-latest` / `windows-latest` on Node 22,
-   plus `ubuntu-latest` on Node 20 (both active LTS lines). `fail-fast: false`
-   so one platform's failure doesn't mask another's.
-2. Audit of path handling found one real Windows bug: `scanRepo` passed
+1. CI matrix: `ubuntu-latest` / `macos-latest` / `windows-latest` on Node 22.
+   (A Node 20 job was tried and dropped: `engines` requires `>=22` and pnpm 11
+   itself needs Node >=22.13, so 20 is out of the support window by design.)
+   `fail-fast: false` so one platform's failure doesn't mask another's.
+2. The first matrix run caught a real Windows failure: the discovery test
+   asserted a `/`-separated substring against `path.join` output (fixed to be
+   separator-agnostic). An audit of path handling then found one real Windows
+   product bug: `scanRepo` passed
    native-separator relative paths (`tests\x.spec.ts`) into `checkSource`
    rules, so the round-5 test-path downgrade (`/(^|\/)tests?\//`) and the
    dynamic-exec heuristics would not match on Windows. Fixed: rules now always
@@ -23,8 +27,7 @@ cross-platform. AgentGate had platform-aware config discovery
 
 ## Evidence
 
-- CI on this PR runs 4 jobs (3 OS × Node 22 + ubuntu Node 20); all must be
-  green before merge — see the PR checks.
+- CI on this PR: ubuntu / macos / windows all green (see the PR checks).
 - `knownConfigLocations` already covered win32 (`%APPDATA%`) and darwin
   (`Library/Application Support`) paths with tests injecting each platform.
 - Full local suite unchanged: 160 tests green on Linux.
