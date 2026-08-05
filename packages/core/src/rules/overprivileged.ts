@@ -1,14 +1,32 @@
-import { Rule, finding, toolText } from './rule.js';
+import { Rule, finding, toolText, verbAlt } from './rule.js';
 import { ToolSurface } from '../types.js';
 
 type Capability = 'read-files' | 'write-files' | 'exec' | 'network' | 'send-messages';
 
 const CAPABILITY_PATTERNS: { cap: Capability; re: RegExp }[] = [
-  { cap: 'read-files', re: /\b(read|cat|open|load|view)\b[^.]{0,40}\b(file|files|directory|folder|path)\b|\bread[-_]?file\b/i },
-  { cap: 'write-files', re: /\b(write|save|create|modify|edit|delete|remove)\b[^.]{0,40}\b(file|files|directory|folder)\b|\bwrite[-_]?file\b/i },
-  { cap: 'exec', re: /\b(execute|run|spawn|launch)\b[^.]{0,40}\b(command|shell|script|process|code)\b|\bshell[-_ ]?(command|exec)\b|\bexec\b/i },
-  { cap: 'network', re: /\b(fetch|http|request|download|url|crawl|browse|scrape)\b/i },
-  { cap: 'send-messages', re: /\b(send|post|publish)\b[^.]{0,40}\b(email|message|slack|webhook|tweet|sms)\b/i },
+  {
+    cap: 'read-files',
+    re: new RegExp(`\\b${verbAlt(['read', 'cat', 'open', 'load', 'view'])}\\b[^.]{0,40}\\b(file|files|directory|directories|folder|folders|path|paths)\\b|\\bread[-_]?file\\b`, 'i'),
+  },
+  {
+    cap: 'write-files',
+    re: new RegExp(
+      `\\b${verbAlt(['write', 'save', 'create', 'modify', 'edit', 'delete', 'remove'])}\\b[^.]{0,40}\\b(file|files|directory|directories|folder|folders)\\b|\\bwrite[-_]?file\\b`,
+      'i',
+    ),
+  },
+  {
+    cap: 'exec',
+    re: new RegExp(
+      `\\b${verbAlt(['execute', 'run', 'spawn', 'launch'])}\\b[^.]{0,40}\\b(command|commands|shell|script|scripts|process|processes|code)\\b|\\bshell[-_ ]?(command|exec)\\b|\\bexec\\b`,
+      'i',
+    ),
+  },
+  { cap: 'network', re: new RegExp(`\\b(${verbAlt(['fetch', 'request', 'download', 'crawl', 'browse', 'scrape'])}|http|url)\\b`, 'i') },
+  {
+    cap: 'send-messages',
+    re: new RegExp(`\\b${verbAlt(['send', 'post', 'publish'])}\\b[^.]{0,40}\\b(email|emails|message|messages|slack|webhook|tweet|sms)\\b`, 'i'),
+  },
 ];
 
 const DANGEROUS_COMBOS: { caps: Capability[]; why: string }[] = [

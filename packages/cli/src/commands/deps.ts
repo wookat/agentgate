@@ -50,6 +50,16 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
       concurrency: Number(opts.concurrency),
     });
     findings = scoreDependencies(results);
+    // When the registry is unreachable every ref fails identically; one warning
+    // beats a page of per-package "could not verify" rows.
+    const unverified = findings.filter((f) => f.ruleId === 'AG-DP-001' && f.severity === 'info' && f.message.startsWith('could not verify'));
+    if (unverified.length > 1 && unverified.length === refs.length) {
+      const reason = unverified[0]!.message.split(': ').slice(1).join(': ');
+      findings = findings.filter((f) => !unverified.includes(f));
+      warnings.push(
+        `registry unreachable (${reason}): ${unverified.length} package(s) could not be verified — re-run with network access or use --offline for name-shape checks only`,
+      );
+    }
   }
 
   const sorted = sortFindings(findings);

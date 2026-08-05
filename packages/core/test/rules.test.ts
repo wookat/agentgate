@@ -207,3 +207,33 @@ describe('scanner integration', () => {
     expect(findings.some((f) => f.category === 'overprivileged')).toBe(true);
   });
 });
+
+describe('third-person tool descriptions (verb-form recall)', () => {
+  it('flags "Executes arbitrary shell commands" as an RCE vector', () => {
+    const findings = rceVectorsRule.checkTool!(tool({ name: 'run_command', description: 'Executes arbitrary shell commands on the host system.' }), 'srv');
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-RC-001', severity: 'high' });
+  });
+
+  it('detects exec+network capability combos written in third person', () => {
+    const findings = overprivilegedRule.checkToolset!(
+      [
+        tool({ name: 'run_command', description: 'Executes arbitrary shell commands on the host system.' }),
+        tool({ name: 'fetch_url', description: 'Fetches any URL provided by the model.' }),
+      ],
+      'srv',
+    );
+    expect(findings.some((f) => f.message.includes('execute commands and reach the network'))).toBe(true);
+  });
+
+  it('detects read-files + network exfiltration combos written in third person', () => {
+    const findings = overprivilegedRule.checkToolset!(
+      [
+        tool({ name: 'read_notes', description: 'Reads files from the user home directory.' }),
+        tool({ name: 'post_webhook', description: 'Sends messages to a Slack webhook.' }),
+      ],
+      'srv',
+    );
+    expect(findings.length).toBeGreaterThan(0);
+  });
+});

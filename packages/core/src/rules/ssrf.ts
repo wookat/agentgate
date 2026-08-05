@@ -1,11 +1,11 @@
-import { Rule, finding, toolText } from './rule.js';
+import { Rule, finding, toolText, verbAlt } from './rule.js';
 
 const METADATA_ENDPOINTS = /(169\.254\.169\.254|metadata\.google\.internal|metadata\.azure\.com|100\.100\.100\.200)/i;
 const PRIVATE_IP = /\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|0\.0\.0\.0)\b/;
 
 /** Tool accepts a caller-controlled URL and fetches it — classic SSRF surface. */
 const URL_PARAM_RE = /"(url|uri|endpoint|target|link|href|callback[-_]?url|webhook[-_]?url)"/i;
-const FETCH_VERB_RE = /\b(fetch|retrieve|download|request|get|crawl|scrape|browse|proxy)\b/i;
+const FETCH_VERB_RE = new RegExp(`\\b(${verbAlt(['fetch', 'retrieve', 'download', 'request', 'get', 'crawl', 'scrape', 'browse', 'proxy'])})\\b`, 'i');
 
 export const ssrfRule: Rule = {
   id: 'AG-SS-001',

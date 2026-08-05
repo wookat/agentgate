@@ -4,6 +4,30 @@ import { Rule, finding } from './rule.js';
 const HIDDEN_UNICODE =
   /[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2064\u206a-\u206f\ufeff\ue000-\uf8ff]|[\u{e0000}-\u{e007f}]/u;
 
+/** Zero-width joiners between pictographs are ordinary emoji sequences (👩‍💻), not hidden instructions. */
+const EMOJI_ZWJ = /(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator})[\u{fe0e}\u{fe0f}]?(?:\u200d(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator})[\u{fe0e}\u{fe0f}]?)+/gu;
+
+/**
+ * Same set minus the private-use area (Nerd Font / Powerline glyphs are legitimately
+ * embedded in terminal code) and a leading BOM, which are noise in ordinary source files.
+ */
+const SOURCE_HIDDEN_UNICODE =
+  /[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2069\u206a-\u206f\ufeff]|[\u{e0000}-\u{e007f}]/u;
+
+function hasHiddenUnicode(text: string): boolean {
+  return HIDDEN_UNICODE.test(text.replace(EMOJI_ZWJ, ''));
+}
+
+/** Regional flag emoji (🏴󠁧󠁢󠁥󠁮󠁧󠁿) legitimately encode their region with Unicode tag characters. */
+const EMOJI_TAG_SEQUENCE = /\u{1f3f4}[\u{e0020}-\u{e007f}]+/gu;
+
+function findHiddenInSource(content: string): { char: string; line: number } | undefined {
+  const cleaned = content.replace(/^\ufeff/, '').replace(EMOJI_ZWJ, '').replace(EMOJI_TAG_SEQUENCE, '');
+  const m = cleaned.match(SOURCE_HIDDEN_UNICODE);
+  if (!m) return undefined;
+  return { char: m[0], line: cleaned.slice(0, m.index ?? 0).split('\n').length };
+}
+
 const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
@@ -20,7 +44,7 @@ export const toolPoisoningRule: Rule = {
   checkTool(tool, serverName) {
     const findings = [];
     const text = `${tool.name}\n${tool.description}\n${JSON.stringify(tool.inputSchema ?? {})}`;
-    if (HIDDEN_UNICODE.test(text)) {
+    if (hasHiddenUnicode(text)) {
       findings.push(
         finding(this, {
           severity: 'critical',
@@ -44,13 +68,20 @@ export const toolPoisoningRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    if (!HIDDEN_UNICODE.test(content)) return [];
+    const hit = findHiddenInSource(content);
+    if (!hit) return [];
+    const cp = hit.char.codePointAt(0)!;
+    const codepoint = `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
+    // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
+    // zero-width space or BOM is usually editor noise, so it is reported quietly.
+    const trojan = (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069) || cp >= 0xe0000;
     return [
       finding(this, {
-        severity: 'high',
+        severity: trojan ? 'high' : 'low',
         target: file,
         file,
-        message: 'Source file contains hidden/invisible Unicode characters (possible hidden tool instructions)',
+        line: hit.line,
+        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions`,
       }),
     ];
   },

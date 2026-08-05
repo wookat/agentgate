@@ -14,6 +14,25 @@ export interface ScanOptions {
   failOn?: Severity;
   ignore?: string[];
   timeout: string;
+  /** Skip the interactive confirmation before `--live` spawns stdio servers. */
+  yes?: boolean;
+}
+
+/** Ask once, listing every command that would be spawned. Non-interactive runs must pass --yes. */
+async function confirmSpawn(commands: string[]): Promise<boolean> {
+  console.error(pc.bold('\nagentgate --live starts these stdio servers as subprocesses to read their tool surface:'));
+  for (const c of commands) console.error(`  ${c}`);
+  if (!process.stdin.isTTY) {
+    console.error(pc.yellow('non-interactive session: re-run with --yes to allow starting them (skipping live scan)\n'));
+    return false;
+  }
+  process.stderr.write(pc.bold('\nStart them? [y/N]: '));
+  const answer = await new Promise<string>((resolve) => {
+    process.stdin.setEncoding('utf8');
+    process.stdin.once('data', (d) => resolve(String(d)));
+  });
+  process.stdin.pause();
+  return /^\s*y(es)?\s*$/i.test(answer);
 }
 
 export async function runScan(target: string | undefined, opts: ScanOptions): Promise<number> {
@@ -44,14 +63,27 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   scannedServers.push(...servers.map((s) => s.name));
   findings.push(...scanServers(servers));
 
+  const stdioServers = servers.filter((s) => s.command);
   if (opts.live) {
-    const { surfaces, errors } = await gatherSurfaces(servers, Number(opts.timeout));
-    for (const { server, error } of errors) {
-      warnings.push(`live scan skipped for "${server}": ${error}`);
+    const allowed =
+      stdioServers.length === 0 ||
+      opts.yes ||
+      (await confirmSpawn(stdioServers.map((s) => [s.command, ...(s.args ?? [])].join(' '))));
+    if (allowed) {
+      const { surfaces, errors } = await gatherSurfaces(servers, Number(opts.timeout));
+      for (const { server, error } of errors) {
+        warnings.push(`live scan skipped for "${server}": ${error}`);
+      }
+      for (const [name, tools] of Object.entries(surfaces)) {
+        findings.push(...scanTools(name, tools));
+      }
+    } else {
+      warnings.push(`live scan declined: ${stdioServers.length} stdio server(s) were not started; only static checks ran`);
     }
-    for (const [name, tools] of Object.entries(surfaces)) {
-      findings.push(...scanTools(name, tools));
-    }
+  } else if (stdioServers.length > 0) {
+    warnings.push(
+      `${stdioServers.length} stdio server(s) were not started, so their live tool surface (descriptions, schemas) was not inspected — re-run with --live to catch tool poisoning`,
+    );
   }
 
   const sorted = sortFindings(findings);
@@ -64,13 +96,13 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     warnings,
   };
 
+  for (const w of warnings) console.error(pc.yellow(`warning: ${w}`));
   let rendered: string;
   if (opts.format === 'json') {
     rendered = JSON.stringify(report, null, 2);
   } else if (opts.format === 'sarif') {
     rendered = JSON.stringify(toSarif(sorted), null, 2);
   } else {
-    for (const w of warnings) console.error(pc.yellow(`warning: ${w}`));
     rendered = [
       pc.dim(`Scanned ${scannedServers.length} server(s) across ${scannedFiles.length} file(s)${opts.live ? ' (live)' : ''}`),
       renderFindingsTable(sorted),

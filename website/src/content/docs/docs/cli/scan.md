@@ -18,11 +18,18 @@ Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, C
 | static (default) | Analyzes client configs and (for a directory target) source files. Never executes server code. |
 | `--live` | Additionally connects to each stdio server, performs the MCP handshake, and analyzes the tool surface the server *actually* exposes. Explicit opt-in because it runs server code. |
 
+Scanning a config means *starting the commands it names*, so `--live` first
+prints every command it is about to run and asks for confirmation. In a
+non-interactive session (CI, piped output) nothing is started unless you pass
+`--yes`. A static scan that skips stdio servers says so — it warns that their
+live tool surface was not inspected rather than reporting a clean bill.
+
 ## Options
 
 | Flag | Default | Description |
 |---|---|---|
 | `--live` | off | Connect to stdio servers and analyze their live tool surface. |
+| `-y, --yes` | off | With `--live`, start the configured stdio servers without asking for confirmation (required in CI). |
 | `-c, --config <file>` | auto-discover | Explicit MCP client config file (skips auto-discovery). Codex `config.toml` and OpenCode `opencode.json` are also understood. |
 | `-s, --server <names...>` | all | Restrict to specific server names. |
 | `-f, --format <format>` | `table` | Output format: `table`, `json`, `sarif`. JSON follows the [scan output spec](/docs/spec/scan-output/). |
@@ -34,7 +41,8 @@ Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, C
 
 ```bash
 agentgate scan                                  # audit everything your clients are configured to run
-agentgate scan --live                           # also audit the live tool surface
+agentgate scan --live                           # also audit the live tool surface (asks before starting servers)
+agentgate scan --live --yes                     # same, unattended (CI)
 agentgate scan --format json -o report.json     # machine-readable report (open it in the report viewer)
 agentgate scan --format sarif -o report.sarif   # for GitHub code scanning
 agentgate scan path/to/repo                     # source-level scan of an MCP server repo

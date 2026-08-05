@@ -28,6 +28,7 @@ program
   .description('Scan MCP servers: static config/repo analysis, plus live tool-surface analysis with --live')
   .argument('[target]', 'directory (repo scan + project configs) or config file; default: auto-discover client configs')
   .option('--live', 'connect to stdio servers and analyze their live tool surface')
+  .option('-y, --yes', 'with --live, start the configured stdio servers without asking for confirmation')
   .addOption(configOption)
   .addOption(serverOption)
   .addOption(new Option('-f, --format <format>', 'output format').choices(['table', 'json', 'sarif']).default('table'))

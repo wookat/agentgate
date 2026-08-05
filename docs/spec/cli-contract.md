@@ -35,7 +35,7 @@ that cannot be parsed is fatal (`2`).
       "detail": "optional extra context"
     }
   ],
-  "warnings": ["string"]
+  "warnings": ["string"]   // live-scan skips/declines, uninspected stdio servers
 }
 ```
 
