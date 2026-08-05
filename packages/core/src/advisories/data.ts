@@ -520,5 +520,49 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0010",
+    "title": "Malicious PyPI packages impersonating popular AI libraries as MCP servers (openai-mcp, langchain-core-mcp, tiktoken-mcp, instructor-mcp)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "openai-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "pypi",
+        "name": "langchain-core-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "pypi",
+        "name": "tiktoken-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "pypi",
+        "name": "instructor-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
