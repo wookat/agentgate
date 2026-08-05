@@ -20,4 +20,27 @@ describe('toSarif', () => {
     expect(run.results[0]!.level).toBe('error');
     expect(run.results[1]!.level).toBe('warning');
   });
+
+  it('reports the tool version and repository-relative artifact URIs', () => {
+    const findings: Finding[] = [
+      { ruleId: 'AG-TP-001', category: 'tool-poisoning', severity: 'critical', message: 'bad', target: 's/t', file: '/repo/sub/config.json', line: 3 },
+      { ruleId: 'AG-SC-001', category: 'supply-chain', severity: 'medium', message: 'unpinned', target: 'server', file: 'C:\\repo\\sub\\mcp.json' },
+      { ruleId: 'AG-SC-001', category: 'supply-chain', severity: 'medium', message: 'outside', target: 'server', file: '/elsewhere/mcp.json' },
+    ];
+    const sarif = toSarif(findings, { toolVersion: '1.2.3', baseDir: '/repo' }) as {
+      runs: {
+        tool: { driver: { version: string } };
+        results: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }[];
+      }[];
+    };
+    const run = sarif.runs[0]!;
+    expect(run.tool.driver.version).toBe('1.2.3');
+    const uris = run.results.map((r) => r.locations[0]!.physicalLocation.artifactLocation.uri);
+    expect(uris[0]).toBe('sub/config.json');
+    expect(uris[1]).toBe('C:/repo/sub/mcp.json');
+    expect(uris[2]).toBe('/elsewhere/mcp.json');
+
+    const winSarif = toSarif([findings[1]!], { baseDir: 'C:\\repo' }) as typeof sarif;
+    expect(winSarif.runs[0]!.results[0]!.locations[0]!.physicalLocation.artifactLocation.uri).toBe('sub/mcp.json');
+  });
 });
