@@ -37,7 +37,9 @@ this before installation.
    malicious-packages project). A dependency with a `MAL-*` advisory is a
    **critical** finding (`AG-DP-006`) linking to the advisory. When the
    advisory only covers specific compromised releases (e.g. the 2025
-   `debug`/`chalk` incident), the installed version from `node_modules` is
+   `debug`/`chalk` incident), the resolved version — from `node_modules`, or a
+   lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock` v1,
+   `poetry.lock`, `uv.lock`; best-effort parsing) — is
    compared: unaffected = `low`, affected = `critical`, unresolvable = `high`
    ("verify your lockfile"). Version-range CVEs are out of scope; use a
    dependency vulnerability scanner (osv-scanner, `npm audit`) alongside.
