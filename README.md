@@ -121,6 +121,20 @@ repos:
       - id: agentgate-ci
 ```
 
+## Compatibility
+
+| Platform | Status |
+| --- | --- |
+| Linux | CI-verified on every PR (`ubuntu-latest`) |
+| macOS | CI-verified on every PR (`macos-latest`) |
+| Windows | CI-verified on every PR (`windows-latest`) |
+| Node.js | >= 22 (enforced via `engines`) |
+
+The full test suite — including a live stdio MCP fixture server — runs on all
+three operating systems in CI. Client config discovery covers the
+platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
+and OpenCode on each OS.
+
 ## Config portability
 
 Move your MCP server config between clients without retyping JSON/TOML by hand

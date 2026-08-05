@@ -71,6 +71,17 @@ repos:
       - id: agentgate-ci
 ```
 
+## 兼容性
+
+| 平台 | 状态 |
+| --- | --- |
+| Linux | 每个 PR CI 实测（`ubuntu-latest`） |
+| macOS | 每个 PR CI 实测（`macos-latest`） |
+| Windows | 每个 PR CI 实测（`windows-latest`） |
+| Node.js | >= 22（`engines` 强制） |
+
+完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode 的平台特定路径。
+
 ## 配置可移植转换
 
 在各 MCP 客户端之间迁移配置，无需手工重写 JSON/TOML（官方 MCP 2026 路线图明确点名配置可移植性缺口）：
