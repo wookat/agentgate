@@ -141,13 +141,12 @@ Move your MCP server config between clients without retyping JSON/TOML by hand
 (the official MCP 2026 roadmap names config portability as an open gap):
 
 ```bash
-npx mcp-agentgate-config-convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
+npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
 Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, and OpenCode, with
-explicit warnings on any lossy conversion. See
-[packages/config-convert](packages/config-convert/) — merging into the CLI as
-`agentgate config convert`.
+explicit warnings on any lossy conversion. Also available as the standalone
+[mcp-agentgate-config-convert](packages/config-convert/) package.
 
 ## Why not just use a scanner (or just a lockfile)?
 
