@@ -60,9 +60,16 @@ describe('rule branch coverage', () => {
     expect(dlx.some((f) => f.category === 'supply-chain')).toBe(true);
   });
 
-  it('rce-vectors: eval of dynamic content in source', () => {
-    const findings = repoScan({ 'evil.js': 'const r = eval(userInput);\n' });
+  it('rce-vectors: eval of dynamic content in MCP server source', () => {
+    const findings = repoScan({
+      'evil.js': 'import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";\nconst r = eval(userInput);\n',
+    });
     expect(findings.some((f) => f.category === 'rce-vectors')).toBe(true);
+  });
+
+  it('rce-vectors: eval in ordinary non-MCP source is out of scope', () => {
+    const findings = repoScan({ 'app.js': 'const r = eval(userInput);\n' });
+    expect(findings.some((f) => f.category === 'rce-vectors')).toBe(false);
   });
 
   it('auth-missing: invalid URL and inline auth with query params', () => {

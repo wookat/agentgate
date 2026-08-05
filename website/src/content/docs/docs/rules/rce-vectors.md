@@ -16,8 +16,8 @@ Detects remote-code-execution vectors in how servers are launched and what their
 
 **Source scan**:
 
-- `curl|sh` patterns in repo files (`critical`).
-- Dynamic code-execution primitives — `eval(`, `new Function(`, `child_process`/`execSync` shell spawns (`medium`) — review how inputs reach them.
+- `curl|sh` patterns in repo files: `critical` in files that are actually executed (shell scripts, Dockerfiles, CI YAML, `package.json`), `medium` elsewhere (usually documentation or prompt text — confirm it is never executed).
+- Dynamic code-execution primitives — `eval(`, `new Function(`, `child_process`/`execSync` shell spawns (`medium`) — review how inputs reach them. Reported only in files that are part of an MCP server (referencing `modelcontextprotocol`, `FastMCP`, `McpServer`, …): that is where model-controlled input can reach them. Dynamic execution in ordinary application code is out of scope for this scanner.
 
 ## Why it matters
 
