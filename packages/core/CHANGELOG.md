@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.6.2
+
+### Patch Changes
+
+- 4b28ae8: Add proper package-level READMEs so the npm registry pages document install, commands, exit codes, and links (previously the CLI package had no README on npm).
+
 ## 0.6.1
 
 ## 0.6.0
