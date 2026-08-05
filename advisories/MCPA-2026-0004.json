@@ -1,0 +1,24 @@
+{
+  "id": "MCPA-2026-0004",
+  "title": "ray-mcp-server 0.2.1 shipped malicious code (Hades/Shai-Hulud PyPI campaign)",
+  "summary": "PyPI package ray-mcp-server version 0.2.1 contained malicious code delivered through a setup.pth payload, part of the Hades campaign hitting PyPI packages. Published as PYSEC-2026-1074 / OSV MAL-2026-5325. Only 0.2.1 is listed as affected; installations pinned to other versions should still verify their environment, and machines that installed 0.2.1 (e.g. via `uvx ray-mcp-server`) should rotate secrets.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["PYSEC-2026-1074", "MAL-2026-5325"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "ray-mcp-server",
+      "ranges": [{ "introduced": "0.2.1", "last_affected": "0.2.1" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/PYSEC-2026-1074" },
+    { "type": "article", "url": "https://www.stepsecurity.io/blog/the-hades-campaign-pypi-packages" },
+    { "type": "article", "url": "https://www.endorlabs.com/learn/shai-hulud-hades-wave-hits-six-pypi-bioinformatics-packages" }
+  ],
+  "timeline": {
+    "published": "2026-07-07"
+  }
+}

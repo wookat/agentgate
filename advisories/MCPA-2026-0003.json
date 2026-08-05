@@ -1,0 +1,23 @@
+{
+  "id": "MCPA-2026-0003",
+  "title": "explorhub-mcp-server is a malicious npm package",
+  "summary": "The npm package explorhub-mcp-server contains embedded malicious code (CWE-506); every published version is affected. Identified by the OpenSSF malicious-packages project and published as GHSA-2qjx-pmc9-2jrj / OSV MAL-2026-4312. Any machine that installed or launched it (e.g. via `npx explorhub-mcp-server` in an MCP client config) should be treated as compromised: remove the package and rotate secrets.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["GHSA-2qjx-pmc9-2jrj", "MAL-2026-4312"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "explorhub-mcp-server",
+      "ranges": [{ "introduced": "0" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-2qjx-pmc9-2jrj" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-4312" }
+  ],
+  "timeline": {
+    "published": "2026-05-25"
+  }
+}
