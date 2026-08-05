@@ -5,6 +5,8 @@ import {
   Finding,
   Severity,
   collectDependencies,
+  queryOsvMalware,
+  scoreAdvisories,
   scoreDependencies,
   scoreOffline,
   sortFindings,
@@ -24,6 +26,19 @@ export interface DepsOptions {
   imports?: boolean;
   timeout: string;
   concurrency: string;
+}
+
+/** Resolved version of an npm dependency, read from node_modules when installed. */
+function installedVersion(dir: string, ref: { name: string; ecosystem: string }): string | undefined {
+  if (ref.ecosystem !== 'npm') return undefined;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'node_modules', ...ref.name.split('/'), 'package.json'), 'utf8')) as {
+      version?: string;
+    };
+    return typeof pkg.version === 'string' ? pkg.version : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function runDeps(target: string | undefined, opts: DepsOptions): Promise<number> {
@@ -59,6 +74,12 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
       warnings.push(
         `registry unreachable (${reason}): ${unverified.length} package(s) could not be verified — re-run with network access or use --offline for name-shape checks only`,
       );
+    }
+    const osv = await queryOsvMalware(refs, { timeoutMs: Number(opts.timeout) });
+    findings.push(...scoreAdvisories(osv.advisories, (ref) => installedVersion(dir, ref)));
+    debugLog(`OSV: ${osv.advisories.length} malware advisory hit(s)${osv.error ? ` (error: ${osv.error})` : ''}`);
+    if (osv.error) {
+      warnings.push(`OSV.dev unreachable (${osv.error}): known-malware advisory check skipped`);
     }
   }
 
