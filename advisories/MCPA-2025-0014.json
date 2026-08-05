@@ -1,0 +1,20 @@
+{
+  "id": "MCPA-2025-0014",
+  "title": "Malicious npm package mcp-server-everything squats the MCP reference \"everything\" server",
+  "summary": "The unscoped npm package mcp-server-everything (observed at 2.0.0, September 2025) is malicious and squats the name of the official MCP reference \"everything\" test server, which lives under the @modelcontextprotocol scope as @modelcontextprotocol/server-everything. OSV/GHSA flag every version of the unscoped name as malware (OSV MAL-2025-46986, GHSA-6j44-frpv-rvv9). MCP client configs and docs commonly launch the reference server via npx, so a missing scope prefix installs the malicious package instead. Treat every version of the unscoped npm name as malicious and use @modelcontextprotocol/server-everything.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["MAL-2025-46986", "GHSA-6j44-frpv-rvv9"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    { "ecosystem": "npm", "name": "mcp-server-everything", "ranges": [{ "introduced": "0" }] }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2025-46986" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-6j44-frpv-rvv9" },
+    { "type": "web", "url": "https://github.com/modelcontextprotocol/servers" }
+  ],
+  "timeline": {
+    "published": "2025-09-09"
+  }
+}

@@ -7,6 +7,9 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://agentgate.zalize.com',
+  redirects: {
+    '/docs': '/docs/introduction/',
+  },
   integrations: [
     starlight({
       title: 'AgentGate',

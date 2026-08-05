@@ -244,6 +244,23 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     ]
   },
   {
+    "id": "MCPA-2025-0014",
+    "title": "Malicious npm package mcp-server-everything squats the MCP reference \"everything\" server",
+    "type": "malicious-package",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-everything",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "MCPA-2026-0001",
     "title": "Azure MCP Server server-side request forgery allows privilege elevation (CVE-2026-26118)",
     "type": "ssrf",

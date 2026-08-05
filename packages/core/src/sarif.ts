@@ -19,8 +19,26 @@ const SECURITY_SEVERITY: Record<Severity, string> = {
   info: '0.0',
 };
 
+export interface SarifOptions {
+  /** Version reported as tool.driver.version. */
+  toolVersion?: string;
+  /**
+   * Directory that artifact URIs are made relative to (default: cwd).
+   * GitHub code scanning requires repository-relative paths.
+   */
+  baseDir?: string;
+}
+
+function relativeUri(file: string, baseDir: string): string {
+  const base = baseDir.endsWith('/') ? baseDir : `${baseDir}/`;
+  const posix = file.replaceAll('\\', '/');
+  return posix.startsWith(base) ? posix.slice(base.length) : posix;
+}
+
 /** Convert findings to SARIF 2.1.0 for GitHub code scanning and other consumers. */
-export function toSarif(findings: Finding[], toolVersion = '0.1.0'): object {
+export function toSarif(findings: Finding[], opts: SarifOptions = {}): object {
+  const toolVersion = opts.toolVersion ?? '0.0.0';
+  const baseDir = (opts.baseDir ?? process.cwd()).replaceAll('\\', '/');
   return {
     $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
     version: '2.1.0',
@@ -57,7 +75,7 @@ export function toSarif(findings: Finding[], toolVersion = '0.1.0'): object {
           locations: [
             {
               physicalLocation: {
-                artifactLocation: { uri: f.file ?? f.target },
+                artifactLocation: { uri: relativeUri(f.file ?? f.target, baseDir) },
                 region: { startLine: f.line ?? 1 },
               },
             },

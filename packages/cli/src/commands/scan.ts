@@ -19,6 +19,7 @@ import {
 } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
+import { CLI_VERSION } from '../version.js';
 
 export interface ScanOptions {
   live?: boolean;
@@ -145,7 +146,7 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   if (opts.format === 'json') {
     rendered = JSON.stringify(report, null, 2);
   } else if (opts.format === 'sarif') {
-    rendered = JSON.stringify(toSarif(sorted), null, 2);
+    rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION }), null, 2);
   } else {
     rendered = [
       pc.dim(`Scanned ${scannedServers.length} server(s) across ${scannedFiles.length} file(s)${opts.live ? ' (live)' : ''}`),
