@@ -15,7 +15,7 @@ Detects hardcoded credentials in MCP client configs and tools that solicit secre
 
 **Tool surface** (`--live`): tools whose input schema or description solicits credentials ("paste your API key…") are flagged at `medium` — secrets entered there flow through model context and may be logged or exfiltrated.
 
-**Source scan**: hardcoded secret patterns in repo files (`high`).
+**Source scan**: hardcoded secret patterns in repo files (`high`). In test/fixture/example paths (or `*.test.*` / `*.spec.*` files) the severity is `low` with a "likely a deliberate fake; confirm" note — redaction tests deliberately contain secret-shaped strings, but a real key pasted into a test is still a leak.
 
 ## Fixing findings
 

@@ -91,17 +91,20 @@ export const credentialLeakRule: Rule = {
   },
   checkSource(file, content) {
     const findings = [];
+    // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
+    // (redaction tests, sample configs); still reported, but quietly.
+    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
         const line = content.slice(0, m.index ?? 0).split('\n').length;
         findings.push(
           finding(this, {
-            severity: 'high',
+            severity: testPath ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}`,
           }),
         );
       }
