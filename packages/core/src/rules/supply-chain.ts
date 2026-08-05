@@ -72,12 +72,16 @@ export const supplyChainRule: Rule = {
     const spec = extractPackageSpec(server.command, args);
     if (spec !== undefined) {
       if (!isPinned(spec)) {
+        const bareName = splitSpec(spec.split('@latest')[0] ?? spec).name.split(/[><=!~]/)[0] ?? spec;
+        const pinExample = PYPI_RUNNERS.has((server.command ?? '').split(/[\\/]/).pop() ?? '')
+          ? `${bareName}==1.2.3`
+          : `${bareName}@1.2.3`;
         findings.push(
           finding(this, {
             severity: 'medium',
             target: server.name,
             file: server.source,
-            message: `Server "${server.name}" runs unpinned package "${spec}" — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${spec.split('@latest')[0]}@1.2.3) and lock the tool surface with \`agentgate lock\``,
+            message: `Server "${server.name}" runs unpinned package "${spec}" — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${pinExample}) and lock the tool surface with \`agentgate lock\``,
           }),
         );
       }
