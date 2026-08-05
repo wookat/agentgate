@@ -20,6 +20,8 @@ Detects servers whose combined tool surface enables exfiltration-class behavior,
 | read-files + send-messages | read local files and exfiltrate them via messages/email |
 | exec + network | download-and-run |
 
+**Configuration** (`--live`, `AG-TF-001`): the agent sees every configured server's tools in one namespace, so the same analysis runs *across* servers. A tool that reads private data (files, notes, email, repos) on one server plus a tool that sends data out (email, Slack, webhooks) on another is an exfiltration flow (`medium`); if a third tool ingests untrusted external content (web pages, issues, feeds) the toxic flow is complete — poisoned content can drive the other two — and severity is `high`.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.

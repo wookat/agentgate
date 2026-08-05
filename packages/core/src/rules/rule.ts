@@ -12,6 +12,8 @@ export interface Rule {
   checkToolset?(tools: ToolSurface[], serverName: string): Finding[];
   /** Check a source file (repo scan). */
   checkSource?(file: string, content: string): Finding[];
+  /** Check every configured server's tool surface together (cross-server analysis). */
+  checkConfiguration?(surfaces: Record<string, ToolSurface[]>): Finding[];
 }
 
 export function finding(rule: Rule, partial: Omit<Finding, 'ruleId' | 'category'>): Finding {
@@ -19,7 +21,10 @@ export function finding(rule: Rule, partial: Omit<Finding, 'ruleId' | 'category'
 }
 
 export function toolText(tool: ToolSurface): string {
-  return `${tool.name}\n${tool.description}\n${JSON.stringify(tool.inputSchema ?? {})}`;
+  // Drop the "$schema" meta-URL: its "http://json-schema.org/…" value would give
+  // every zod/JSON-Schema-generated tool a network capability.
+  const schema = JSON.stringify(tool.inputSchema ?? {}, (key, value) => (key === '$schema' ? undefined : value));
+  return `${tool.name}\n${tool.description}\n${schema}`;
 }
 
 /**
@@ -44,6 +49,11 @@ const IRREGULAR_FORMS: Record<string, string[]> = {
 
 function verbForms(verb: string): string {
   const extra = IRREGULAR_FORMS[verb] ?? [];
-  const generic = verb.endsWith('e') ? `${verb}(?:s|d)?|${verb.slice(0, -1)}ing` : `${verb}(?:s|ed|ing)?`;
+  const generic = verb.endsWith('e')
+    ? `${verb}(?:s|d)?|${verb.slice(0, -1)}ing`
+    : /(?:ch|sh|s|x|z)$/.test(verb)
+      ? `${verb}(?:es|ed|ing)?`
+      : `${verb}(?:s|ed|ing)?`;
   return extra.length > 0 ? `${[...extra].join('|')}|${generic}` : generic;
 }
+

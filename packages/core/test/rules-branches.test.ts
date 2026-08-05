@@ -19,7 +19,9 @@ function tool(overrides: Partial<ToolSurface>): ToolSurface {
 function repoScan(files: Record<string, string>) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-branch-'));
   for (const [name, content] of Object.entries(files)) {
-    fs.writeFileSync(path.join(dir, name), content);
+    const full = path.join(dir, name);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, content);
   }
   const result = scanRepo(dir);
   fs.rmSync(dir, { recursive: true, force: true });
@@ -60,9 +62,23 @@ describe('rule branch coverage', () => {
     expect(dlx.some((f) => f.category === 'supply-chain')).toBe(true);
   });
 
-  it('rce-vectors: eval of dynamic content in source', () => {
-    const findings = repoScan({ 'evil.js': 'const r = eval(userInput);\n' });
+  it('rce-vectors: eval of dynamic content in MCP server source', () => {
+    const findings = repoScan({
+      'evil.js': 'import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";\nconst r = eval(userInput);\n',
+    });
     expect(findings.some((f) => f.category === 'rce-vectors')).toBe(true);
+  });
+
+  it('credential-leak: secret-shaped strings in test paths are reported quietly', () => {
+    const key = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+    const findings = repoScan({ 'test/redaction.test.ts': `const fake = "${key}";\n` });
+    const hit = findings.find((f) => f.category === 'credential-leak');
+    expect(hit?.severity).toBe('low');
+  });
+
+  it('rce-vectors: eval in ordinary non-MCP source is out of scope', () => {
+    const findings = repoScan({ 'app.js': 'const r = eval(userInput);\n' });
+    expect(findings.some((f) => f.category === 'rce-vectors')).toBe(false);
   });
 
   it('auth-missing: invalid URL and inline auth with query params', () => {

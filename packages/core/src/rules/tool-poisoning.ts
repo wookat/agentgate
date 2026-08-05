@@ -1,4 +1,4 @@
-import { Rule, finding } from './rule.js';
+import { Rule, finding, toolText } from './rule.js';
 
 /** Zero-width / bidi / tag characters that can hide instructions from human review. */
 const HIDDEN_UNICODE =
@@ -43,7 +43,7 @@ export const toolPoisoningRule: Rule = {
   description: 'Detects hidden Unicode and prompt-injection patterns in tool names/descriptions/schemas',
   checkTool(tool, serverName) {
     const findings = [];
-    const text = `${tool.name}\n${tool.description}\n${JSON.stringify(tool.inputSchema ?? {})}`;
+    const text = toolText(tool);
     if (hasHiddenUnicode(text)) {
       findings.push(
         finding(this, {

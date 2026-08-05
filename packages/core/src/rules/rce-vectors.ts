@@ -15,6 +15,14 @@ const EXEC_TOOL_RE = new RegExp(
   'i',
 );
 
+/**
+ * Dynamic-exec primitives matter to an MCP scanner where model-controlled input
+ * can reach them — i.e. in files that are part of an MCP server. In an arbitrary
+ * codebase they are ordinary engineering, and reporting each one buries the
+ * findings that matter.
+ */
+const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpServer\b|mcpServers/i;
+
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
 function isExecutableFile(file: string): boolean {
   return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file);
@@ -80,7 +88,7 @@ export const rceVectorsRule: Rule = {
         }),
       );
     }
-    if (EVAL_RE.test(content)) {
+    if (EVAL_RE.test(content) && MCP_MARKER_RE.test(content)) {
       const m = content.match(EVAL_RE)!;
       findings.push(
         finding(this, {
