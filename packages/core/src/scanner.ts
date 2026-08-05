@@ -95,10 +95,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     if (stat.size > MAX_FILE_BYTES) continue;
     const content = fs.readFileSync(file, 'utf8');
     scannedFiles.push(file);
-    const rel = path.relative(dir, file);
+    // Posix-style so path-based rule heuristics (test/fixture trees) work on Windows too.
     for (const rule of rules) {
       if (rule.checkSource) {
-        findings.push(...rule.checkSource(rel, content).map((f) => ({ ...f, file: rel })));
+        findings.push(...rule.checkSource(relPosix, content).map((f) => ({ ...f, file: relPosix })));
       }
     }
   }
