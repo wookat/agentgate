@@ -5,6 +5,8 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { defaultConfigPath } from '../src/commands/config.js';
+
 const exec = promisify(execFile);
 const CLI = path.resolve(__dirname, '..', 'dist', 'index.js');
 
@@ -46,6 +48,13 @@ describe('agentgate config convert', () => {
     const res = await run(['config', 'convert', '--from', 'cursor', '--to', 'vscode', '--in', inFile]);
     expect(res.code).toBe(2);
     expect(res.stderr).toContain('invalid JSON');
+  });
+
+  it('defaultConfigPath finds a project-level config for the source client', () => {
+    const proj = path.join(dir, 'proj');
+    fs.mkdirSync(path.join(proj, '.cursor'), { recursive: true });
+    fs.writeFileSync(path.join(proj, '.cursor', 'mcp.json'), '{"mcpServers":{}}');
+    expect(defaultConfigPath('cursor', proj)).toBe(path.join(proj, '.cursor', 'mcp.json'));
   });
 
   it('rejects unknown client names via option choices', async () => {

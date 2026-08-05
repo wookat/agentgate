@@ -13,7 +13,7 @@ npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json
 | --- | --- |
 | `--from <client>` | source client format (required) |
 | `--to <client>` | target client format (required) |
-| `--in <file>` | input file (default: stdin) |
+| `--in <file>` | input file (default: the source client's config at its default location — project-level first, then user-level — or stdin when piped) |
 | `--out <file>` | output file (default: stdout) |
 
 Supported clients: `claude-desktop`, `claude-code`, `cursor`, `vscode`, `codex`, `opencode`.

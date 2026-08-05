@@ -105,7 +105,7 @@ configCmd
   .description('Convert MCP server configuration between client formats')
   .addOption(new Option('--from <client>', 'source client format').choices(clientChoices()).makeOptionMandatory())
   .addOption(new Option('--to <client>', 'target client format').choices(clientChoices()).makeOptionMandatory())
-  .option('--in <file>', 'input file (default: stdin)')
+  .option('--in <file>', "input file (default: the source client's config at its default location, or stdin when piped)")
   .option('--out <file>', 'output file (default: stdout)')
   .addHelpText('after', `\nClients:\n${describeClients()}`)
   .action((opts) => {
