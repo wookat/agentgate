@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import pc from 'picocolors';
-import { Finding, Severity, scanRepo, scanServers, scanTools, sortFindings, toSarif } from 'mcp-agentgate-core';
+import { Finding, Severity, scanConfiguration, scanRepo, scanServers, scanTools, sortFindings, toSarif } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
 import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
 
@@ -77,6 +77,7 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
       for (const [name, tools] of Object.entries(surfaces)) {
         findings.push(...scanTools(name, tools));
       }
+      findings.push(...scanConfiguration(surfaces));
     } else {
       warnings.push(`live scan declined: ${stdioServers.length} stdio server(s) were not started; only static checks ran`);
     }

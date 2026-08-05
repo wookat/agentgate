@@ -30,6 +30,16 @@ export function scanTools(serverName: string, tools: ToolSurface[], rules: Rule[
   return findings;
 }
 
+/** Run cross-server rules over every scanned server's tool surface at once. */
+export function scanConfiguration(surfaces: Record<string, ToolSurface[]>, rules: Rule[] = ALL_RULES): Finding[] {
+  if (Object.keys(surfaces).length < 2) return [];
+  const findings: Finding[] = [];
+  for (const rule of rules) {
+    if (rule.checkConfiguration) findings.push(...rule.checkConfiguration(surfaces));
+  }
+  return findings;
+}
+
 function* walk(dir: string): Generator<string> {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.') && entry.name !== '.mcp.json') {

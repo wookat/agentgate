@@ -12,7 +12,9 @@ Detects hidden Unicode and prompt-injection patterns in tool names, descriptions
 - **Hidden/invisible Unicode** (`critical`) — zero-width characters, bidi controls, Unicode tag characters, private-use-area glyphs. These hide instructions from human review while remaining fully visible to the model.
 - **Prompt-injection patterns** (`critical`) — e.g. `<instructions>`/`<secret>` style hidden-instruction tags, "ignore previous instructions", "do not tell the user", cross-tool coercion ("before using this tool… read/send…"), exfiltration instructions mentioning SSH keys / `.env` / credentials, and known poisoning markers.
 
-**Source scan** (repo target): source files containing hidden/invisible Unicode are flagged at `high`.
+**Source scan** (repo target): source files containing hidden/invisible Unicode are flagged with the codepoint and line. Trojan-Source-grade characters (bidi overrides, Unicode tag characters) are `high`; stray zero-width characters or BOMs — usually editor noise — are `low`. Emoji ZWJ/flag sequences and Nerd-Font private-use glyphs are not flagged.
+
+**Configuration** (`--live`, `AG-XS-001`): with several servers configured, tool names are checked for collisions — two servers exposing the same tool name means whichever the client resolves last silently shadows the other (`high`) — and each tool's text is checked for instructions about *another server's* tools ("instead of X…", "before calling X…"), which is cross-server hijacking (`critical`).
 
 ## Why it matters
 
