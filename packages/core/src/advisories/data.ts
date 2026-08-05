@@ -422,5 +422,103 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0009",
+    "title": "Malicious npm packages squatting official MCP reference server names (mcp-server-fetch et al.)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-fetch",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-figma",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-git",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-github",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-notion",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-postgres",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-redis",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-sentry",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-sequential-thinking",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-server-supabase",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
