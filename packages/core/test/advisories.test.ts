@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MCPA_ADVISORIES, McpaAdvisory, matchMcpaAdvisories, scoreMcpaMatches } from '../src/index.js';
+import { MCPA_ADVISORIES, McpaAdvisory, fetchLiveMcpaAdvisories, matchMcpaAdvisories, scoreMcpaMatches } from '../src/index.js';
 
 const ranged: McpaAdvisory = {
   id: 'MCPA-9999-0001',
@@ -82,5 +82,41 @@ describe('scoreMcpaMatches', () => {
     );
     expect(f!.severity).toBe('medium');
     expect(f!.message).toContain('pin');
+  });
+});
+
+describe('fetchLiveMcpaAdvisories', () => {
+  const jsonResponse = (body: unknown, status = 200) =>
+    Promise.resolve(new Response(JSON.stringify(body), { status }));
+
+  it('merges live records over the bundled database by id', async () => {
+    const bundledId = MCPA_ADVISORIES[0]!.id;
+    const override: McpaAdvisory = { ...ranged, id: bundledId };
+    const fresh: McpaAdvisory = { ...packageWide, id: 'MCPA-9999-0100' };
+    const res = await fetchLiveMcpaAdvisories({
+      fetchFn: () => jsonResponse({ advisories: [override, fresh] }),
+    });
+    expect(res.error).toBeUndefined();
+    expect(res.advisories.length).toBe(MCPA_ADVISORIES.length + 1);
+    expect(res.advisories.find((a) => a.id === bundledId)?.title).toBe(ranged.title);
+    expect(res.advisories.find((a) => a.id === 'MCPA-9999-0100')).toBeDefined();
+  });
+
+  it('drops malformed live records', async () => {
+    const res = await fetchLiveMcpaAdvisories({
+      fetchFn: () => jsonResponse({ advisories: [{ id: 'MCPA-9999-0101' }, 42, null] }),
+    });
+    expect(res.error).toBeUndefined();
+    expect(res.advisories.length).toBe(MCPA_ADVISORIES.length);
+  });
+
+  it('falls back to the bundled database on HTTP errors and network failures', async () => {
+    const http = await fetchLiveMcpaAdvisories({ fetchFn: () => jsonResponse({}, 500) });
+    expect(http.error).toContain('500');
+    expect(http.advisories).toBe(MCPA_ADVISORIES);
+
+    const network = await fetchLiveMcpaAdvisories({ fetchFn: () => Promise.reject(new Error('fetch failed')) });
+    expect(network.error).toBe('fetch failed');
+    expect(network.advisories).toBe(MCPA_ADVISORIES);
   });
 });

@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import {
   Finding,
   Severity,
+  fetchLiveMcpaAdvisories,
   matchMcpaAdvisories,
   queryOsvMalware,
   scanConfiguration,
@@ -81,10 +82,17 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   // against OSV.dev known-malware entries. Pinned versions in the spec are
   // compared against version-scoped advisories.
   const pkgRefs = servers.map(serverPackageRef).filter((r) => r !== undefined);
-  // Bundled AgentGate MCP advisory database (works offline).
-  for (const ref of pkgRefs) {
-    const matches = matchMcpaAdvisories(ref.name, ref.ecosystem, ref.version);
-    findings.push(...scoreMcpaMatches(matches, ref, { serverName: ref.context?.match(/"(.+)"/)?.[1] ?? ref.name, file: ref.file }));
+  // AgentGate MCP advisory database: bundled copy (works offline) merged
+  // with any fresher records from the live advisory API.
+  if (pkgRefs.length > 0) {
+    const mcpa = await fetchLiveMcpaAdvisories({ timeoutMs: Number(opts.timeout) });
+    if (mcpa.error) {
+      warnings.push(`AgentGate advisory API unreachable (${mcpa.error}): using the advisory database bundled with this release`);
+    }
+    for (const ref of pkgRefs) {
+      const matches = matchMcpaAdvisories(ref.name, ref.ecosystem, ref.version, mcpa.advisories);
+      findings.push(...scoreMcpaMatches(matches, ref, { serverName: ref.context?.match(/"(.+)"/)?.[1] ?? ref.name, file: ref.file }));
+    }
   }
   if (pkgRefs.length > 0) {
     const osv = await queryOsvMalware(pkgRefs, { timeoutMs: Number(opts.timeout) });

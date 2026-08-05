@@ -16,6 +16,7 @@ export * from './deps/resolved.js';
 export * from './advisories/types.js';
 export * from './advisories/data.js';
 export * from './advisories/match.js';
+export * from './advisories/live.js';
 export * from './advisories/score.js';
 export * from './deps/score.js';
 export type { Rule } from './rules/rule.js';
