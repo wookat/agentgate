@@ -31,8 +31,26 @@ describe('scoreDependency', () => {
   it('flags nonexistent packages as critical and stops there', () => {
     const findings = scoreDependency({ ref: ref({ name: 'ghost-pkg', origin: 'import', file: 'app.js' }), info: { exists: false } });
     expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-001', severity: 'critical', target: 'npm:ghost-pkg' });
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-001', severity: 'critical', target: 'npm:ghost-pkg (import)' });
     expect(findings[0]!.message).toContain('imported in app.js');
+  });
+
+  it('downgrades nonexistent import-only packages under test/example paths to low', () => {
+    const findings = scoreDependency({
+      ref: ref({ name: 'runtime_module', ecosystem: 'pypi', origin: 'import', file: 'tests/test_config.py' }),
+      info: { exists: false },
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-001', severity: 'low' });
+    expect(findings[0]!.message).toContain('test/example path');
+  });
+
+  it('keeps manifest-declared nonexistent packages critical even under test paths', () => {
+    const findings = scoreDependency({
+      ref: ref({ name: 'ghost', ecosystem: 'pypi', origin: 'manifest', file: 'tests/requirements.txt' }),
+      info: { exists: false },
+    });
+    expect(findings[0]).toMatchObject({ severity: 'critical' });
   });
 
   it('reports registry errors as info, not failures', () => {

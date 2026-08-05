@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import pc from 'picocolors';
-import { Finding, Severity, sortFindings } from 'mcp-agentgate-core';
+import { Finding, Severity, ruleDocUrl, sortFindings } from 'mcp-agentgate-core';
 
 const SEVERITY_COLOR: Record<Severity, (s: string) => string> = {
   critical: (s) => pc.bold(pc.red(s)),
@@ -28,7 +28,11 @@ export function renderFindingsTable(findings: Finding[]): string {
     .filter(([, n]) => n > 0)
     .map(([sev, n]) => SEVERITY_COLOR[sev](`${n} ${sev}`))
     .join(', ');
-  return `${table.toString()}\n\n${findings.length} finding(s): ${summary}`;
+  const docLinks = [...new Map(findings.map((f) => [f.ruleId, ruleDocUrl(f.ruleId, f.category)]))]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, url]) => pc.dim(`  ${id} → ${url}`))
+    .join('\n');
+  return `${table.toString()}\n\n${findings.length} finding(s): ${summary}\n${docLinks}`;
 }
 
 export function countBySeverity(findings: Finding[]): Record<Severity, number> {

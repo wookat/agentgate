@@ -20,6 +20,26 @@ export interface CollectOptions {
   includeImports?: boolean;
 }
 
+export interface CollectResult {
+  refs: DependencyRef[];
+  scannedFiles: string[];
+  /** Non-fatal problems, e.g. unparseable manifests. */
+  warnings: string[];
+}
+
+/** Remove Python string literals (incl. docstrings) and # comments so example code inside them is not treated as real imports. */
+export function stripPyLiterals(content: string): string {
+  return content
+    .replace(/("""|''')[\s\S]*?\1/g, '')
+    .replace(/(["'])(?:\\.|(?!\1).)*\1/g, "''")
+    .replace(/#[^\n]*/g, '');
+}
+
+/** Remove JS/TS block and line comments so commented-out imports are not collected. */
+export function stripJsComments(content: string): string {
+  return content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
+}
+
 function* walk(dir: string): Generator<string> {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue;
@@ -79,12 +99,13 @@ export function parseRequirementLine(line: string): string | undefined {
   return m?.[1];
 }
 
-function refsFromPackageJson(file: string, content: string, localNames: Set<string>): DependencyRef[] {
+function refsFromPackageJson(file: string, content: string, localNames: Set<string>, warnings: string[]): DependencyRef[] {
   const refs: DependencyRef[] = [];
   let data: unknown;
   try {
     data = JSON.parse(content);
-  } catch {
+  } catch (err) {
+    warnings.push(`${file}: unparseable JSON, skipped (${err instanceof Error ? err.message.split('\n')[0] : 'parse error'})`);
     return refs;
   }
   if (typeof data !== 'object' || data === null) return refs;
@@ -115,12 +136,13 @@ function refsFromRequirementsTxt(file: string, content: string): DependencyRef[]
   return refs;
 }
 
-function refsFromPyproject(file: string, content: string): DependencyRef[] {
+function refsFromPyproject(file: string, content: string, warnings: string[]): DependencyRef[] {
   const refs: DependencyRef[] = [];
   let data: Record<string, unknown>;
   try {
     data = parseToml(content) as Record<string, unknown>;
-  } catch {
+  } catch (err) {
+    warnings.push(`${file}: unparseable TOML, skipped (${err instanceof Error ? err.message.split('\n')[0] : 'parse error'})`);
     return refs;
   }
   const push = (name: string | undefined, context: string): void => {
@@ -152,13 +174,16 @@ function refsFromPyproject(file: string, content: string): DependencyRef[] {
  * pyproject.toml) and, optionally, bare import specifiers in source files.
  * Import-origin refs are only reported when not already declared in a manifest.
  */
-export function collectDependencies(dir: string, opts: CollectOptions = {}): { refs: DependencyRef[]; scannedFiles: string[] } {
+export function collectDependencies(dir: string, opts: CollectOptions = {}): CollectResult {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const manifestRefs: DependencyRef[] = [];
   const importRefs: DependencyRef[] = [];
   const scannedFiles: string[] = [];
+  const warnings: string[] = [];
   // workspace/file/git deps and the project's own package names: declared, not verified
   const localNames = new Set<string>();
+  // first-party Python modules present in the tree: never registry-verified
+  const localPyModules = new Set<string>();
 
   for (const file of walk(dir)) {
     const rel = path.relative(dir, file).split(path.sep).join('/');
@@ -167,6 +192,11 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): { r
     const ext = path.extname(file);
     const isManifest = base === 'package.json' || base === 'pyproject.toml' || /^requirements[\w.-]*\.txt$/.test(base);
     const isSource = opts.includeImports !== false && (JS_EXTENSIONS.has(ext) || ext === '.py');
+    if (ext === '.py') {
+      localPyModules.add(base.slice(0, -3));
+      const parent = path.basename(path.dirname(file));
+      if (parent && parent !== '.') localPyModules.add(parent);
+    }
     if (!isManifest && !isSource) continue;
     let content: string;
     try {
@@ -176,15 +206,15 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): { r
       continue;
     }
     scannedFiles.push(rel);
-    if (base === 'package.json') manifestRefs.push(...refsFromPackageJson(rel, content, localNames));
-    else if (base === 'pyproject.toml') manifestRefs.push(...refsFromPyproject(rel, content));
+    if (base === 'package.json') manifestRefs.push(...refsFromPackageJson(rel, content, localNames, warnings));
+    else if (base === 'pyproject.toml') manifestRefs.push(...refsFromPyproject(rel, content, warnings));
     else if (isManifest) manifestRefs.push(...refsFromRequirementsTxt(rel, content));
     else if (JS_EXTENSIONS.has(ext)) {
-      for (const name of extractJsImports(content)) {
+      for (const name of extractJsImports(stripJsComments(content))) {
         importRefs.push({ name, ecosystem: 'npm', origin: 'import', file: rel });
       }
     } else {
-      for (const name of extractPyImports(content)) {
+      for (const name of extractPyImports(stripPyLiterals(content))) {
         importRefs.push({ name, ecosystem: 'pypi', origin: 'import', file: rel });
       }
     }
@@ -193,6 +223,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): { r
   const declared = new Set([
     ...manifestRefs.map((r) => `${r.ecosystem}:${normalizeName(r.name, r.ecosystem)}`),
     ...[...localNames].map((n) => `npm:${n}`),
+    ...[...localPyModules].map((n) => `pypi:${normalizeName(n, 'pypi')}`),
   ]);
   const refs = [...manifestRefs];
   const seenImports = new Set<string>();
@@ -202,7 +233,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): { r
     seenImports.add(key);
     refs.push(ref);
   }
-  return { refs: dedupe(refs), scannedFiles };
+  return { refs: dedupe(refs), scannedFiles, warnings };
 }
 
 export function normalizeName(name: string, ecosystem: DepEcosystem): string {

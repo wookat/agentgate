@@ -1,4 +1,5 @@
 import { ALL_RULES } from './rules/index.js';
+import { ruleDocUrl } from './docs.js';
 import { DEP_RULES } from './deps/score.js';
 import { Finding, Severity } from './types.js';
 
@@ -35,12 +36,14 @@ export function toSarif(findings: Finding[], toolVersion = '0.1.0'): object {
                 id: rule.id,
                 name: rule.category,
                 shortDescription: { text: rule.description },
+                helpUri: ruleDocUrl(rule.id, rule.category),
                 properties: { 'security-severity': '8.0', tags: ['security', 'mcp', rule.category] },
               })),
               ...DEP_RULES.map((rule) => ({
                 id: rule.id,
                 name: 'supply-chain',
                 shortDescription: { text: rule.description },
+                helpUri: ruleDocUrl(rule.id, 'supply-chain'),
                 properties: { 'security-severity': '8.0', tags: ['security', 'dependencies', 'supply-chain'] },
               })),
             ],

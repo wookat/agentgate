@@ -119,10 +119,36 @@ describe('collectDependencies', () => {
     expect(refs).toEqual([]);
   });
 
-  it('tolerates malformed manifests', () => {
+  it('tolerates malformed manifests and reports them as warnings', () => {
     fs.writeFileSync(path.join(dir, 'package.json'), '{not json');
     fs.writeFileSync(path.join(dir, 'pyproject.toml'), '[[[broken');
-    const { refs } = collectDependencies(dir);
+    const { refs, warnings } = collectDependencies(dir);
     expect(refs).toEqual([]);
+    expect(warnings.some((w) => w.includes('package.json') && w.includes('unparseable JSON'))).toBe(true);
+    expect(warnings.some((w) => w.includes('pyproject.toml') && w.includes('unparseable TOML'))).toBe(true);
+  });
+
+  it('does not report first-party Python modules present in the tree', () => {
+    fs.mkdirSync(path.join(dir, 'src', 'myapp'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'src', 'myapp', '__init__.py'), '');
+    fs.writeFileSync(path.join(dir, 'utilmod.py'), '');
+    fs.writeFileSync(path.join(dir, 'main.py'), ['import myapp', 'import utilmod', 'import realdep', ''].join('\n'));
+    const { refs } = collectDependencies(dir);
+    expect(refs.map((r) => r.name)).toEqual(['realdep']);
+  });
+
+  it('ignores imports inside Python docstrings/strings and comments', () => {
+    fs.writeFileSync(
+      path.join(dir, 'doc.py'),
+      '"""Example:\n    import yourapplication\n"""\nx = "import strpkg"\n# import commented\nimport realpkg\n',
+    );
+    const { refs } = collectDependencies(dir);
+    expect(refs.map((r) => r.name)).toEqual(['realpkg']);
+  });
+
+  it('ignores imports inside JS comments', () => {
+    fs.writeFileSync(path.join(dir, 'c.js'), "/* const x = require('blockpkg'); */\n// import y from 'linepkg';\nrequire('realjs');\n");
+    const { refs } = collectDependencies(dir);
+    expect(refs.map((r) => r.name)).toEqual(['realjs']);
   });
 });
