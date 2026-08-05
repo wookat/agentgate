@@ -12,5 +12,6 @@ export * from './deps/types.js';
 export * from './deps/collect.js';
 export * from './deps/registry.js';
 export * from './deps/osv.js';
+export * from './deps/resolved.js';
 export * from './deps/score.js';
 export type { Rule } from './rules/rule.js';
