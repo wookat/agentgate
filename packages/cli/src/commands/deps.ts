@@ -29,19 +29,6 @@ export interface DepsOptions {
   concurrency: string;
 }
 
-/** Resolved version of an npm dependency, read from node_modules when installed. */
-function installedVersion(dir: string, ref: { name: string; ecosystem: string }): string | undefined {
-  if (ref.ecosystem !== 'npm') return undefined;
-  try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'node_modules', ...ref.name.split('/'), 'package.json'), 'utf8')) as {
-      version?: string;
-    };
-    return typeof pkg.version === 'string' ? pkg.version : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export async function runDeps(target: string | undefined, opts: DepsOptions): Promise<number> {
   const dir = path.resolve(target ?? process.cwd());
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
