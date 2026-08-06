@@ -700,5 +700,43 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0016",
+    "title": "LudusMCP ludus_cli_execute command injection via command/args arguments (CVE-2026-19047)",
+    "type": "rce-vectors",
+    "severity": "medium",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "ludus-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.24"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0017",
+    "title": "LudusMCP ludus_environment_guides_search path traversal via guide_name (CVE-2026-19046)",
+    "type": "path-traversal",
+    "severity": "low",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "ludus-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.24"
+          }
+        ]
+      }
+    ]
   }
 ];
