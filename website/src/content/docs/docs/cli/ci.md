@@ -36,6 +36,8 @@ When running under GitHub Actions (`GITHUB_ACTIONS=true`), `ci`, `scan`, and
 `deps` (table format) additionally emit one [workflow-command annotation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-an-error-message)
 per finding — `critical`/`high` as errors, `medium` as warnings, `low`/`info`
 as notices — so findings with a file and line surface inline on the PR diff.
+`ci` also emits one error annotation per lockfile drift entry; skill drift
+entries carry the changed file's path, landing directly on the PR diff.
 JSON and SARIF output is never mixed with annotations.
 
 ## CI integration

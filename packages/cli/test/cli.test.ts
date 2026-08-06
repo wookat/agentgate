@@ -149,6 +149,10 @@ describe('agentgate scan', () => {
     expect(drift.code).toBe(1);
     expect(drift.stdout).toMatch(/skill-changed/);
     expect(drift.stdout).toMatch(/\.claude\/skills\/deploy\/SKILL\.md/);
+
+    const ghaCi = await run(['ci', '--config', emptyConfig, '-l', lockPath, '--skills', repo], { GITHUB_ACTIONS: 'true' });
+    expect(ghaCi.code).toBe(1);
+    expect(ghaCi.stdout).toMatch(/^::error file=\.claude\/skills\/deploy\/SKILL\.md,title=agentgate drift \(skill-changed\)::/m);
   });
 
   it('emits GitHub Actions annotations under GITHUB_ACTIONS', async () => {

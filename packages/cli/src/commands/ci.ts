@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import { Severity, formatDiff, scanServers, sortFindings } from 'mcp-agentgate-core';
 import { gatherServers } from '../context.js';
-import { isGitHubActions, maxSeverityAtLeast, renderFindingsTable, renderGitHubAnnotations } from '../output.js';
+import { isGitHubActions, maxSeverityAtLeast, renderDriftAnnotations, renderFindingsTable, renderGitHubAnnotations } from '../output.js';
 import { computeDrift } from './diff.js';
 
 export interface CiOptions {
@@ -31,7 +31,12 @@ export async function runCi(opts: CiOptions): Promise<number> {
     failed = true;
   }
   console.log(drift.diff.drifted ? pc.red(formatDiff(drift.diff)) : pc.green(formatDiff(drift.diff)));
-  if (drift.diff.drifted) failed = true;
+  if (drift.diff.drifted) {
+    if (isGitHubActions()) {
+      console.log(renderDriftAnnotations(drift.diff.entries));
+    }
+    failed = true;
+  }
 
   const { servers } = gatherServers({ config: opts.config, server: opts.server });
   const findings = sortFindings(scanServers(servers));

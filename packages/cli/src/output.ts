@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import pc from 'picocolors';
-import { Finding, Severity, ruleDocUrl, sortFindings } from 'mcp-agentgate-core';
+import { DriftEntry, Finding, Severity, ruleDocUrl, sortFindings } from 'mcp-agentgate-core';
 
 const SEVERITY_COLOR: Record<Severity, (s: string) => string> = {
   critical: (s) => pc.bold(pc.red(s)),
@@ -73,6 +73,22 @@ export function renderGitHubAnnotations(findings: Finding[]): string {
         `title=${escapeAnnotationProp(`agentgate ${f.ruleId} (${f.severity})`)}`,
       ].join(',');
       return `::${level} ${props}::${escapeAnnotation(`${f.target}: ${f.message}`)}`;
+    })
+    .join('\n');
+}
+
+/**
+ * GitHub Actions annotations for lockfile drift entries, one `::error` per
+ * entry. Skill drift entries carry the file path so they land on the PR diff.
+ */
+export function renderDriftAnnotations(entries: DriftEntry[]): string {
+  return entries
+    .map((e) => {
+      const props = [
+        ...(e.file ? [`file=${escapeAnnotationProp(e.file)}`] : []),
+        `title=${escapeAnnotationProp(`agentgate drift (${e.kind})`)}`,
+      ].join(',');
+      return `::error ${props}::${escapeAnnotation(e.detail)}`;
     })
     .join('\n');
 }
