@@ -32,7 +32,13 @@ jobs:
           lockfile: agentgate.lock
 ```
 
-To surface scan findings in GitHub code scanning, set `sarif-file: agentgate.sarif` on the action and add:
+Findings surface **inline on the PR diff automatically**: under GitHub
+Actions, `ci`, `scan`, and `deps` emit one
+[workflow-command annotation](/docs/cli/ci/#github-actions-annotations) per
+finding (`critical`/`high` as errors, `medium` as warnings, `low`/`info` as
+notices) — no extra permissions or upload steps needed.
+
+To additionally surface scan findings in GitHub code scanning, set `sarif-file: agentgate.sarif` on the action and add:
 
 ```yaml
       - uses: github/codeql-action/upload-sarif@v3
