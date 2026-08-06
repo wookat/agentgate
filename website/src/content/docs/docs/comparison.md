@@ -8,7 +8,8 @@ iterations; each cell is dated so you can judge freshness. Competitors move —
 when a claim is stale or we can't verify something, we say so.
 
 *Last verified: 2026-08-06 against snyk-agent-scan 0.5.16 (formerly
-mcp-scan), socket CLI 1.1.154, osv-scanner v2.4.0.*
+mcp-scan), thynkQ mcp-scan 2.0.2 (npm), socket CLI 1.1.154, osv-scanner
+v2.4.0.*
 
 ## Where AgentGate is different
 
@@ -20,7 +21,7 @@ mcp-scan), socket CLI 1.1.154, osv-scanner v2.4.0.*
 | `allowed-tools` overprivilege analysis | yes (AG-SK-002) | unknown — unverifiable without a token | no |
 | Load-time dynamic-context command analysis | yes (AG-SK-003) | unknown — unverifiable without a token | no |
 | Tool-surface lockfile + drift gate (rug-pull defense) | yes (`lock` / `diff` / `ci`) | no equivalent found | no |
-| Curated MCP advisory database | yes — [29 public advisories](/advisories/), bundled for offline use + live API | no public equivalent found | OSV covers registry malware, not MCP-server CVEs as a category |
+| Curated MCP advisory database | yes — [31 public advisories](/advisories/), bundled for offline use + live API | no public equivalent found | OSV covers registry malware, not MCP-server CVEs as a category |
 | Known-malware package checks | yes (OSV + MCPA) | requires account | yes (their core strength) |
 | Hallucinated-dependency / typosquat checks | yes (`deps`) | no | socket: partial (different focus) |
 | SARIF for GitHub code scanning | yes, per-rule severity + fingerprints | unknown | osv-scanner: yes |
@@ -38,6 +39,18 @@ Honesty cuts both ways:
   npm/PyPI manifests.
 - **snyk-agent-scan** ships runtime guardrails (`guard` hooks) that
   intercept agent traffic live; AgentGate is scan-time only.
+
+## A note on the npm `mcp-scan` (thynkQ)
+
+The npm package `mcp-scan` (v2.0.2, verified by real run 2026-08-06) is an
+unrelated product by thynkQ that took over the name after Invariant Labs'
+tool moved to Snyk. It scans many AI-tool configs offline with no account
+and adds SBOM/compliance/TUI features. On our shared fixture it flagged the
+exposed secret and unpinned packages, but it did not scan skill/instruction
+files at all (a poisoned `SKILL.md` produced zero findings), has no MCP
+advisory database (`ludus-mcp@1.0.24` with three public CVEs reported only a
+generic "unverified source"), and its `diff` compares scan reports rather
+than pinning the tool surface — no lockfile, so description rug-pulls pass.
 
 ## Our position
 
