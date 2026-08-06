@@ -22,7 +22,8 @@ Repo scans also check **agent skill files** — `SKILL.md` anywhere in the tree,
 any markdown under a `skills/` directory of an agent config tree
 (`.agents/`, `.claude/`, `.cursor/`, `.codex/`, `.opencode/`), Windsurf
 rules/workflows (`.windsurf/`, `.windsurfrules`), Cline rules (`.clinerules`,
-`.cursorrules`), and Cursor rule files (`.cursor/rules/*.mdc`). Skills are
+`.cursorrules`), Cursor rule files (`.cursor/rules/*.mdc`), and Gemini CLI
+custom commands (`.gemini/commands/**.toml`). Skills are
 executed as agent instructions verbatim, so both hidden Unicode and
 prompt-injection patterns in them are `critical`. One exception: an injection
 pattern that sits *inside a fenced code block* is reported at `low` severity —

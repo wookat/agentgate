@@ -7,10 +7,11 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (.agents, .claude, .cursor, .codex, .opencode) or of a Claude Code plugin
  * (`plugins/<name>/...`); Windsurf rules/workflows (`.windsurf/rules|workflows`,
  * `.windsurfrules`); Cline rules (`.clinerules/` dir or file, `.cursorrules`);
- * Cursor rule files (`.cursor/rules/*.mdc`).
+ * Cursor rule files (`.cursor/rules/*.mdc`); Gemini CLI custom commands
+ * (`.gemini/commands/**.toml`, prompt text with `!{...}` shell blocks).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -74,8 +75,9 @@ export const skillOverprivilegeRule: Rule = {
 
 /**
  * Extract dynamic-context commands: inline `` !`cmd` `` placeholders
- * (recognized at line start or after whitespace) and ```! fenced blocks.
- * These run as shell commands the moment the skill loads.
+ * (recognized at line start or after whitespace), ```! fenced blocks, and
+ * Gemini CLI `!{cmd}` shell-injection blocks. These run as shell commands
+ * when the skill or command loads.
  */
 export function extractDynamicCommands(content: string): { command: string; line: number }[] {
   const out: { command: string; line: number }[] = [];
@@ -97,6 +99,9 @@ export function extractDynamicCommands(content: string): { command: string; line
       continue;
     }
     for (const m of text.matchAll(/(?:^|\s)!`([^`]+)`/g)) {
+      out.push({ command: m[1] ?? '', line: i + 1 });
+    }
+    for (const m of text.matchAll(/!\{([^}]+)\}/g)) {
       out.push({ command: m[1] ?? '', line: i + 1 });
     }
   }
