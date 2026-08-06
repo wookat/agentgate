@@ -106,6 +106,44 @@ describe("convert", () => {
     }
   });
 
+  it("windsurf remote servers use serverUrl in both directions", () => {
+    const ws = JSON.stringify({
+      mcpServers: { remote: { serverUrl: "https://mcp.example.com/sse", headers: { A: "b" } } },
+    });
+    const { config } = ADAPTERS.windsurf.parse(ws);
+    expect(config.servers[0].url).toBe("https://mcp.example.com/sse");
+    const rendered = ADAPTERS.windsurf.render(config);
+    const out = JSON.parse(rendered.content).mcpServers.remote;
+    expect(out.serverUrl).toBe("https://mcp.example.com/sse");
+    expect(out.url).toBeUndefined();
+  });
+
+  it("gemini-cli distinguishes sse url from streamable httpUrl", () => {
+    const gm = JSON.stringify({
+      mcpServers: {
+        sse: { url: "https://a.example/sse" },
+        http: { httpUrl: "https://b.example/mcp" },
+      },
+    });
+    const { config } = ADAPTERS["gemini-cli"].parse(gm);
+    expect(config.servers.map((s) => s.transport).sort()).toEqual(["http", "sse"]);
+    const rendered = ADAPTERS["gemini-cli"].render(config);
+    const out = JSON.parse(rendered.content).mcpServers;
+    expect(out.sse.url).toBe("https://a.example/sse");
+    expect(out.http.httpUrl).toBe("https://b.example/mcp");
+  });
+
+  it("cline disabled flag maps to enabled and back, autoApprove warns", () => {
+    const cl = JSON.stringify({
+      mcpServers: { s: { command: "npx", args: ["x"], disabled: true, autoApprove: ["tool_a"] } },
+    });
+    const { config, warnings } = ADAPTERS.cline.parse(cl);
+    expect(config.servers[0].enabled).toBe(false);
+    expect(warnings.some((w) => w.includes("autoApprove"))).toBe(true);
+    const rendered = ADAPTERS.cline.render(config);
+    expect(JSON.parse(rendered.content).mcpServers.s.disabled).toBe(true);
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });

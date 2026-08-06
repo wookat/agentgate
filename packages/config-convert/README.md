@@ -13,6 +13,9 @@ Supported clients:
 | `vscode` | JSON `servers` (+`type`, `inputs`) | `.vscode/mcp.json` |
 | `codex` | TOML `[mcp_servers.<name>]` | `~/.codex/config.toml` |
 | `opencode` | JSON `mcp` (`local`/`remote`) | `opencode.json` |
+| `windsurf` | JSON `mcpServers` (remote via `serverUrl`) | `~/.codeium/windsurf/mcp_config.json` |
+| `cline` | JSON `mcpServers` (+`disabled`) | `<vscode user dir>/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
+| `gemini-cli` | JSON `mcpServers` (`url` sse / `httpUrl` http) | `~/.gemini/settings.json` |
 
 ## CLI
 
