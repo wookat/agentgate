@@ -1,6 +1,6 @@
 ---
 title: agentgate scan
-description: Static and live analysis of MCP servers with seven built-in rule categories.
+description: Static and live analysis of MCP servers with twelve built-in rules across seven categories.
 ---
 
 Scan MCP servers for security issues.
@@ -51,7 +51,7 @@ agentgate scan -c ~/.cursor/mcp.json --fail-on high
 
 ## Rules
 
-Findings come from seven rules, one per category — see the [rule reference](/docs/rules/) for what each detects: `tool-poisoning`, `credential-leak`, `overprivileged`, `auth-missing`, `ssrf`, `rce-vectors`, `supply-chain`.
+Findings come from twelve rules across seven categories — see the [rule reference](/docs/rules/) for what each detects: `tool-poisoning` (including agent skill files), `credential-leak`, `overprivileged` (including skill `allowed-tools` grants), `auth-missing`, `ssrf`, `rce-vectors` (including skill dynamic-context commands), `supply-chain`.
 
 ## Exit codes
 

@@ -45,7 +45,7 @@ agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退�
 
 从源码开发：`git clone` 后 `pnpm install && pnpm build`，然后 `node packages/cli/dist/index.js`。文档站：**https://agentgate.zalize.com**。
 
-扫描规则七大类，对齐真实事故：`tool-poisoning`、`credential-leak`、`overprivileged`、`auth-missing`、`ssrf`、`rce-vectors`、`supply-chain`。锁文件格式见 [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json)。
+七大类共十二条扫描规则，对齐真实事故：`tool-poisoning`（含 agent skill 文件投毒）、`credential-leak`、`overprivileged`（含 skill `allowed-tools` 过权授权）、`auth-missing`、`ssrf`、`rce-vectors`（含 skill 载入时动态上下文命令）、`supply-chain`。锁文件格式见 [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json)。
 
 ## 一步接入 CI 门禁
 
