@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalJson, createLockfile, lockServer, lockTool, parseLockfile, serializeLockfile, sha256 } from '../src/lockfile.js';
+import { canonicalJson, createLockfile, lockServer, lockSkills, lockTool, parseLockfile, serializeLockfile, sha256 } from '../src/lockfile.js';
 import { ToolSurface } from '../src/types.js';
 
 const tool: ToolSurface = {
@@ -80,5 +80,33 @@ describe('lockfile version gate', () => {
     expect(() => parseLockfile('{"lockfileVersion":99,"generatedBy":"x","generatedAt":"x","servers":{}}')).toThrow(
       /unsupported lockfileVersion 99/,
     );
+  });
+});
+
+describe('skills lock (v2)', () => {
+  it('locks skill files deterministically and round-trips as lockfileVersion 2', () => {
+    const skills = lockSkills({ 'b/SKILL.md': 'two', 'a/SKILL.md': 'one' });
+    expect(Object.keys(skills.files)).toEqual(['a/SKILL.md', 'b/SKILL.md']);
+    expect(skills.files['a/SKILL.md']).toBe(sha256('one'));
+    expect(lockSkills({ 'a/SKILL.md': 'one', 'b/SKILL.md': 'two' }).surfaceHash).toBe(skills.surfaceHash);
+
+    const lockfile = createLockfile({ s: [tool] }, 'test', skills);
+    expect(lockfile.lockfileVersion).toBe(2);
+    const parsed = parseLockfile(serializeLockfile(lockfile));
+    expect(parsed.skills?.surfaceHash).toBe(skills.surfaceHash);
+
+    // no skills → still v1
+    expect(createLockfile({ s: [tool] }).lockfileVersion).toBe(1);
+  });
+
+  it('rejects a skills section on lockfileVersion 1', () => {
+    const bad = JSON.stringify({
+      lockfileVersion: 1,
+      generatedBy: 'x',
+      generatedAt: 'x',
+      servers: {},
+      skills: { surfaceHash: sha256('x'), files: {} },
+    });
+    expect(() => parseLockfile(bad)).toThrow(/requires lockfileVersion 2/);
   });
 });

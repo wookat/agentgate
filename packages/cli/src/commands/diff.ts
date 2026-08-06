@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import pc from 'picocolors';
-import { LockDiff, createLockfile, diffLockfiles, formatDiff, parseLockfile } from 'mcp-agentgate-core';
+import { LockDiff, collectSkillFiles, createLockfile, diffLockfiles, formatDiff, lockSkills, parseLockfile } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
-import { GENERATED_BY } from './lock.js';
+import { GENERATED_BY, skillsDir } from './lock.js';
 
 export interface DiffOptions {
   config?: string;
@@ -10,6 +10,8 @@ export interface DiffOptions {
   lockfile: string;
   timeout: string;
   json?: boolean;
+  /** true = current directory; string = explicit directory */
+  skills?: boolean | string;
 }
 
 export async function computeDrift(opts: DiffOptions): Promise<{ diff: LockDiff; errors: { server: string; error: string }[] } | { fatal: string }> {
@@ -25,7 +27,9 @@ export async function computeDrift(opts: DiffOptions): Promise<{ diff: LockDiff;
   const lockedServers = Object.keys(baseline.servers);
   const { servers } = gatherServers({ config: opts.config, server: opts.server ?? lockedServers });
   const { surfaces, errors } = await gatherSurfaces(servers, Number(opts.timeout));
-  const current = createLockfile(surfaces, GENERATED_BY);
+  // Re-hash skill files whenever the baseline pinned them (--skills overrides the directory).
+  const skills = baseline.skills ? lockSkills(collectSkillFiles(skillsDir(opts.skills) ?? '.')) : undefined;
+  const current = createLockfile(surfaces, GENERATED_BY, skills);
   return { diff: diffLockfiles(baseline, current), errors };
 }
 

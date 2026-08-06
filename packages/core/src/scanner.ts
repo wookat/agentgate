@@ -111,6 +111,26 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   return { findings, scannedServers: [], scannedFiles };
 }
 
+/** Collect skill/instruction files under a directory: posix-relative path → content. */
+export function collectSkillFiles(dir: string, opts: { ignore?: string[] } = {}): Record<string, string> {
+  const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
+  const out: Record<string, string> = {};
+  for (const file of walk(dir)) {
+    const relPosix = path.relative(dir, file).split(path.sep).join('/');
+    if (!SKILL_FILE.test(relPosix)) continue;
+    if (ignoreRes.some((re) => re.test(relPosix))) continue;
+    let stat;
+    try {
+      stat = fs.statSync(file);
+    } catch {
+      continue;
+    }
+    if (stat.size > MAX_FILE_BYTES) continue;
+    out[relPosix] = fs.readFileSync(file, 'utf8');
+  }
+  return out;
+}
+
 export function severityRank(sev: Finding['severity']): number {
   return ['info', 'low', 'medium', 'high', 'critical'].indexOf(sev);
 }

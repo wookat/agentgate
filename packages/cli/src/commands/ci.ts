@@ -10,6 +10,8 @@ export interface CiOptions {
   lockfile: string;
   timeout: string;
   failOn: Severity;
+  /** true = current directory; string = explicit directory */
+  skills?: boolean | string;
 }
 
 /**

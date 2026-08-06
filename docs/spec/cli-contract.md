@@ -76,9 +76,10 @@ degrade to `info`-severity findings and never fail the run by themselves.
   "drifted": true,
   "entries": [
     {
-      "kind": "server-added | server-removed | tool-added | tool-removed | description-changed | schema-changed",
-      "server": "server name",
+      "kind": "server-added | server-removed | tool-added | tool-removed | description-changed | schema-changed | skill-added | skill-removed | skill-changed",
+      "server": "server name (\"(skills)\" for skill-* entries)",
       "tool": "tool name (absent for server-level entries)",
+      "file": "skill file path (skill-* entries only)",
       "detail": "human-readable description"
     }
   ]

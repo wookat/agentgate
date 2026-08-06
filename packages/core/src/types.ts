@@ -77,10 +77,25 @@ export const ServerLockSchema = z.object({
 });
 export type ServerLock = z.infer<typeof ServerLockSchema>;
 
-export const LockfileSchema = z.object({
-  lockfileVersion: z.literal(1),
-  generatedBy: z.string(),
-  generatedAt: z.string(),
-  servers: z.record(z.string(), ServerLockSchema),
+export const SkillsLockSchema = z.object({
+  /** sha256 over all locked skill files (paths + content hashes) */
+  surfaceHash: z.string(),
+  /** posix-relative skill/instruction file path → sha256 of its content */
+  files: z.record(z.string(), z.string()),
 });
+export type SkillsLock = z.infer<typeof SkillsLockSchema>;
+
+export const LockfileSchema = z
+  .object({
+    /** 1 = servers only (frozen); 2 = adds the optional `skills` section. */
+    lockfileVersion: z.union([z.literal(1), z.literal(2)]),
+    generatedBy: z.string(),
+    generatedAt: z.string(),
+    servers: z.record(z.string(), ServerLockSchema),
+    /** Locked agent skill / instruction files (`lock --skills`, v2 only). */
+    skills: SkillsLockSchema.optional(),
+  })
+  .refine((l) => l.skills === undefined || l.lockfileVersion === 2, {
+    message: 'the "skills" section requires lockfileVersion 2',
+  });
 export type Lockfile = z.infer<typeof LockfileSchema>;

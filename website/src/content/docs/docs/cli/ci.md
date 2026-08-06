@@ -18,6 +18,7 @@ agentgate ci [options]
 | `-c, --config <file>` | auto-discover | Explicit MCP client config file. |
 | `-s, --server <names...>` | all | Restrict to specific server names. |
 | `-l, --lockfile <file>` | `agentgate.lock` | Lockfile path. |
+| `--skills [dir]` | `.` | Directory to re-hash locked skill files from (only used when the lockfile pinned skills). |
 | `--fail-on <severity>` | `high` | Severity gate for static findings: `info`, `low`, `medium`, `high`, `critical`. |
 | `-t, --timeout <ms>` | `15000` | Per-server connect timeout. |
 
