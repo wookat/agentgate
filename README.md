@@ -53,7 +53,7 @@ agentgate ci --fail-on high    # CI gate: drift OR high-severity findings → no
 
 Point at a specific config instead of auto-discovery with `--config path/to/mcp.json` (Codex `config.toml` and OpenCode `opencode.json` are also understood).
 
-Seven scan rule categories, aligned with real-world MCP incidents: `tool-poisoning` (hidden Unicode, prompt injection), `credential-leak`, `overprivileged` (dangerous capability combos), `auth-missing`, `ssrf`, `rce-vectors`, `supply-chain` (unpinned `npx -y pkg@latest` rug-pull exposure).
+Twelve scan rules across seven categories, aligned with real-world MCP incidents: `tool-poisoning` (hidden Unicode, prompt injection — in tool descriptions and agent skill files), `credential-leak`, `overprivileged` (dangerous capability combos, unscoped skill `allowed-tools` grants), `auth-missing`, `ssrf`, `rce-vectors` (including load-time skill dynamic-context commands), `supply-chain` (unpinned `npx -y pkg@latest` rug-pull exposure).
 
 The lockfile format is frozen as v1: [docs/spec/lockfile-v1.md](docs/spec/lockfile-v1.md) / [JSON Schema](docs/spec/agentgate.lock.schema.json).
 

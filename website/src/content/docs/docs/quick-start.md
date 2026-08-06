@@ -82,6 +82,6 @@ Recipes for GitLab CI, CircleCI, Jenkins, and Azure Pipelines: [CI integration g
 ## Next steps
 
 - [CLI reference](/docs/cli/scan/) — every command and flag.
-- [Rule reference](/docs/rules/) — what each of the seven rules detects.
+- [Rule reference](/docs/rules/) — what each scan rule detects.
 - [Threat model](/docs/threat-model/) — what AgentGate defends against, with real incidents.
 - [Advisory database](/advisories/) — known-bad MCP packages, cross-checked on every scan.
