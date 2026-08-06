@@ -91,7 +91,7 @@ repos:
 npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
-支持 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI，任何有损转换都会显式告警。也可用独立包 [mcp-agentgate-config-convert](packages/config-convert/)。
+支持 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed，任何有损转换都会显式告警。也可用独立包 [mcp-agentgate-config-convert](packages/config-convert/)。
 
 ## 为什么不只用扫描器（或只用 lockfile）？
 

@@ -16,6 +16,9 @@ Supported clients:
 | `windsurf` | JSON `mcpServers` (remote via `serverUrl`) | `~/.codeium/windsurf/mcp_config.json` |
 | `cline` | JSON `mcpServers` (+`disabled`) | `<vscode user dir>/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
 | `gemini-cli` | JSON `mcpServers` (`url` sse / `httpUrl` http) | `~/.gemini/settings.json` |
+| `kiro` | JSON `mcpServers` | `~/.kiro/settings/mcp.json` / `.kiro/settings/mcp.json` |
+| `roo-code` | JSON `mcpServers` | `<vscode user dir>/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json` / `.roo/mcp.json` |
+| `zed` | JSONC `context_servers` inside settings | `~/.config/zed/settings.json` |
 
 ## CLI
 

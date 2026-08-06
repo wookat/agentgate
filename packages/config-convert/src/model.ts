@@ -25,7 +25,10 @@ export type ClientId =
   | "opencode"
   | "windsurf"
   | "cline"
-  | "gemini-cli";
+  | "gemini-cli"
+  | "kiro"
+  | "roo-code"
+  | "zed";
 
 export const CLIENT_IDS: ClientId[] = [
   "claude-desktop",
@@ -37,6 +40,9 @@ export const CLIENT_IDS: ClientId[] = [
   "windsurf",
   "cline",
   "gemini-cli",
+  "kiro",
+  "roo-code",
+  "zed",
 ];
 
 export interface ParseResult {
