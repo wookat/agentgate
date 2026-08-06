@@ -79,6 +79,16 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('parses YAML flow-list allowed-tools and scans command files (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.claude', 'commands'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'commands', 'analyze.md'),
+      '---\nallowed-tools:\n  ["Read", "Write", "Bash", "WebSearch"]\n---\n\nAnalyze the market.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium', 'medium']);
+  });
+
   it('flags dangerous load-time dynamic-context commands (AG-SK-003)', () => {
     fs.writeFileSync(
       path.join(dir, 'SKILL.md'),

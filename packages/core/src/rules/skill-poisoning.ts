@@ -2,11 +2,13 @@ import { Rule, finding } from './rule.js';
 import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
 
 /**
- * Agent skill files: `SKILL.md` anywhere, or any markdown under a
- * `skills/` directory of an agent config tree (.agents, .claude, .cursor,
- * .codex, .opencode).
+ * Agent instruction files that support frontmatter tool grants and dynamic
+ * context: `SKILL.md` anywhere; markdown under `skills/`, `commands/`, or
+ * `agents/` of an agent config tree (.agents, .claude, .cursor, .codex,
+ * .opencode) or of a Claude Code plugin (`plugins/<name>/...`).
  */
-export const SKILL_FILE = /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/skills\/.+\.md$/i;
+export const SKILL_FILE =
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -26,6 +28,11 @@ export function parseAllowedTools(content: string): string[] {
       items.push(m[1].trim());
     }
     raw = items.join(',');
+    if (!raw) {
+      // Indented continuation line, e.g. a YAML flow list: ["Read", "Bash"]
+      const next = lines[idx + 1] ?? '';
+      if (/^\s+\S/.test(next)) raw = next.trim();
+    }
   }
   const tokens = raw.match(/[A-Za-z_][A-Za-z0-9_]*(\([^)]*\))?/g) ?? [];
   return tokens.map((t) => t.replace(/^['"]|['"]$/g, ''));
