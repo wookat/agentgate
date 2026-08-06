@@ -8,6 +8,122 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  */
 export const SKILL_FILE = /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/skills\/.+\.md$/i;
 
+/** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
+export function parseAllowedTools(content: string): string[] {
+  const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fm?.[1]) return [];
+  const lines = fm[1].split(/\r?\n/);
+  const idx = lines.findIndex((l) => /^allowed-tools\s*:/i.test(l));
+  if (idx === -1) return [];
+  const inline = (lines[idx] ?? '').replace(/^allowed-tools\s*:/i, '').trim();
+  let raw = inline;
+  if (!inline) {
+    // YAML list form: subsequent "- item" lines.
+    const items: string[] = [];
+    for (let i = idx + 1; i < lines.length; i++) {
+      const m = (lines[i] ?? '').match(/^\s+-\s+(.+)$/);
+      if (!m?.[1]) break;
+      items.push(m[1].trim());
+    }
+    raw = items.join(',');
+  }
+  const tokens = raw.match(/[A-Za-z_][A-Za-z0-9_]*(\([^)]*\))?/g) ?? [];
+  return tokens.map((t) => t.replace(/^['"]|['"]$/g, ''));
+}
+
+/** Tool grants that pre-approve dangerous capabilities when unscoped. */
+const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] = [
+  { re: /^bash(\(\s*(\*(:\*)?)?\s*\))?$/i, severity: 'high', risk: 'unrestricted shell execution' },
+  { re: /^(write|edit)(\(\s*\*?\s*\))?$/i, severity: 'medium', risk: 'unrestricted file writes' },
+  { re: /^(webfetch|websearch)(\(\s*\*?\s*\))?$/i, severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
+];
+
+export const skillOverprivilegeRule: Rule = {
+  id: 'AG-SK-002',
+  category: 'overprivileged',
+  description: 'Detects skill frontmatter that pre-approves dangerous unscoped tool grants (allowed-tools)',
+  checkSkill(file, content) {
+    const findings = [];
+    for (const grant of parseAllowedTools(content)) {
+      const hit = RISKY_GRANTS.find((r) => r.re.test(grant));
+      if (hit) {
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            message: `Skill pre-approves "${grant}" via allowed-tools — ${hit.risk} without a permission prompt; scope the grant (e.g. Bash(git add *)) or remove it`,
+          }),
+        );
+      }
+    }
+    return findings;
+  },
+};
+
+/**
+ * Extract dynamic-context commands: inline `` !`cmd` `` placeholders
+ * (recognized at line start or after whitespace) and ```! fenced blocks.
+ * These run as shell commands the moment the skill loads.
+ */
+export function extractDynamicCommands(content: string): { command: string; line: number }[] {
+  const out: { command: string; line: number }[] = [];
+  const lines = content.split(/\r?\n/);
+  let fence: { start: number; body: string[] } | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i] ?? '';
+    if (fence) {
+      if (/^```/.test(text.trim())) {
+        out.push({ command: fence.body.join('\n'), line: fence.start });
+        fence = null;
+      } else {
+        fence.body.push(text);
+      }
+      continue;
+    }
+    if (/^```!/.test(text.trim())) {
+      fence = { start: i + 1, body: [] };
+      continue;
+    }
+    for (const m of text.matchAll(/(?:^|\s)!`([^`]+)`/g)) {
+      out.push({ command: m[1] ?? '', line: i + 1 });
+    }
+  }
+  return out;
+}
+
+/** Load-time command patterns that go beyond gathering local context. */
+const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
+  { re: /\b(curl|wget)\b[^|;&]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
+  { re: /\b(curl|wget)\b[^\n]*\s(-d|--data(-\w+)?|-F|--form|--upload-file|-T)\b/, severity: 'high', risk: 'sends data to a remote host at skill load time' },
+  { re: /(~\/\.ssh\b|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc\b|\.netrc\b)/, severity: 'high', risk: 'reads credential material into the prompt at skill load time' },
+  { re: /(^|[\s;|&])(cat|grep|head|tail|cp|base64)\b[^\n]*\.env\b/, severity: 'high', risk: 'reads .env secrets into the prompt at skill load time' },
+];
+
+export const skillDynamicContextRule: Rule = {
+  id: 'AG-SK-003',
+  category: 'rce-vectors',
+  description: 'Detects dangerous load-time dynamic-context commands in skill files',
+  checkSkill(file, content) {
+    const findings = [];
+    for (const { command, line } of extractDynamicCommands(content)) {
+      const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+      if (hit) {
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            line,
+            message: `Skill dynamic-context command ${hit.risk}: "${command.slice(0, 80)}" — it runs before anyone reviews the rendered prompt`,
+          }),
+        );
+      }
+    }
+    return findings;
+  },
+};
+
 export const skillPoisoningRule: Rule = {
   id: 'AG-SK-001',
   category: 'tool-poisoning',
