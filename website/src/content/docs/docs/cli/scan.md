@@ -9,7 +9,7 @@ Scan MCP servers for security issues.
 agentgate scan [target] [options]
 ```
 
-Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode). Pass a directory to also run a repo/source scan over it, or a config file to scan just that config.
+Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI). Pass a directory to also run a repo/source scan over it, or a config file to scan just that config.
 
 ## Modes
 

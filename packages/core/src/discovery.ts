@@ -11,7 +11,8 @@ export interface ClientConfigLocation {
 
 /**
  * Well-known MCP client config locations, relative to a home directory.
- * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode.
+ * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
+ * Windsurf, Cline, and Gemini CLI.
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -44,6 +45,21 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('codex', path.join(homeDir, '.codex', 'config.toml'), 'codex-toml');
   // OpenCode
   push('opencode', path.join(homeDir, '.config', 'opencode', 'opencode.json'), 'opencode-json');
+  // Windsurf (Cascade) — global config only
+  push('windsurf', path.join(homeDir, '.codeium', 'windsurf', 'mcp_config.json'));
+  push('windsurf', path.join(homeDir, '.codeium', 'mcp_config.json'));
+  // Cline (VS Code extension, own settings file under globalStorage)
+  const clineRel = path.join('globalStorage', 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json');
+  if (platform === 'darwin') {
+    push('cline', path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', clineRel));
+  } else if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    push('cline', path.join(appData, 'Code', 'User', clineRel));
+  } else {
+    push('cline', path.join(homeDir, '.config', 'Code', 'User', clineRel));
+  }
+  // Gemini CLI — mcpServers key inside settings.json
+  push('gemini-cli', path.join(homeDir, '.gemini', 'settings.json'));
 
   return locations;
 }
@@ -55,6 +71,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'vscode', path: path.join(projectDir, '.vscode', 'mcp.json'), format: 'vscode-mcp-json' },
     { client: 'claude-code', path: path.join(projectDir, '.mcp.json'), format: 'mcpServers-json' },
     { client: 'opencode', path: path.join(projectDir, 'opencode.json'), format: 'opencode-json' },
+    { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
   ];
 }

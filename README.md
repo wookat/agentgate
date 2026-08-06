@@ -81,7 +81,7 @@ the whole loop in one tool:
 The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
 
 ```bash
-# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode auto-discovered)
+# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI auto-discovered)
 npx mcp-agentgate scan
 
 # Pin the current tool surface into agentgate.lock
