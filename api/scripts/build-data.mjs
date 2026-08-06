@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const advisoriesDir = join(root, "advisories");
 
-const files = (await readdir(advisoriesDir)).filter((f) => f.endsWith(".json"));
+const files = (await readdir(advisoriesDir)).filter((f) => /^MCPA-\d{4}-\d{4}\.json$/.test(f));
 const advisories = [];
 for (const f of files.sort()) {
   advisories.push(JSON.parse(await readFile(join(advisoriesDir, f), "utf8")));

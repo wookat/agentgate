@@ -21,6 +21,16 @@ const files = fs
   .filter((f) => /^MCPA-\d{4}-\d{4}\.json$/.test(f));
 const advisories = files.map((f) => JSON.parse(fs.readFileSync(path.join(ROOT, "advisories", f), "utf8")));
 const knownAliases = new Set(advisories.flatMap((a) => a.aliases ?? []));
+
+// Reviewed advisory ids / package channels deliberately not mirrored into
+// MCPA; the rationale lives in the GAP reports referenced in the file.
+const ignoreList = JSON.parse(fs.readFileSync(path.join(ROOT, "advisories", "watch-ignore.json"), "utf8"));
+const ignoredIds = new Set(ignoreList.ids ?? []);
+const ignoredPkgs = new Set(ignoreList.packages ?? []);
+function ignored(id, pkgs = []) {
+  if (ignoredIds.has(id)) return true;
+  return pkgs.length > 0 && pkgs.every((p) => ignoredPkgs.has(`${p.ecosystem}:${p.name}`));
+}
 const trackedPackages = [
   ...new Map(
     advisories
@@ -44,6 +54,7 @@ async function ghsaSweep() {
   const hits = all.filter((a) => {
     const text = `${a.summary ?? ""} ${a.description ?? ""}`.toLowerCase();
     if (!(text.includes("mcp") || text.includes("model context protocol"))) return false;
+    if (ignored(a.ghsa_id) || (a.cve_id && ignoredIds.has(a.cve_id))) return false;
     return !(knownAliases.has(a.ghsa_id) || (a.cve_id && knownAliases.has(a.cve_id)));
   });
   return { error: null, hits };
@@ -79,7 +90,9 @@ async function osvSweep() {
     if (!detail.ok) continue;
     const v = await detail.json();
     const published = Date.parse(v.published ?? v.modified ?? 0);
-    if (published >= since) hits.push({ ...c, published: v.published?.slice(0, 10) });
+    if (published < since) continue;
+    if (ignored(c.id, c.pkgs) || (v.aliases ?? []).some((al) => knownAliases.has(al) || ignoredIds.has(al))) continue;
+    hits.push({ ...c, published: v.published?.slice(0, 10) });
   }
   return { error: null, hits };
 }

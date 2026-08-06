@@ -1,0 +1,15 @@
+{
+  "comment": "Reviewed sweep findings deliberately not mirrored into the MCPA database. ids: individual GHSA/CVE/OSV ids; packages: ecosystem:name channels whose non-MCP app-level advisories are delegated to general scanners (osv-scanner et al). Rationale is recorded in the GAP report named next to each group.",
+  "ids": [
+    "GHSA-q94p-g4rh-r9rf",
+    "CVE-2026-18991"
+  ],
+  "packages": [
+    "npm:flowise",
+    "npm:flowise-components"
+  ],
+  "rationale": {
+    "GHSA-q94p-g4rh-r9rf": "NanoClaw is not a registry package the package-runner matcher can see (GAP-ROUND-27)",
+    "npm:flowise": "platform-level CVEs delegated to osv-scanner; MCP-specific flowise advisories are still ingested (GAP-ROUND-22, MCPA-2026-0006); the GHSA keyword sweep still surfaces new MCP-related flowise advisories"
+  }
+}
