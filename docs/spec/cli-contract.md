@@ -85,6 +85,26 @@ degrade to `info`-severity findings and never fail the run by themselves.
 }
 ```
 
+## `advisory check --json` report
+
+```jsonc
+{
+  "package": { "ecosystem": "npm | pypi", "name": "pkg", "version": "1.2.3" }, // version null when omitted
+  "source": "live | bundled",   // "bundled" when --offline or the advisory API is unreachable
+  "matches": [
+    {
+      "versionConfirmed": true, // false when no version was given and the advisory has fixed ranges
+      "advisory": { "id": "MCPA-YYYY-NNNN", /* ... McpaAdvisory ... */ }
+    }
+  ]
+}
+```
+
+Exit code `1` when `matches` is non-empty, `0` when clean — so
+`agentgate advisory check <pkg>@<version>` works as a pre-install gate.
+`advisory list --json` emits `{ "source", "count", "advisories": [...] }`,
+sorted newest-first by id.
+
 ## Diagnostics
 
 `--debug` prints diagnostic details (config files parsed, servers contacted,

@@ -7,6 +7,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "mcp-remote OS command injection via untrusted MCP server (CVE-2025-6514)",
     "type": "rce-vectors",
     "severity": "critical",
+    "published": "2025-07-09",
     "packages": [
       {
         "ecosystem": "npm",
@@ -25,6 +26,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "postmark-mcp npm package backdoored to exfiltrate emails via hidden BCC",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2025-09-25",
     "packages": [
       {
         "ecosystem": "npm",
@@ -43,6 +45,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "MCP Inspector proxy allows unauthenticated remote code execution (CVE-2025-49596)",
     "type": "auth-missing",
     "severity": "critical",
+    "published": "2025-06-13",
     "packages": [
       {
         "ecosystem": "npm",
@@ -61,6 +64,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "@modelcontextprotocol/server-filesystem path validation bypass via colliding path prefix (CVE-2025-53110)",
     "type": "path-traversal",
     "severity": "high",
+    "published": "2025-07-01",
     "packages": [
       {
         "ecosystem": "npm",
@@ -83,6 +87,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "@modelcontextprotocol/server-filesystem symlink bypass enables full filesystem access (CVE-2025-53109)",
     "type": "path-traversal",
     "severity": "high",
+    "published": "2025-07-02",
     "packages": [
       {
         "ecosystem": "npm",
@@ -105,6 +110,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "@cyanheads/git-mcp-server command injection in several git tools (CVE-2025-53107)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2025-06-29",
     "packages": [
       {
         "ecosystem": "npm",
@@ -123,6 +129,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "mcp-server-kubernetes command injection in several kubectl tools (CVE-2025-53355)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2025-07-08",
     "packages": [
       {
         "ecosystem": "npm",
@@ -141,6 +148,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "mcp-package-docs command injection in several tools (CVE-2025-54073)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2025-07-18",
     "packages": [
       {
         "ecosystem": "npm",
@@ -159,6 +167,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "@akoskm/create-mcp-server-stdio command injection via exec in which-app-on-port tool (CVE-2025-54994)",
     "type": "rce-vectors",
     "severity": "critical",
+    "published": "2025-09-08",
     "packages": [
       {
         "ecosystem": "npm",
@@ -177,6 +186,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "adb-mcp command injection in inspect_ui tool (CVE-2025-59834)",
     "type": "rce-vectors",
     "severity": "critical",
+    "published": "2025-09-24",
     "packages": [
       {
         "ecosystem": "npm",
@@ -195,6 +205,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "figma-developer-mcp (Framelink Figma MCP) command injection in get_figma_data (CVE-2025-53967)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2025-09-29",
     "packages": [
       {
         "ecosystem": "npm",
@@ -213,6 +224,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "@lanyer640/mcp-runcommand-server npm package backdoored with dual reverse shells",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2025-10-02",
     "packages": [
       {
         "ecosystem": "npm",
@@ -230,6 +242,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "mcp-fetch-server SSRF via private-IP validation bypass (CVE-2025-65513)",
     "type": "ssrf",
     "severity": "medium",
+    "published": "2025-12-09",
     "packages": [
       {
         "ecosystem": "npm",
@@ -248,6 +261,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Malicious npm package mcp-server-everything squats the MCP reference \"everything\" server",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2025-09-09",
     "packages": [
       {
         "ecosystem": "npm",
@@ -265,6 +279,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Azure MCP Server server-side request forgery allows privilege elevation (CVE-2026-26118)",
     "type": "ssrf",
     "severity": "high",
+    "published": "2026-03-10",
     "packages": [
       {
         "ecosystem": "npm",
@@ -311,6 +326,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "n8n-mcp path traversal, redirect-following SSRF, and telemetry payload exposure",
     "type": "ssrf",
     "severity": "high",
+    "published": "2026-05-04",
     "packages": [
       {
         "ecosystem": "npm",
@@ -329,6 +345,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "explorhub-mcp-server is a malicious npm package",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2026-05-25",
     "packages": [
       {
         "ecosystem": "npm",
@@ -346,6 +363,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "ray-mcp-server 0.2.1 shipped malicious code (Hades/Shai-Hulud PyPI campaign)",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2026-07-07",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -364,6 +382,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "mcp-search-server (PyPI) is a malicious package",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2026-07-30",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -381,6 +400,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Flowise MCP environment-variable blocklist bypass via npm_config_yes (unauthenticated RCE, CVE-2026-69263)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2026-08-04",
     "packages": [
       {
         "ecosystem": "npm",
@@ -409,6 +429,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "gemini-bridge arbitrary local file read via consult_gemini_with_files inline mode (CVE-2026-54785)",
     "type": "path-traversal",
     "severity": "medium",
+    "published": "2026-07-31",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -427,6 +448,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Flyto2 Core arbitrary file write via image.download output_dir bypass (CVE-2026-67429)",
     "type": "path-traversal",
     "severity": "critical",
+    "published": "2026-07-30",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -445,6 +467,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Malicious npm packages squatting official MCP reference server names (mcp-server-fetch et al.)",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2026-06-09",
     "packages": [
       {
         "ecosystem": "npm",
@@ -543,6 +566,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Malicious PyPI packages impersonating popular AI libraries as MCP servers (openai-mcp, langchain-core-mcp, tiktoken-mcp, instructor-mcp)",
     "type": "malicious-package",
     "severity": "critical",
+    "published": "2026-06-08",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -587,6 +611,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "AWS Labs DocumentDB MCP Server read-only mode bypass via write-capable aggregation pipeline stages (CVE-2026-18954)",
     "type": "auth-missing",
     "severity": "medium",
+    "published": "2026-08-05",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -605,6 +630,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Flyto2 Core unauthenticated command execution via HTTP MCP execute_module (CVE-2026-55786)",
     "type": "rce-vectors",
     "severity": "high",
+    "published": "2026-07-06",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -623,6 +649,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Flyto2 Core SSRF guard bypass via IPv6 transition addresses (CVE-2026-55787)",
     "type": "ssrf",
     "severity": "high",
+    "published": "2026-07-06",
     "packages": [
       {
         "ecosystem": "pypi",
@@ -641,6 +668,7 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
     "title": "Flyto2 Core 2026-07-30 batch: unauthenticated callback SSRF, secret leaks, and guard bypasses (CVE-2026-67424..67428)",
     "type": "ssrf",
     "severity": "critical",
+    "published": "2026-07-30",
     "packages": [
       {
         "ecosystem": "pypi",

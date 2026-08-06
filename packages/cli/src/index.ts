@@ -7,6 +7,7 @@ import { runDiff } from './commands/diff.js';
 import { runCi } from './commands/ci.js';
 import { runDeps } from './commands/deps.js';
 import { clientChoices, describeClients, runConfigConvert } from './commands/config.js';
+import { runAdvisoryList, runAdvisoryCheck } from './commands/advisory.js';
 import { setDebug } from './debug.js';
 import { CLI_VERSION } from './version.js';
 
@@ -91,6 +92,30 @@ program
   .addOption(new Option('--concurrency <n>', 'max concurrent registry lookups').default('8'))
   .action(async (target, opts) => {
     process.exitCode = await runDeps(target, opts);
+  });
+
+const advisoryCmd = program
+  .command('advisory')
+  .description('Query the AgentGate MCP advisory database (MCPA)');
+advisoryCmd
+  .command('list')
+  .description('List all MCPA advisories')
+  .option('--json', 'output as JSON')
+  .option('--offline', 'use only the bundled database; skip the live advisory API')
+  .addOption(new Option('-t, --timeout <ms>', 'advisory API timeout').default('5000'))
+  .action(async (opts) => {
+    process.exitCode = await runAdvisoryList(opts);
+  });
+advisoryCmd
+  .command('check')
+  .description('Check a package against the MCPA advisory database; exit 1 on a match')
+  .argument('<package>', 'package name, optionally with a version: mcp-remote@0.1.10')
+  .addOption(new Option('-e, --ecosystem <ecosystem>', 'package ecosystem').choices(['npm', 'pypi']).default('npm'))
+  .option('--json', 'output as JSON')
+  .option('--offline', 'use only the bundled database; skip the live advisory API')
+  .addOption(new Option('-t, --timeout <ms>', 'advisory API timeout').default('5000'))
+  .action(async (pkg, opts) => {
+    process.exitCode = await runAdvisoryCheck(pkg, opts);
   });
 
 const configCmd = program.command('config').description('MCP client configuration utilities');

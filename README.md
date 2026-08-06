@@ -92,6 +92,9 @@ npx mcp-agentgate ci
 
 # Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
 npx mcp-agentgate deps --fail-on high
+
+# Ask the MCP advisory database about a package before you install it
+npx mcp-agentgate advisory check mcp-remote@0.1.10
 ```
 
 All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
