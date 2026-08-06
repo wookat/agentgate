@@ -16,6 +16,15 @@ Detects hidden Unicode and prompt-injection patterns in tool names, descriptions
 
 **Configuration** (`--live`, `AG-XS-001`): with several servers configured, tool names are checked for collisions — two servers exposing the same tool name means whichever the client resolves last silently shadows the other (`high`) — and each tool's text is checked for instructions about *another server's* tools ("instead of X…", "before calling X…"), which is cross-server hijacking (`critical`).
 
+## Agent skill files (AG-SK-001)
+
+Repo scans also check **agent skill files** — `SKILL.md` anywhere in the tree,
+and any markdown under a `skills/` directory of an agent config tree
+(`.agents/`, `.claude/`, `.cursor/`, `.codex/`, `.opencode/`). Skills are
+executed as agent instructions verbatim, so both hidden Unicode and
+prompt-injection patterns in them are `critical`. Ordinary markdown (READMEs,
+docs) is not treated as a skill and is never flagged by this rule.
+
 ## Why it matters
 
 Tool descriptions are attacker-controlled model input. A poisoned description can redirect your agent to exfiltrate files or silently misuse other tools — this is the core mechanism of the [GitHub MCP-style prompt-injection incidents](/docs/threat-model/).
