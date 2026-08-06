@@ -19,6 +19,17 @@ Detects remote-code-execution vectors in how servers are launched and what their
 - `curl|sh` patterns in repo files: `critical` in files that are actually executed (shell scripts, Dockerfiles, CI YAML, `package.json`), `medium` elsewhere (usually documentation or prompt text — confirm it is never executed).
 - Dynamic code-execution primitives — `eval(`, `new Function(`, `child_process`/`execSync` shell spawns (`medium`) — review how inputs reach them. Reported only in files that are part of an MCP server (referencing `modelcontextprotocol`, `FastMCP`, `McpServer`, …): that is where model-controlled input can reach them. Dynamic execution in ordinary application code is out of scope for this scanner.
 
+## Skill dynamic context (AG-SK-003)
+
+Agent skill files (`SKILL.md`) can embed dynamic-context commands — inline
+`` !`command` `` placeholders and ```` ```! ```` fenced blocks — that run as
+shell commands **the moment the skill loads**, before anyone reviews the
+rendered prompt. Repo scans flag load-time commands that go beyond gathering
+local context: piping a remote download into a shell (`critical`), sending
+data to a remote host (`high`), and reading credential material (`~/.ssh`,
+`.aws/credentials`, `.env`) into the prompt (`high`). Benign context commands
+like `` !`git diff HEAD` `` are not flagged.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.

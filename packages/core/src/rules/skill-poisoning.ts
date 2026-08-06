@@ -61,6 +61,69 @@ export const skillOverprivilegeRule: Rule = {
   },
 };
 
+/**
+ * Extract dynamic-context commands: inline `` !`cmd` `` placeholders
+ * (recognized at line start or after whitespace) and ```! fenced blocks.
+ * These run as shell commands the moment the skill loads.
+ */
+export function extractDynamicCommands(content: string): { command: string; line: number }[] {
+  const out: { command: string; line: number }[] = [];
+  const lines = content.split(/\r?\n/);
+  let fence: { start: number; body: string[] } | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i] ?? '';
+    if (fence) {
+      if (/^```/.test(text.trim())) {
+        out.push({ command: fence.body.join('\n'), line: fence.start });
+        fence = null;
+      } else {
+        fence.body.push(text);
+      }
+      continue;
+    }
+    if (/^```!/.test(text.trim())) {
+      fence = { start: i + 1, body: [] };
+      continue;
+    }
+    for (const m of text.matchAll(/(?:^|\s)!`([^`]+)`/g)) {
+      out.push({ command: m[1] ?? '', line: i + 1 });
+    }
+  }
+  return out;
+}
+
+/** Load-time command patterns that go beyond gathering local context. */
+const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
+  { re: /\b(curl|wget)\b[^|;&]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
+  { re: /\b(curl|wget)\b[^\n]*\s(-d|--data(-\w+)?|-F|--form|--upload-file|-T)\b/, severity: 'high', risk: 'sends data to a remote host at skill load time' },
+  { re: /(~\/\.ssh\b|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc\b|\.netrc\b)/, severity: 'high', risk: 'reads credential material into the prompt at skill load time' },
+  { re: /(^|[\s;|&])(cat|grep|head|tail|cp|base64)\b[^\n]*\.env\b/, severity: 'high', risk: 'reads .env secrets into the prompt at skill load time' },
+];
+
+export const skillDynamicContextRule: Rule = {
+  id: 'AG-SK-003',
+  category: 'rce-vectors',
+  description: 'Detects dangerous load-time dynamic-context commands in skill files',
+  checkSkill(file, content) {
+    const findings = [];
+    for (const { command, line } of extractDynamicCommands(content)) {
+      const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+      if (hit) {
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            line,
+            message: `Skill dynamic-context command ${hit.risk}: "${command.slice(0, 80)}" — it runs before anyone reviews the rendered prompt`,
+          }),
+        );
+      }
+    }
+    return findings;
+  },
+};
+
 export const skillPoisoningRule: Rule = {
   id: 'AG-SK-001',
   category: 'tool-poisoning',

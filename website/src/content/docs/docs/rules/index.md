@@ -20,6 +20,7 @@ description: The seven AgentGate scan rules — what each detects, why it matter
 | [AG-AM-001](/docs/rules/auth-missing/) | `auth-missing` | Remote servers without auth or over plain HTTP |
 | [AG-SS-001](/docs/rules/ssrf/) | `ssrf` | Cloud-metadata endpoints; unrestricted URL-fetching tools |
 | [AG-RC-001](/docs/rules/rce-vectors/) | `rce-vectors` | Shell-wrapped launches, `curl\|sh`, arbitrary code-execution tools |
+| [AG-SK-003](/docs/rules/rce-vectors/#skill-dynamic-context-ag-sk-003) | `rce-vectors` | Dangerous load-time dynamic-context commands in skill files |
 | [AG-SC-001](/docs/rules/supply-chain/) | `supply-chain` | Unpinned `npx pkg@latest` launches, unpinned docker images |
 
 Severities: `critical` > `high` > `medium` > `low` > `info`. Gate on them with `agentgate scan --fail-on <severity>` or [`agentgate ci`](/docs/cli/ci/).
