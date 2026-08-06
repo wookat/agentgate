@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.13.2
+
+### Patch Changes
+
+- 8108647: AG-SK-001 no longer lets an early fenced-code example mask a real prompt injection later in the same skill file: all matches per pattern are inspected and one outside fenced code (`critical`) wins over a quoted example (`low`).
+
 ## 0.13.1
 
 ## 0.13.0
