@@ -54,6 +54,21 @@ afterAll(() => {
 });
 
 describe('agentgate scan', () => {
+  it('warns when no configs are discovered instead of a silent clean bill', async () => {
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-empty-'));
+    try {
+      const env = { ...process.env, HOME: empty, USERPROFILE: empty, XDG_CONFIG_HOME: path.join(empty, '.config'), APPDATA: path.join(empty, 'AppData') };
+      const { stderr, code } = await exec(process.execPath, [CLI, 'scan'], { cwd: empty, env }).then(
+        (r) => ({ ...r, code: 0 }),
+        (e: { stdout?: string; stderr?: string; code?: number }) => ({ stdout: e.stdout ?? '', stderr: e.stderr ?? '', code: e.code ?? 1 }),
+      );
+      expect(code).toBe(0);
+      expect(stderr).toContain('nothing was scanned');
+    } finally {
+      fs.rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
   it('outputs JSON findings for a static config scan', async () => {
     const badConfig = path.join(dir, 'bad.json');
     fs.writeFileSync(
