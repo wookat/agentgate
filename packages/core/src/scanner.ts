@@ -1,10 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALL_RULES, Rule } from './rules/index.js';
+import { SKILL_FILE } from './rules/skill-poisoning.js';
 import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
+/** Hidden agent-config trees that may carry skill files. */
+const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode']);
 const MAX_FILE_BYTES = 1024 * 1024;
 
 /** Run config-level rules over normalized MCP server entries. */
@@ -43,7 +46,7 @@ export function scanConfiguration(surfaces: Record<string, ToolSurface[]>, rules
 function* walk(dir: string): Generator<string> {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.name.startsWith('.') && entry.name !== '.mcp.json') {
-      if (entry.isDirectory()) continue;
+      if (entry.isDirectory() && !AGENT_DOT_DIRS.has(entry.name)) continue;
     }
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -83,8 +86,9 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const findings: Finding[] = [];
   const scannedFiles: string[] = [];
   for (const file of walk(dir)) {
-    if (!SOURCE_EXTENSIONS.has(path.extname(file))) continue;
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
+    const isSkill = path.extname(file).toLowerCase() === '.md' && SKILL_FILE.test(relPosix);
+    if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file))) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
@@ -97,7 +101,9 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     scannedFiles.push(file);
     // Posix-style so path-based rule heuristics (test/fixture trees) work on Windows too.
     for (const rule of rules) {
-      if (rule.checkSource) {
+      if (isSkill) {
+        if (rule.checkSkill) findings.push(...rule.checkSkill(relPosix, content).map((f) => ({ ...f, file: relPosix })));
+      } else if (rule.checkSource) {
         findings.push(...rule.checkSource(relPosix, content).map((f) => ({ ...f, file: relPosix })));
       }
     }

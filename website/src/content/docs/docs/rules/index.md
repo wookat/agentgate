@@ -13,6 +13,7 @@ description: The seven AgentGate scan rules — what each detects, why it matter
 | Rule | Category | Detects |
 |---|---|---|
 | [AG-TP-001](/docs/rules/tool-poisoning/) | `tool-poisoning` | Hidden Unicode and prompt-injection patterns in tool descriptions |
+| [AG-SK-001](/docs/rules/tool-poisoning/#agent-skill-files-ag-sk-001) | `tool-poisoning` | Hidden Unicode and prompt-injection patterns in agent skill files (`SKILL.md`) |
 | [AG-CL-001](/docs/rules/credential-leak/) | `credential-leak` | Hardcoded secrets in configs; tools soliciting credentials |
 | [AG-OP-001](/docs/rules/overprivileged/) | `overprivileged` | Dangerous capability combos; overly broad filesystem grants |
 | [AG-AM-001](/docs/rules/auth-missing/) | `auth-missing` | Remote servers without auth or over plain HTTP |

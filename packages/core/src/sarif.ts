@@ -27,6 +27,7 @@ const SECURITY_SEVERITY: Record<Severity, string> = {
  */
 const RULE_SECURITY_SEVERITY: Record<string, string> = {
   'AG-TP-001': '9.5',
+  'AG-SK-001': '9.5',
   'AG-CL-001': '8.0',
   'AG-OP-001': '7.0',
   'AG-AM-001': '6.5',

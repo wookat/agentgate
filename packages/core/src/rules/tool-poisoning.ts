@@ -14,21 +14,21 @@ const EMOJI_ZWJ = /(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_I
 const SOURCE_HIDDEN_UNICODE =
   /[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u2069\u206a-\u206f\ufeff]|[\u{e0000}-\u{e007f}]/u;
 
-function hasHiddenUnicode(text: string): boolean {
+export function hasHiddenUnicode(text: string): boolean {
   return HIDDEN_UNICODE.test(text.replace(EMOJI_ZWJ, ''));
 }
 
 /** Regional flag emoji (🏴󠁧󠁢󠁥󠁮󠁧󠁿) legitimately encode their region with Unicode tag characters. */
 const EMOJI_TAG_SEQUENCE = /\u{1f3f4}[\u{e0020}-\u{e007f}]+/gu;
 
-function findHiddenInSource(content: string): { char: string; line: number } | undefined {
+export function findHiddenInSource(content: string): { char: string; line: number } | undefined {
   const cleaned = content.replace(/^\ufeff/, '').replace(EMOJI_ZWJ, '').replace(EMOJI_TAG_SEQUENCE, '');
   const m = cleaned.match(SOURCE_HIDDEN_UNICODE);
   if (!m) return undefined;
   return { char: m[0], line: cleaned.slice(0, m.index ?? 0).split('\n').length };
 }
 
-const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
+export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
   { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b/i, label: 'concealment instruction' },

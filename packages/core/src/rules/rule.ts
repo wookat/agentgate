@@ -12,6 +12,8 @@ export interface Rule {
   checkToolset?(tools: ToolSurface[], serverName: string): Finding[];
   /** Check a source file (repo scan). */
   checkSource?(file: string, content: string): Finding[];
+  /** Check an agent skill file (SKILL.md; repo scan). */
+  checkSkill?(file: string, content: string): Finding[];
   /** Check every configured server's tool surface together (cross-server analysis). */
   checkConfiguration?(surfaces: Record<string, ToolSurface[]>): Finding[];
 }

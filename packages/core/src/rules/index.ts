@@ -7,6 +7,7 @@ import { ssrfRule } from './ssrf.js';
 import { rceVectorsRule } from './rce-vectors.js';
 import { supplyChainRule } from './supply-chain.js';
 import { toxicFlowRule, toolShadowingRule } from './cross-server.js';
+import { skillPoisoningRule } from './skill-poisoning.js';
 
 export const ALL_RULES: Rule[] = [
   toolPoisoningRule,
@@ -18,7 +19,8 @@ export const ALL_RULES: Rule[] = [
   supplyChainRule,
   toxicFlowRule,
   toolShadowingRule,
+  skillPoisoningRule,
 ];
 
-export { toolPoisoningRule, credentialLeakRule, overprivilegedRule, authMissingRule, ssrfRule, rceVectorsRule, supplyChainRule, toxicFlowRule, toolShadowingRule };
+export { toolPoisoningRule, credentialLeakRule, overprivilegedRule, authMissingRule, ssrfRule, rceVectorsRule, supplyChainRule, toxicFlowRule, toolShadowingRule, skillPoisoningRule };
 export type { Rule } from './rule.js';
