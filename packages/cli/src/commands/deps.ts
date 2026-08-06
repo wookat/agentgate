@@ -15,7 +15,7 @@ import {
   verifyDependencies,
 } from 'mcp-agentgate-core';
 import { debugLog } from '../debug.js';
-import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
+import { isGitHubActions, maxSeverityAtLeast, renderFindingsTable, renderGitHubAnnotations } from '../output.js';
 import { CLI_VERSION } from '../version.js';
 
 export interface DepsOptions {
@@ -101,6 +101,10 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
     console.log(pc.dim(`Report written to ${opts.output}`));
   } else {
     console.log(rendered);
+  }
+
+  if (isGitHubActions() && opts.format === 'table' && sorted.length > 0) {
+    console.log(renderGitHubAnnotations(sorted));
   }
 
   if (opts.failOn && maxSeverityAtLeast(sorted, opts.failOn)) {
