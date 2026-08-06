@@ -1,5 +1,19 @@
 # mcp-agentgate
 
+## 0.12.0
+
+### Minor Changes
+
+- f1538d0: Config discovery now covers Windsurf (`~/.codeium/windsurf/mcp_config.json`, legacy `~/.codeium/mcp_config.json`), Cline (`cline_mcp_settings.json` under the VS Code globalStorage dir), and Gemini CLI (`~/.gemini/settings.json` plus project-level `.gemini/settings.json`) — all `mcpServers`-format, per each client's official docs.
+- c58fbd7: `config convert` supports three new client formats: `windsurf` (remote servers via `serverUrl`), `cline` (`disabled` flag mapped to enabled state, `autoApprove` warned as lossy), and `gemini-cli` (`url` = SSE vs `httpUrl` = streamable HTTP preserved in both directions). Default-path auto-discovery picks up the new clients too.
+
+### Patch Changes
+
+- Updated dependencies [f1538d0]
+- Updated dependencies [c58fbd7]
+  - mcp-agentgate-core@0.12.0
+  - mcp-agentgate-config-convert@0.2.0
+
 ## 0.11.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.12.0
+
+### Minor Changes
+
+- f1538d0: Config discovery now covers Windsurf (`~/.codeium/windsurf/mcp_config.json`, legacy `~/.codeium/mcp_config.json`), Cline (`cline_mcp_settings.json` under the VS Code globalStorage dir), and Gemini CLI (`~/.gemini/settings.json` plus project-level `.gemini/settings.json`) — all `mcpServers`-format, per each client's official docs.
+
 ## 0.11.1
 
 ### Patch Changes
