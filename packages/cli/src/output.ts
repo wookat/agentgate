@@ -35,6 +35,45 @@ export function renderFindingsTable(findings: Finding[]): string {
   return `${table.toString()}\n\n${findings.length} finding(s): ${summary}\n${docLinks}`;
 }
 
+const ANNOTATION_LEVEL: Record<Severity, 'error' | 'warning' | 'notice'> = {
+  critical: 'error',
+  high: 'error',
+  medium: 'warning',
+  low: 'notice',
+  info: 'notice',
+};
+
+function escapeAnnotation(s: string): string {
+  return s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+}
+
+function escapeAnnotationProp(s: string): string {
+  return escapeAnnotation(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
+}
+
+/**
+ * GitHub Actions workflow-command annotations (`::error file=…,line=…::msg`),
+ * one per finding, so findings surface inline on the PR diff. Emitted only
+ * when running under GitHub Actions.
+ */
+export function renderGitHubAnnotations(findings: Finding[]): string {
+  return sortFindings(findings)
+    .map((f) => {
+      const level = ANNOTATION_LEVEL[f.severity];
+      const props = [
+        ...(f.file ? [`file=${escapeAnnotationProp(f.file)}`] : []),
+        ...(f.line ? [`line=${f.line}`] : []),
+        `title=${escapeAnnotationProp(`agentgate ${f.ruleId} (${f.severity})`)}`,
+      ].join(',');
+      return `::${level} ${props}::${escapeAnnotation(`${f.target}: ${f.message}`)}`;
+    })
+    .join('\n');
+}
+
+export function isGitHubActions(env = process.env): boolean {
+  return env.GITHUB_ACTIONS === 'true';
+}
+
 export function countBySeverity(findings: Finding[]): Record<Severity, number> {
   const counts: Record<Severity, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
   for (const f of findings) counts[f.severity] += 1;

@@ -29,6 +29,14 @@ agentgate ci [options]
 | 1 | Drift detected, or findings at/above the threshold. |
 | 2 | Execution error (missing lockfile, unreachable server). |
 
+## GitHub Actions annotations
+
+When running under GitHub Actions (`GITHUB_ACTIONS=true`), `ci` and `scan`
+(table format) additionally emit one [workflow-command annotation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#setting-an-error-message)
+per finding — `critical`/`high` as errors, `medium` as warnings, `low`/`info`
+as notices — so findings with a file and line surface inline on the PR diff.
+JSON and SARIF output is never mixed with annotations.
+
 ## CI integration
 
 ```yaml
