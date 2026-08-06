@@ -44,3 +44,45 @@ jobs:
                   re.compile(h["files"])
           print(".pre-commit-hooks.yaml OK")
           EOF
+
+  # Run the composite action end-to-end against the published CLI:
+  # lock (--out) → ci (--lockfile) → scan with SARIF output.
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create MCP config fixture
+        run: |
+          mkdir -p /tmp/smoke
+          cat > /tmp/smoke/.mcp.json <<'EOF'
+          {
+            "mcpServers": {
+              "everything": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-everything@2026.7.4"] }
+            }
+          }
+          EOF
+      - name: agentgate lock via action
+        uses: ./packages/action
+        with:
+          command: lock
+          working-directory: /tmp/smoke
+          args: --config .mcp.json --timeout 120000
+      - name: agentgate ci via action
+        uses: ./packages/action
+        with:
+          command: ci
+          working-directory: /tmp/smoke
+          args: --config .mcp.json --timeout 120000
+      - name: agentgate scan with SARIF via action
+        uses: ./packages/action
+        with:
+          command: scan
+          working-directory: /tmp/smoke
+          sarif-file: agentgate.sarif
+          args: --config .mcp.json --fail-on critical
+      - name: Assert artifacts
+        run: |
+          test -s /tmp/smoke/agentgate.lock
+          test -s /tmp/smoke/agentgate.sarif
+          python3 -c "import json; json.load(open('/tmp/smoke/agentgate.sarif'))"
+          echo "action smoke OK"
