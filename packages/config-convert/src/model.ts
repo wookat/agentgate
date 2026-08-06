@@ -22,7 +22,10 @@ export type ClientId =
   | "cursor"
   | "vscode"
   | "codex"
-  | "opencode";
+  | "opencode"
+  | "windsurf"
+  | "cline"
+  | "gemini-cli";
 
 export const CLIENT_IDS: ClientId[] = [
   "claude-desktop",
@@ -31,6 +34,9 @@ export const CLIENT_IDS: ClientId[] = [
   "vscode",
   "codex",
   "opencode",
+  "windsurf",
+  "cline",
+  "gemini-cli",
 ];
 
 export interface ParseResult {

@@ -325,6 +325,148 @@ export const opencode: ClientAdapter = {
   },
 };
 
+/** Windsurf — `~/.codeium/windsurf/mcp_config.json`; remote servers use `serverUrl`. */
+export const windsurf: ClientAdapter = {
+  id: "windsurf",
+  defaultPath: "~/.codeium/windsurf/mcp_config.json",
+  parse(content): ParseResult {
+    const data = parseJson("windsurf", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcpServers;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("windsurf", "mcpServers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      if (isRecord(entry) && typeof entry.serverUrl === "string" && entry.url === undefined) {
+        entry.url = entry.serverUrl;
+      }
+      const s = parseCommonEntry("windsurf", name, entry, warnings);
+      if (s) servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: windsurf has no disabled flag; server emitted as enabled`);
+      }
+      if (s.cwd) warnings.push(`${s.name}: windsurf does not support cwd; dropped`);
+      const entry = renderCommonEntry(s, false);
+      if (s.transport !== "stdio") {
+        entry.serverUrl = entry.url;
+        delete entry.url;
+      }
+      mcpServers[s.name] = entry;
+    }
+    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+  },
+};
+
+/** Cline — `cline_mcp_settings.json` under VS Code globalStorage; supports `disabled`. */
+export const cline: ClientAdapter = {
+  id: "cline",
+  defaultPath: "<vscode user dir>/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json",
+  parse(content): ParseResult {
+    const data = parseJson("cline", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcpServers;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("cline", "mcpServers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      const s = parseCommonEntry("cline", name, entry, warnings);
+      if (!s) continue;
+      if (isRecord(entry)) {
+        if (typeof entry.disabled === "boolean") s.enabled = !entry.disabled;
+        if (Array.isArray(entry.autoApprove) && entry.autoApprove.length) {
+          warnings.push(`${name}: cline autoApprove list cannot be represented in other clients; dropped`);
+        }
+      }
+      servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.cwd) warnings.push(`${s.name}: cline does not support cwd; dropped`);
+      const entry = renderCommonEntry(s, s.transport !== "stdio");
+      if (s.enabled === false) entry.disabled = true;
+      mcpServers[s.name] = entry;
+    }
+    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+  },
+};
+
+/** Gemini CLI — `~/.gemini/settings.json`; `url` is SSE, `httpUrl` is streamable HTTP. */
+export const geminiCli: ClientAdapter = {
+  id: "gemini-cli",
+  defaultPath: "~/.gemini/settings.json",
+  parse(content): ParseResult {
+    const data = parseJson("gemini-cli", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcpServers;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("gemini-cli", "mcpServers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      if (!isRecord(entry)) {
+        warnings.push(`${name}: entry is not an object; dropped`);
+        continue;
+      }
+      if (typeof entry.httpUrl === "string") {
+        servers.push({
+          name,
+          transport: "http",
+          url: entry.httpUrl,
+          headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
+        });
+        continue;
+      }
+      if (typeof entry.url === "string") {
+        servers.push({
+          name,
+          transport: "sse",
+          url: entry.url,
+          headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
+        });
+        continue;
+      }
+      const s = parseCommonEntry("gemini-cli", name, entry, warnings);
+      if (s) servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: gemini-cli has no disabled flag; server emitted as enabled`);
+      }
+      const entry: Record<string, unknown> = {};
+      if (s.transport === "stdio") {
+        entry.command = s.command;
+        if (s.args?.length) entry.args = s.args;
+        if (s.env && Object.keys(s.env).length) entry.env = s.env;
+        if (s.cwd) entry.cwd = s.cwd;
+      } else {
+        if (s.transport === "sse") entry.url = s.url;
+        else entry.httpUrl = s.url;
+        if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
+      }
+      mcpServers[s.name] = entry;
+    }
+    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -332,4 +474,7 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   vscode,
   codex,
   opencode,
+  windsurf,
+  cline,
+  "gemini-cli": geminiCli,
 };
