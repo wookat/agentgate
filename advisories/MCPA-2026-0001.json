@@ -9,35 +9,67 @@
     "score": 8.8,
     "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
   },
-  "aliases": ["CVE-2026-26118", "GHSA-hhfx-wfvq-7g9c"],
-  "cwe": ["CWE-918"],
+  "aliases": [
+    "CVE-2026-26118",
+    "GHSA-hhfx-wfvq-7g9c",
+    "PYSEC-2026-2669"
+  ],
+  "cwe": [
+    "CWE-918"
+  ],
   "packages": [
     {
       "ecosystem": "npm",
       "name": "@azure/mcp",
       "ranges": [
-        { "introduced": "1.0.0", "fixed": "1.0.2" },
-        { "introduced": "2.0.0-beta.1", "fixed": "2.0.0-beta.17" }
+        {
+          "introduced": "1.0.0",
+          "fixed": "1.0.2"
+        },
+        {
+          "introduced": "2.0.0-beta.1",
+          "fixed": "2.0.0-beta.17"
+        }
       ]
     },
     {
       "ecosystem": "nuget",
       "name": "Azure.Mcp",
       "ranges": [
-        { "introduced": "1.0.0", "fixed": "1.0.2" },
-        { "introduced": "2.0.0-beta.1", "fixed": "2.0.0-beta.17" }
+        {
+          "introduced": "1.0.0",
+          "fixed": "1.0.2"
+        },
+        {
+          "introduced": "2.0.0-beta.1",
+          "fixed": "2.0.0-beta.17"
+        }
       ]
     },
     {
       "ecosystem": "pypi",
       "name": "msmcp-azure",
-      "ranges": [{ "introduced": "2.0.0b14", "fixed": "2.0.0b17" }]
+      "ranges": [
+        {
+          "introduced": "2.0.0b14",
+          "fixed": "2.0.0b17"
+        }
+      ]
     }
   ],
   "references": [
-    { "type": "vendor", "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-26118" },
-    { "type": "advisory", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26118" },
-    { "type": "advisory", "url": "https://github.com/advisories/GHSA-hhfx-wfvq-7g9c" }
+    {
+      "type": "vendor",
+      "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2026-26118"
+    },
+    {
+      "type": "advisory",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26118"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-hhfx-wfvq-7g9c"
+    }
   ],
   "timeline": {
     "published": "2026-03-10"

@@ -1,0 +1,44 @@
+{
+  "id": "MCPA-2026-0014",
+  "title": "Flyto2 Core 2026-07-30 batch: unauthenticated callback SSRF, secret leaks, and guard bypasses (CVE-2026-67424..67428)",
+  "summary": "Five vulnerabilities in flyto-core before 2.26.7, disclosed together on 2026-07-30: unauthenticated flyto-verification /run callback_url SSRF with internal runner-secret exfiltration (CVE-2026-67426, CVSS 9.3); guarded HTTP modules following redirects into internal address space (CVE-2026-67424); ${env.VAR} interpolation reading arbitrary environment secrets despite an env allowlist (CVE-2026-67427); multiple HTTP-family modules fetching client-controlled URLs without SSRF validation (CVE-2026-67428); and LLM/API keys leaking to an attacker-controlled base_url (CVE-2026-67425). All fixed in 2.26.7.",
+  "type": "ssrf",
+  "severity": "critical",
+  "aliases": [
+    "CVE-2026-67424",
+    "CVE-2026-67425",
+    "CVE-2026-67426",
+    "CVE-2026-67427",
+    "CVE-2026-67428",
+    "GHSA-c9hr-64h3-gxpc",
+    "GHSA-qq9q-xgm3-xv9g",
+    "GHSA-jx74-cqjv-2c67",
+    "GHSA-hr7p-wg7r-hg9m",
+    "GHSA-pgwh-4jj4-qm8v",
+    "PYSEC-2026-3569",
+    "PYSEC-2026-3570",
+    "PYSEC-2026-3571",
+    "PYSEC-2026-3572",
+    "PYSEC-2026-3573"
+  ],
+  "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:N", "score": 9.3 },
+  "cwe": ["CWE-306", "CWE-522", "CWE-918"],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "flyto-core",
+      "ranges": [{ "introduced": "0", "fixed": "2.26.7" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-jx74-cqjv-2c67" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-c9hr-64h3-gxpc" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-qq9q-xgm3-xv9g" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-hr7p-wg7r-hg9m" },
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-pgwh-4jj4-qm8v" },
+    { "type": "web", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-67426" }
+  ],
+  "timeline": {
+    "published": "2026-07-30"
+  }
+}
