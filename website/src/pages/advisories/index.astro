@@ -21,17 +21,36 @@ for (const a of advisories) bySeverity[a.severity]++;
       href="/docs/advisories/contributing/">contribute a new advisory</a>.
   </p>
 
-  <div class="ag-adv-stats" aria-label="Advisory counts by severity">
-    <span class="ag-pill ag-sev-critical">{bySeverity.critical} critical</span>
-    <span class="ag-pill ag-sev-high">{bySeverity.high} high</span>
-    <span class="ag-pill ag-sev-medium">{bySeverity.medium} medium</span>
-    <span class="ag-pill ag-sev-low">{bySeverity.low} low</span>
+  <div class="ag-adv-stats" role="group" aria-label="Filter advisories by severity">
+    <button type="button" class="ag-pill ag-sev-critical ag-filter" data-severity="critical" aria-pressed="false">{bySeverity.critical} critical</button>
+    <button type="button" class="ag-pill ag-sev-high ag-filter" data-severity="high" aria-pressed="false">{bySeverity.high} high</button>
+    <button type="button" class="ag-pill ag-sev-medium ag-filter" data-severity="medium" aria-pressed="false">{bySeverity.medium} medium</button>
+    <button type="button" class="ag-pill ag-sev-low ag-filter" data-severity="low" aria-pressed="false">{bySeverity.low} low</button>
+    <input
+      type="search"
+      id="ag-adv-search"
+      placeholder="Filter by id, package, CVE…"
+      aria-label="Filter advisories by id, title, package, or alias"
+    />
   </div>
+  <p id="ag-adv-empty" hidden>No advisories match the current filter.</p>
 
   <ul class="ag-adv-list">
     {
       advisories.map((a) => (
-        <li class="ag-adv-card">
+        <li
+          class="ag-adv-card"
+          data-severity={a.severity}
+          data-search={[
+            a.id,
+            a.title,
+            a.type,
+            ...(a.aliases ?? []),
+            ...a.packages.map((p) => `${p.ecosystem}/${p.name}`),
+          ]
+            .join(' ')
+            .toLowerCase()}
+        >
           <a href={`/advisories/${a.id.toLowerCase()}/`}>
             <div class="ag-adv-card-head">
               <span class={`ag-pill ag-sev-${a.severity}`}>{a.severity}</span>
@@ -52,3 +71,57 @@ for (const a of advisories) bySeverity[a.severity]++;
     }
   </ul>
 </StarlightPage>
+
+<script>
+  const cards = [...document.querySelectorAll<HTMLElement>('.ag-adv-card')];
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('.ag-filter')];
+  const search = document.getElementById('ag-adv-search') as HTMLInputElement;
+  const empty = document.getElementById('ag-adv-empty') as HTMLElement;
+  let severity = '';
+
+  function apply() {
+    const q = search.value.trim().toLowerCase();
+    let shown = 0;
+    for (const card of cards) {
+      const ok =
+        (!severity || card.dataset.severity === severity) &&
+        (!q || (card.dataset.search ?? '').includes(q));
+      card.hidden = !ok;
+      if (ok) shown++;
+    }
+    empty.hidden = shown > 0;
+  }
+
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      severity = severity === b.dataset.severity ? '' : (b.dataset.severity ?? '');
+      for (const other of buttons) {
+        other.setAttribute('aria-pressed', String(other.dataset.severity === severity));
+      }
+      apply();
+    });
+  }
+  search.addEventListener('input', apply);
+</script>
+
+<style>
+  button.ag-filter {
+    cursor: pointer;
+    border: 1px solid transparent;
+    font: inherit;
+    font-size: var(--sl-text-xs);
+  }
+  button.ag-filter[aria-pressed='true'] {
+    border-color: currentColor;
+  }
+  #ag-adv-search {
+    flex: 1;
+    min-width: 12rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 999px;
+    background: var(--sl-color-black);
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-sm);
+  }
+</style>
