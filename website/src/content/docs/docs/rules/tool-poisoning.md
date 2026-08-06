@@ -22,7 +22,11 @@ Repo scans also check **agent skill files** — `SKILL.md` anywhere in the tree,
 and any markdown under a `skills/` directory of an agent config tree
 (`.agents/`, `.claude/`, `.cursor/`, `.codex/`, `.opencode/`). Skills are
 executed as agent instructions verbatim, so both hidden Unicode and
-prompt-injection patterns in them are `critical`. Ordinary markdown (READMEs,
+prompt-injection patterns in them are `critical`. One exception: an injection
+pattern that sits *inside a fenced code block* is reported at `low` severity —
+security and guardrail skills legitimately quote jailbreak strings as example
+data, so those matches are surfaced for review instead of failing a `high`
+gate. Hidden Unicode stays `critical` everywhere. Ordinary markdown (READMEs,
 docs) is not treated as a skill and is never flagged by this rule.
 
 ## Why it matters

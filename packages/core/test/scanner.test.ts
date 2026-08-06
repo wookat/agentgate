@@ -53,6 +53,17 @@ describe('scanRepo', () => {
     expect(hits[0].file).toBe('.claude/skills/helper/SKILL.md');
   });
 
+  it('downgrades injection patterns quoted in fenced code blocks to low (AG-SK-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'SKILL.md'),
+      '# Guardrails\n\nDetect jailbreaks:\n\n```python\nblocked = ["Ignore previous instructions"]\n```\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0].severity).toBe('low');
+    expect(hits[0].message).toContain('fenced code block');
+  });
+
   it('flags hidden Unicode in a root SKILL.md and reports the line', () => {
     fs.writeFileSync(path.join(dir, 'SKILL.md'), '# Skill\n\nnormal line\nbad\u202eline\n');
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-001');

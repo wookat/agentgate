@@ -133,6 +133,30 @@ export const skillDynamicContextRule: Rule = {
   },
 };
 
+/** 1-based line numbers that sit inside a fenced code block (``` or ~~~). */
+export function fencedCodeLines(content: string): Set<number> {
+  const inFence = new Set<number>();
+  const lines = content.split(/\r?\n/);
+  let fence: string | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const m = (lines[i] ?? '').trimStart().match(/^(`{3,}|~{3,})/);
+    if (m?.[1]) {
+      if (!fence) {
+        fence = m[1][0] as string;
+        inFence.add(i + 1);
+        continue;
+      }
+      if (m[1].startsWith(fence)) {
+        inFence.add(i + 1);
+        fence = null;
+        continue;
+      }
+    }
+    if (fence) inFence.add(i + 1);
+  }
+  return inFence;
+}
+
 export const skillPoisoningRule: Rule = {
   id: 'AG-SK-001',
   category: 'tool-poisoning',
@@ -152,16 +176,21 @@ export const skillPoisoningRule: Rule = {
         }),
       );
     }
+    const codeLines = fencedCodeLines(content);
     for (const { re, label } of INJECTION_PATTERNS) {
       const m = content.match(re);
       if (m) {
+        const line = content.slice(0, m.index ?? 0).split('\n').length;
+        const quoted = codeLines.has(line);
         findings.push(
           finding(this, {
-            severity: 'critical',
+            severity: quoted ? 'low' : 'critical',
             target: file,
             file,
-            line: content.slice(0, m.index ?? 0).split('\n').length,
-            message: `Skill file matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
+            line,
+            message: quoted
+              ? `Skill file matches prompt-injection pattern (${label}) inside a fenced code block: "${m[0].slice(0, 80)}" — likely quoted example content, but review it`
+              : `Skill file matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
           }),
         );
       }
