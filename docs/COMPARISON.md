@@ -87,6 +87,27 @@ Legend: ✅ shipped/confirmed in their README or code · ⚠️ partial (see not
 - Different layer than the name suggests: pins the **npm package** (exact version + tarball integrity hash) of each MCP server, like `npm ci` — it does **not** hash the live tool surface, so a rug-pull that changes tool descriptions server-side without a package release passes.
 - Weaknesses vs AgentGate: npm-only; no tool-surface lock, no scanning, no advisory DB, no Action.
 
+### mcp-scan — thynkQ (npm `mcp-scan`, unrelated to Invariant/Snyk)
+
+- A separate product that took over the `mcp-scan` npm name (thynkq.com, first
+  published 2026-03; v2.0.2 verified by real run 2026-08-06). Wide command
+  surface: scan/diff/watch/ci, SBOM, compliance mapping (SOC2/GDPR/HIPAA…),
+  privacy assessments, a TUI dashboard, a runtime proxy, and a marketplace
+  submission flow. Scans configs of "16+ AI tools", offline, no account —
+  the closest UX overlap with AgentGate's static scan.
+- Real-run findings on our shared fixture (2026-08-06): flagged the exposed
+  env secret and unpinned packages, fast (≤30 ms). But it **did not scan
+  skill/instruction files at all** (a poisoned `SKILL.md` in the same project
+  produced zero findings), has **no advisory database** (`ludus-mcp@1.0.24`
+  with three public CVEs reported only generic "unverified source"), and
+  showed accuracy issues: our fake `sk-proj-…` OpenAI-style key was labeled
+  a "Cloudflare API Token", a version spec `ludus-mcp@1.0.24` was flagged as
+  a network "exfiltration-vector", and one env secret triggered four
+  boilerplate PII-compliance findings.
+- `diff` compares two scan reports (finding drift), not the tool surface:
+  no lockfile, no schema/description pinning, so a rug-pull that changes
+  tool descriptions between scans without changing findings passes.
+
 ## Honest gaps (where competitors beat AgentGate today)
 
 Per CHARTER §7 the comparison must be honest, so, as of this writing:
