@@ -87,7 +87,10 @@ export default defineConfig({
         },
         {
           label: 'Security',
-          items: [{ label: 'Threat model', slug: 'docs/threat-model' }],
+          items: [
+            { label: 'Threat model', slug: 'docs/threat-model' },
+            { label: 'How AgentGate compares', slug: 'docs/comparison' },
+          ],
         },
         {
           label: 'Advisory database',
