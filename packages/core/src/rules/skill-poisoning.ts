@@ -191,19 +191,29 @@ export const skillPoisoningRule: Rule = {
         m,
         line: content.slice(0, m.index ?? 0).split('\n').length,
       }));
-      const best = all.find(({ line }) => !codeLines.has(line)) ?? all[0];
+      // Skill files ARE instructions, so <instructions>/<important> tags are
+      // ordinary prompt-template structure there — not a concealment channel
+      // like they are in a tool description.
+      const isStructural = (s: string) => label === 'hidden instruction tag' && /^<(instructions|important)>$/i.test(s);
+      const best =
+        all.find(({ m, line }) => !codeLines.has(line) && !isStructural(m[0])) ??
+        all.find(({ line }) => !codeLines.has(line)) ??
+        all[0];
       if (best) {
         const { m, line } = best;
         const quoted = codeLines.has(line);
+        const structural = isStructural(m[0]);
         findings.push(
           finding(this, {
-            severity: quoted ? 'low' : 'critical',
+            severity: quoted || structural ? 'low' : 'critical',
             target: file,
             file,
             line,
             message: quoted
               ? `Skill file matches prompt-injection pattern (${label}) inside a fenced code block: "${m[0].slice(0, 80)}" — likely quoted example content, but review it`
-              : `Skill file matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
+              : structural
+                ? `Skill file uses a "${m[0]}" tag — common prompt-template structure in instruction files, but review that it does not conceal directives`
+                : `Skill file matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
           }),
         );
       }

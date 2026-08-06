@@ -25,11 +25,14 @@ rules/workflows (`.windsurf/`, `.windsurfrules`), Cline rules (`.clinerules`,
 `.cursorrules`), Cursor rule files (`.cursor/rules/*.mdc`), and Gemini CLI
 custom commands (`.gemini/commands/**.toml`). Skills are
 executed as agent instructions verbatim, so both hidden Unicode and
-prompt-injection patterns in them are `critical`. One exception: an injection
-pattern that sits *inside a fenced code block* is reported at `low` severity —
-security and guardrail skills legitimately quote jailbreak strings as example
-data, so those matches are surfaced for review instead of failing a `high`
-gate. Hidden Unicode stays `critical` everywhere. Ordinary markdown (READMEs,
+prompt-injection patterns in them are `critical`. Two exceptions are reported
+at `low` severity (surfaced for review instead of failing a `high` gate): an
+injection pattern that sits *inside a fenced code block* — security and
+guardrail skills legitimately quote jailbreak strings as example data — and a
+bare `<instructions>` or `<important>` tag, which is common prompt-template
+structure in instruction files rather than a concealment channel (both stay
+`critical` in tool descriptions, and `<system>`/`<secret>`/`<hidden>` stay
+`critical` everywhere). Hidden Unicode stays `critical` everywhere. Ordinary markdown (READMEs,
 docs) is not treated as a skill and is never flagged by this rule.
 
 ## Why it matters
