@@ -1,5 +1,12 @@
 # mcp-agentgate
 
+## 0.13.1
+
+### Patch Changes
+
+- a50fa73: `deps` (table format) also emits GitHub Actions workflow-command annotations under `GITHUB_ACTIONS=true`, matching `scan`/`ci` from the previous release.
+  - mcp-agentgate-core@0.13.1
+
 ## 0.13.0
 
 ### Minor Changes
