@@ -23,7 +23,7 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 | 步骤 | 作用 |
 |---|---|
 | **Scan 扫描** | 静态 + 可选连接式分析：工具投毒（隐藏 Unicode、提示注入）、凭证泄露、SSRF/RCE 向量、过度授权组合 |
-| **Lock 锁定** | 把 Agent 实际看到的工具面（名称、描述、输入 schema）固定进 `agentgate.lock`，防御 rug-pull |
+| **Lock 锁定** | 把 Agent 实际看到的工具面（名称、描述、输入 schema）——可选连同全部 skill/指令文件（`--skills`）——固定进 `agentgate.lock`，防御 rug-pull |
 | **Gate 门禁** | 与已批准基线有任何漂移即 CI 红灯；基于 diff 评审，而非二元允许/拒绝 |
 | **Deps 依赖防护** | 拦截 AI 幻觉包（slopsquatting）与 typosquat 依赖 —— 安装前对 manifest *与源码 import* 做 npm/PyPI 实时核验 |
 | **Advise 通报** | 与[公开结构化 MCP 安全通报数据库](advisories/)自动比对 |
@@ -39,13 +39,14 @@ agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Cl
 agentgate scan --live          # 另外连接 stdio 服务器审计实时工具面
                                # （启动前会询问确认；CI 中加 --yes）
 agentgate lock                 # 把当前工具面固定进 agentgate.lock
+agentgate lock --skills        # 同时钉定 agent skill/指令文件（lockfile v2）
 agentgate diff                 # 任何工具名/描述/schema 变化即退出码 1 + 可读 diff
 agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退出
 ```
 
 从源码开发：`git clone` 后 `pnpm install && pnpm build`，然后 `node packages/cli/dist/index.js`。文档站：**https://agentgate.zalize.com**。
 
-七大类共十二条扫描规则，对齐真实事故：`tool-poisoning`（含 agent skill 文件投毒）、`credential-leak`、`overprivileged`（含 skill `allowed-tools` 过权授权）、`auth-missing`、`ssrf`、`rce-vectors`（含 skill 载入时动态上下文命令）、`supply-chain`。锁文件格式见 [docs/spec/agentgate.lock.schema.json](docs/spec/agentgate.lock.schema.json)。
+七大类共十二条扫描规则，对齐真实事故：`tool-poisoning`（含 agent skill 文件投毒）、`credential-leak`、`overprivileged`（含 skill `allowed-tools` 过权授权）、`auth-missing`、`ssrf`、`rce-vectors`（含 skill 载入时动态上下文命令）、`supply-chain`。锁文件格式：v1（仅服务器，已冻结）与 v2（`lock --skills` 额外钉定 skill/指令文件），见 [docs/spec/](docs/spec/)。
 
 ## 一步接入 CI 门禁
 

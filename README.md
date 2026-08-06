@@ -47,6 +47,7 @@ Pin the tool surface your agent sees, then gate on drift:
 
 ```bash
 agentgate lock                 # connect to configured servers, write agentgate.lock
+agentgate lock --skills        # also pin agent skill/instruction files (lockfile v2)
 agentgate diff                 # exit 1 + human-readable diff if any tool name/description/schema changed
 agentgate ci --fail-on high    # CI gate: drift OR high-severity findings → non-zero exit
 ```
@@ -55,7 +56,7 @@ Point at a specific config instead of auto-discovery with `--config path/to/mcp.
 
 Twelve scan rules across seven categories, aligned with real-world MCP incidents: `tool-poisoning` (hidden Unicode, prompt injection — in tool descriptions and agent skill files), `credential-leak`, `overprivileged` (dangerous capability combos, unscoped skill `allowed-tools` grants), `auth-missing`, `ssrf`, `rce-vectors` (including load-time skill dynamic-context commands), `supply-chain` (unpinned `npx -y pkg@latest` rug-pull exposure).
 
-The lockfile format is frozen as v1: [docs/spec/lockfile-v1.md](docs/spec/lockfile-v1.md) / [JSON Schema](docs/spec/agentgate.lock.schema.json).
+Lockfile formats: [v1](docs/spec/lockfile-v1.md) (servers only, frozen) and [v2](docs/spec/lockfile-v2.md) (adds optional pinned skill files via `lock --skills`), with JSON Schemas in [docs/spec/](docs/spec/).
 
 </details>
 
@@ -71,7 +72,7 @@ the whole loop in one tool:
 | Step | What it does |
 |---|---|
 | **Scan** | Static + opt-in live analysis of MCP servers: tool poisoning (hidden Unicode, prompt injection), credential leaks, SSRF/RCE vectors, over-privileged tool combos |
-| **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees into `agentgate.lock` — rug-pull defense |
+| **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees — and optionally every skill/instruction file (`--skills`) — into `agentgate.lock`: rug-pull defense |
 | **Gate** | Fail CI on any drift from the approved baseline; diff-based review, not binary allow/deny |
 | **Deps** | Catch AI-hallucinated (slopsquatted) and typosquatted dependencies — live npm/PyPI verification of manifests *and* source imports before anything installs |
 | **Advise** | Cross-check servers against a [public, structured MCP advisory database](advisories/) |
