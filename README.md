@@ -29,7 +29,7 @@ pnpm build
 alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
-Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI) are configured to use — config paths are discovered automatically:
+Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed) are configured to use — config paths are discovered automatically:
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
@@ -82,7 +82,7 @@ the whole loop in one tool:
 The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
 
 ```bash
-# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI auto-discovered)
+# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed auto-discovered)
 npx mcp-agentgate scan
 
 # Pin the current tool surface into agentgate.lock
@@ -137,7 +137,7 @@ repos:
 The full test suite — including a live stdio MCP fixture server — runs on all
 three operating systems in CI. Client config discovery covers the
 platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
-OpenCode, Windsurf, Cline, and Gemini CLI on each OS.
+OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, and Zed on each OS.
 
 ## Config portability
 

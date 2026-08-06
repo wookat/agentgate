@@ -35,7 +35,7 @@ npm 包名为 **`mcp-agentgate`**（`agentgate` 被占用），安装后命令�
 ```bash
 npm i -g mcp-agentgate   # 或直接 npx mcp-agentgate <命令>
 
-agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode）
+agentgate scan                 # 静态扫描本机 MCP 配置（自动发现 Claude / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed）
 agentgate scan --live          # 另外连接 stdio 服务器审计实时工具面
                                # （启动前会询问确认；CI 中加 --yes）
 agentgate lock                 # 把当前工具面固定进 agentgate.lock
@@ -81,7 +81,7 @@ repos:
 | Windows | 每个 PR CI 实测（`windows-latest`） |
 | Node.js | >= 22（`engines` 强制） |
 
-完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI 的平台特定路径。
+完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed 的平台特定路径。
 
 ## 配置可移植转换
 

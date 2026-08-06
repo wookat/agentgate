@@ -6,13 +6,13 @@ import { McpServerConfig } from './types.js';
 export interface ClientConfigLocation {
   client: string;
   path: string;
-  format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json';
+  format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json';
 }
 
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, and Gemini CLI.
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, and Zed.
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -60,6 +60,25 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   }
   // Gemini CLI — mcpServers key inside settings.json
   push('gemini-cli', path.join(homeDir, '.gemini', 'settings.json'));
+  // Kiro — user-level mcp.json, standard mcpServers format
+  push('kiro', path.join(homeDir, '.kiro', 'settings', 'mcp.json'));
+  // Roo Code (VS Code extension, own settings file under globalStorage)
+  const rooRel = path.join('globalStorage', 'rooveterinaryinc.roo-cline', 'settings', 'mcp_settings.json');
+  if (platform === 'darwin') {
+    push('roo-code', path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', rooRel));
+  } else if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    push('roo-code', path.join(appData, 'Code', 'User', rooRel));
+  } else {
+    push('roo-code', path.join(homeDir, '.config', 'Code', 'User', rooRel));
+  }
+  // Zed — context_servers key inside settings.json (JSONC)
+  if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    push('zed', path.join(appData, 'Zed', 'settings.json'), 'zed-settings-json');
+  } else {
+    push('zed', path.join(homeDir, '.config', 'zed', 'settings.json'), 'zed-settings-json');
+  }
 
   return locations;
 }
@@ -72,6 +91,8 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'claude-code', path: path.join(projectDir, '.mcp.json'), format: 'mcpServers-json' },
     { client: 'opencode', path: path.join(projectDir, 'opencode.json'), format: 'opencode-json' },
     { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
+    { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
   ];
 }
@@ -95,6 +116,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseVsCodeJson(raw, location);
     case 'opencode-json':
       return parseOpenCodeJson(raw, location);
+    case 'zed-settings-json':
+      return parseZedSettingsJson(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -176,6 +199,42 @@ export function parseOpenCodeJson(raw: string, location: ClientConfigLocation): 
     });
   }
   return out;
+}
+
+/** Zed `settings.json`: `{ "context_servers": { ... } }` — same entry shape as mcpServers, JSONC allowed. */
+export function parseZedSettingsJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const json = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
+  return collectServers(json.context_servers, location);
+}
+
+/** Remove `//` and `/* *\/` comments plus trailing commas (outside strings) so JSONC settings parse. */
+function stripJsonComments(raw: string): string {
+  let out = '';
+  let inString = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (inString) {
+      out += ch;
+      if (ch === '\\') {
+        out += raw[++i] ?? '';
+      } else if (ch === '"') {
+        inString = false;
+      }
+    } else if (ch === '"') {
+      inString = true;
+      out += ch;
+    } else if (ch === '/' && raw[i + 1] === '/') {
+      while (i < raw.length && raw[i] !== '\n') i++;
+      out += '\n';
+    } else if (ch === '/' && raw[i + 1] === '*') {
+      i += 2;
+      while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
+      i++;
+    } else {
+      out += ch;
+    }
+  }
+  return out.replace(/,(\s*[}\]])/g, '$1');
 }
 
 /**
