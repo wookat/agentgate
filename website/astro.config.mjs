@@ -49,6 +49,7 @@ export default defineConfig({
             { label: 'agentgate diff', slug: 'docs/cli/diff' },
             { label: 'agentgate ci', slug: 'docs/cli/ci' },
             { label: 'agentgate deps', slug: 'docs/cli/deps' },
+            { label: 'agentgate advisory', slug: 'docs/cli/advisory' },
             { label: 'agentgate config convert', slug: 'docs/cli/config-convert' },
           ],
         },
