@@ -113,7 +113,7 @@ function short(hash: string): string {
 
 /** Render a human-readable diff report. */
 export function formatDiff(diff: LockDiff): string {
-  if (!diff.drifted) return 'No drift: tool surface matches agentgate.lock.';
+  if (!diff.drifted) return 'No drift: locked surface matches agentgate.lock.';
   const lines = [`Drift detected: ${diff.entries.length} change(s) from the approved baseline`, ''];
   const symbol: Record<DriftKind, string> = {
     'server-added': '+',
