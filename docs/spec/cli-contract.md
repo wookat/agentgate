@@ -89,10 +89,11 @@ degrade to `info`-severity findings and never fail the run by themselves.
 
 ```jsonc
 {
-  "package": { "ecosystem": "npm | pypi", "name": "pkg", "version": "1.2.3" }, // version null when omitted
+  "package": { "ecosystem": "npm | pypi | null", "name": "pkg", "version": "1.2.3" }, // null when -e omitted (both checked); version null when omitted
   "source": "live | bundled",   // "bundled" when --offline or the advisory API is unreachable
   "matches": [
     {
+      "ecosystem": "npm | pypi", // the ecosystem this match came from
       "versionConfirmed": true, // false when no version was given and the advisory has fixed ranges
       "advisory": { "id": "MCPA-YYYY-NNNN", /* ... McpaAdvisory ... */ }
     }

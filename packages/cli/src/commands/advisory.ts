@@ -24,7 +24,8 @@ export interface AdvisoryListOptions {
 }
 
 export interface AdvisoryCheckOptions extends AdvisoryListOptions {
-  ecosystem: string;
+  /** When omitted, both npm and PyPI are checked. */
+  ecosystem?: string;
 }
 
 async function loadDatabase(opts: AdvisoryListOptions): Promise<{ advisories: McpaAdvisory[]; source: string }> {
@@ -83,14 +84,21 @@ export async function runAdvisoryCheck(spec: string, opts: AdvisoryCheckOptions)
     return 2;
   }
   const { advisories, source } = await loadDatabase(opts);
-  const matches = matchMcpaAdvisories(name, opts.ecosystem, version, advisories);
+  const ecosystems = opts.ecosystem ? [opts.ecosystem] : ['npm', 'pypi'];
+  const matches = ecosystems.flatMap((eco) =>
+    matchMcpaAdvisories(name, eco, version, advisories).map((m) => ({ ...m, ecosystem: eco })),
+  );
   if (opts.json) {
     console.log(
       JSON.stringify(
         {
-          package: { ecosystem: opts.ecosystem, name, version: version ?? null },
+          package: { ecosystem: opts.ecosystem ?? null, name, version: version ?? null },
           source,
-          matches: matches.map((m) => ({ versionConfirmed: m.versionConfirmed, advisory: m.advisory })),
+          matches: matches.map((m) => ({
+            ecosystem: m.ecosystem,
+            versionConfirmed: m.versionConfirmed,
+            advisory: m.advisory,
+          })),
         },
         null,
         2,
@@ -98,7 +106,7 @@ export async function runAdvisoryCheck(spec: string, opts: AdvisoryCheckOptions)
     );
     return matches.length > 0 ? 1 : 0;
   }
-  const coord = `${opts.ecosystem}/${name}${version ? `@${version}` : ''}`;
+  const coord = `${opts.ecosystem ?? ecosystems.join('+')}/${name}${version ? `@${version}` : ''}`;
   if (matches.length === 0) {
     console.log(pc.green(`✔ ${coord}: no MCPA advisories (${source} database, ${advisories.length} entries)`));
     return 0;

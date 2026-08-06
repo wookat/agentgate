@@ -51,8 +51,16 @@ describe('agentgate advisory', () => {
     const { stdout, code } = await run(['advisory', 'check', 'mcp-remote', '--offline', '--json']);
     expect(code).toBe(1);
     const body = JSON.parse(stdout);
-    expect(body.package).toEqual({ ecosystem: 'npm', name: 'mcp-remote', version: null });
+    expect(body.package).toEqual({ ecosystem: null, name: 'mcp-remote', version: null });
+    expect(body.matches[0].ecosystem).toBe('npm');
     expect(body.matches[0].versionConfirmed).toBe(false);
+  });
+
+  it('check finds PyPI packages without an explicit --ecosystem', async () => {
+    const { stdout, code } = await run(['advisory', 'check', 'flyto-core@2.26.2', '--offline']);
+    expect(code).toBe(1);
+    expect(stdout).toContain('MCPA-2026-0012');
+    expect(stdout).toContain('npm+pypi/flyto-core@2.26.2');
   });
 
   it('check respects --ecosystem for PyPI packages', async () => {
