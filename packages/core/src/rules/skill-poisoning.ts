@@ -178,9 +178,15 @@ export const skillPoisoningRule: Rule = {
     }
     const codeLines = fencedCodeLines(content);
     for (const { re, label } of INJECTION_PATTERNS) {
-      const m = content.match(re);
-      if (m) {
-        const line = content.slice(0, m.index ?? 0).split('\n').length;
+      // Prefer a match outside fenced code (critical) over a quoted example
+      // (low), so an early code-block example can't mask a real injection.
+      const all = [...content.matchAll(new RegExp(re.source, `${re.flags.replace('g', '')}g`))].map((m) => ({
+        m,
+        line: content.slice(0, m.index ?? 0).split('\n').length,
+      }));
+      const best = all.find(({ line }) => !codeLines.has(line)) ?? all[0];
+      if (best) {
+        const { m, line } = best;
         const quoted = codeLines.has(line);
         findings.push(
           finding(this, {
