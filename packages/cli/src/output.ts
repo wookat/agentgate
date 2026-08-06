@@ -21,7 +21,14 @@ export function renderFindingsTable(findings: Finding[]): string {
     style: { head: [] },
   });
   for (const f of sortFindings(findings)) {
-    table.push([SEVERITY_COLOR[f.severity](f.severity.toUpperCase()), f.ruleId, f.category, f.target, f.message]);
+    table.push([
+      SEVERITY_COLOR[f.severity](f.severity.toUpperCase()),
+      f.ruleId,
+      f.category,
+      // Paths have no spaces; wrap them mid-word instead of truncating with "…".
+      { content: f.target, wordWrap: true, wrapOnWordBoundary: false },
+      f.message,
+    ]);
   }
   const counts = countBySeverity(findings);
   const summary = (Object.entries(counts) as [Severity, number][])
