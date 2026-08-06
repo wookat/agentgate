@@ -32,8 +32,8 @@ inputs:
     default: "."
   sarif-file:
     description: >-
-      If set, write a SARIF report to this path (for `scan`/`ci`). Upload it with
-      github/codeql-action/upload-sarif to surface findings in code scanning.
+      If set, write a SARIF report to this path (`scan` command only). Upload it
+      with github/codeql-action/upload-sarif to surface findings in code scanning.
     required: false
     default: ""
   node-version:
@@ -65,10 +65,15 @@ runs:
         set -uo pipefail
         cmd=(npx --yes "mcp-agentgate@${AGENTGATE_VERSION}" "${AGENTGATE_COMMAND}")
         case "${AGENTGATE_COMMAND}" in
-          ci|diff|lock) cmd+=(--lock "${AGENTGATE_LOCKFILE}") ;;
+          ci|diff) cmd+=(--lockfile "${AGENTGATE_LOCKFILE}") ;;
+          lock) cmd+=(--out "${AGENTGATE_LOCKFILE}") ;;
         esac
         if [ -n "${AGENTGATE_SARIF}" ]; then
-          cmd+=(--sarif "${AGENTGATE_SARIF}")
+          if [ "${AGENTGATE_COMMAND}" != "scan" ]; then
+            echo "::error::sarif-file is only supported with command: scan (got: ${AGENTGATE_COMMAND})"
+            exit 2
+          fi
+          cmd+=(--format sarif --output "${AGENTGATE_SARIF}")
         fi
         if [ -n "${AGENTGATE_ARGS}" ]; then
           # shellcheck disable=SC2206

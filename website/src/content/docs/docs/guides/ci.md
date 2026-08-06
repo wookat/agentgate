@@ -38,9 +38,13 @@ Actions, `ci`, `scan`, and `deps` emit one
 finding (`critical`/`high` as errors, `medium` as warnings, `low`/`info` as
 notices) — no extra permissions or upload steps needed.
 
-To additionally surface scan findings in GitHub code scanning, set `sarif-file: agentgate.sarif` on the action and add:
+To additionally surface scan findings in GitHub code scanning, add a `command: scan` step with `sarif-file: agentgate.sarif` (SARIF output is scan-only) and upload it:
 
 ```yaml
+      - uses: wookat/agentgate/packages/action@main
+        with:
+          command: scan
+          sarif-file: agentgate.sarif
       - uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:

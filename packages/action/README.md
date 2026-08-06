@@ -53,7 +53,7 @@ steps:
 | `lockfile` | `agentgate.lock` | Lockfile path (passed to `ci`/`diff`/`lock`) |
 | `version` | `latest` | `agentgate` npm version run via `npx` |
 | `working-directory` | `.` | Directory to run in |
-| `sarif-file` | `""` | Write a SARIF report here (`scan`/`ci`) |
+| `sarif-file` | `""` | Write a SARIF report here (`scan` command only) |
 | `node-version` | `22` | Node.js version |
 
 ## Outputs
@@ -73,9 +73,11 @@ call). Until then the action is usable via the subdirectory reference above.
 
 The action shells out to `npx mcp-agentgate@<version> <command>` and relies on:
 
-- `agentgate ci --lock <file>`: exit non-zero on any drift from the lockfile;
+- `agentgate ci --lockfile <file>` / `agentgate diff --lockfile <file>`: exit
+  non-zero on any drift from the lockfile;
+- `agentgate lock --out <file>`: write the lockfile;
 - `agentgate scan`: exit non-zero on findings at/above the failure threshold;
-- `--sarif <file>` on `scan`/`ci`: write SARIF 2.1.0;
+- `agentgate scan --format sarif --output <file>`: write SARIF 2.1.0;
 - human-readable output to stdout (no TTY assumptions).
 
 Any change to this contract must update this file and `docs/spec/` per ROUTES.md.
