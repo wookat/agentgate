@@ -23,6 +23,7 @@ const { advisory: a } = Astro.props;
   {a.details && <p>{a.details}</p>}
 
   <h3>Affected packages</h3>
+  <div class="ag-table-scroll">
   <table>
     <thead>
       <tr><th>Ecosystem</th><th>Package</th><th>Affected versions</th></tr>
@@ -39,6 +40,7 @@ const { advisory: a } = Astro.props;
       }
     </tbody>
   </table>
+  </div>
 
   {
     (a.aliases?.length || a.cwe?.length) ? (
@@ -83,3 +85,14 @@ const { advisory: a } = Astro.props;
 
   <p><a href="/advisories/">← All advisories</a></p>
 </StarlightPage>
+
+<style>
+  .ag-table-scroll {
+    overflow-x: auto;
+  }
+  .ag-table-scroll table {
+    display: table;
+    width: 100%;
+    margin: 0;
+  }
+</style>
