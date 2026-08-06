@@ -71,6 +71,7 @@ export default defineConfig({
           label: 'Guides',
           items: [
             { label: 'CI integration', slug: 'docs/guides/ci' },
+            { label: 'Scanning agent skills', slug: 'docs/guides/skills' },
             { label: 'FAQ', slug: 'docs/guides/faq' },
             { label: 'Troubleshooting', slug: 'docs/guides/troubleshooting' },
           ],
