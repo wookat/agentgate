@@ -59,6 +59,8 @@ describe('toSarif', () => {
     expect(ruleSev['AG-TP-001']).toBe('9.5');
     expect(ruleSev['AG-SC-001']).toBe('5.0');
     expect(ruleSev['AG-DP-005']).toBe('4.0');
+    expect(ruleSev['AG-SC-002']).toBe('9.5');
+    expect(ruleSev['AG-SC-003']).toBe('9.5');
 
     const fp = run.results[0]!.partialFingerprints['agentgateFindingKey/v1'];
     expect(fp).toMatch(/^[0-9a-f]{32}$/);

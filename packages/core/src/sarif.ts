@@ -45,6 +45,12 @@ const RULE_SECURITY_SEVERITY: Record<string, string> = {
   'AG-DP-006': '9.5',
 };
 
+/** Advisory-driven rules emitted by the scan pipeline outside ALL_RULES/DEP_RULES. */
+const ADVISORY_RULES = [
+  { id: 'AG-SC-002', description: 'Configured server package is a known-malicious package (OSV.dev MAL advisory)' },
+  { id: 'AG-SC-003', description: 'Configured server package matches an AgentGate MCP advisory (MCPA database)' },
+] as const;
+
 function fingerprint(f: Finding, uri: string): string {
   return createHash('sha256').update(`${f.ruleId}\n${uri}\n${f.target}\n${f.message}`).digest('hex').slice(0, 32);
 }
@@ -93,6 +99,13 @@ export function toSarif(findings: Finding[], opts: SarifOptions = {}): object {
                 shortDescription: { text: rule.description },
                 helpUri: ruleDocUrl(rule.id, 'supply-chain'),
                 properties: { 'security-severity': RULE_SECURITY_SEVERITY[rule.id] ?? '8.0', tags: ['security', 'dependencies', 'supply-chain'] },
+              })),
+              ...ADVISORY_RULES.map((rule) => ({
+                id: rule.id,
+                name: 'supply-chain',
+                shortDescription: { text: rule.description },
+                helpUri: ruleDocUrl(rule.id, 'supply-chain'),
+                properties: { 'security-severity': RULE_SECURITY_SEVERITY[rule.id] ?? '8.0', tags: ['security', 'mcp', 'supply-chain'] },
               })),
             ],
           },
