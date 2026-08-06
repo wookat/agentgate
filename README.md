@@ -29,7 +29,7 @@ pnpm build
 alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
-Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode) are configured to use — config paths are discovered automatically:
+Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI) are configured to use — config paths are discovered automatically:
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
@@ -136,7 +136,7 @@ repos:
 The full test suite — including a live stdio MCP fixture server — runs on all
 three operating systems in CI. Client config discovery covers the
 platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
-and OpenCode on each OS.
+OpenCode, Windsurf, Cline, and Gemini CLI on each OS.
 
 ## Config portability
 
@@ -147,7 +147,8 @@ Move your MCP server config between clients without retyping JSON/TOML by hand
 npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
-Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, and OpenCode, with
+Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode,
+Windsurf, Cline, and Gemini CLI, with
 explicit warnings on any lossy conversion. Also available as the standalone
 [mcp-agentgate-config-convert](packages/config-convert/) package.
 
