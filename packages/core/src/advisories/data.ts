@@ -599,5 +599,59 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0012",
+    "title": "Flyto2 Core unauthenticated command execution via HTTP MCP execute_module (CVE-2026-55786)",
+    "type": "rce-vectors",
+    "severity": "high",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "flyto-core",
+        "ranges": [
+          {
+            "introduced": "2.26.2",
+            "fixed": "2.26.4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0013",
+    "title": "Flyto2 Core SSRF guard bypass via IPv6 transition addresses (CVE-2026-55787)",
+    "type": "ssrf",
+    "severity": "high",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "flyto-core",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.26.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0014",
+    "title": "Flyto2 Core 2026-07-30 batch: unauthenticated callback SSRF, secret leaks, and guard bypasses (CVE-2026-67424..67428)",
+    "type": "ssrf",
+    "severity": "critical",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "flyto-core",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.26.7"
+          }
+        ]
+      }
+    ]
   }
 ];

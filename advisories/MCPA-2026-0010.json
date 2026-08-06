@@ -4,19 +4,74 @@
   "summary": "A June 2026 PyPI campaign published packages that impersonate popular AI libraries under MCP-server names: openai-mcp (impersonating the official OpenAI SDK's module structure), langchain-core-mcp (impersonating langchain-core), tiktoken-mcp (impersonating OpenAI's tiktoken), and instructor-mcp (typosquatting instructor). Flagged as malware by Amazon Inspector via OSV (MAL-2026-5317/5318/5320/5326). These names read like plausible MCP bridges for well-known libraries and are exactly what an AI assistant might suggest launching via uvx; none are published by the legitimate upstream projects. Treat every version as malicious.",
   "type": "malicious-package",
   "severity": "critical",
-  "aliases": ["MAL-2026-5317", "MAL-2026-5318", "MAL-2026-5320", "MAL-2026-5326"],
-  "cwe": ["CWE-506"],
+  "aliases": [
+    "MAL-2026-5317",
+    "MAL-2026-5318",
+    "MAL-2026-5320",
+    "MAL-2026-5326",
+    "PYSEC-2026-1069",
+    "PYSEC-2026-1070",
+    "PYSEC-2026-1072",
+    "PYSEC-2026-1075"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
   "packages": [
-    { "ecosystem": "pypi", "name": "openai-mcp", "ranges": [{ "introduced": "0" }] },
-    { "ecosystem": "pypi", "name": "langchain-core-mcp", "ranges": [{ "introduced": "0" }] },
-    { "ecosystem": "pypi", "name": "tiktoken-mcp", "ranges": [{ "introduced": "0" }] },
-    { "ecosystem": "pypi", "name": "instructor-mcp", "ranges": [{ "introduced": "0" }] }
+    {
+      "ecosystem": "pypi",
+      "name": "openai-mcp",
+      "ranges": [
+        {
+          "introduced": "0"
+        }
+      ]
+    },
+    {
+      "ecosystem": "pypi",
+      "name": "langchain-core-mcp",
+      "ranges": [
+        {
+          "introduced": "0"
+        }
+      ]
+    },
+    {
+      "ecosystem": "pypi",
+      "name": "tiktoken-mcp",
+      "ranges": [
+        {
+          "introduced": "0"
+        }
+      ]
+    },
+    {
+      "ecosystem": "pypi",
+      "name": "instructor-mcp",
+      "ranges": [
+        {
+          "introduced": "0"
+        }
+      ]
+    }
   ],
   "references": [
-    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5320" },
-    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5318" },
-    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5326" },
-    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5317" }
+    {
+      "type": "advisory",
+      "url": "https://osv.dev/vulnerability/MAL-2026-5320"
+    },
+    {
+      "type": "advisory",
+      "url": "https://osv.dev/vulnerability/MAL-2026-5318"
+    },
+    {
+      "type": "advisory",
+      "url": "https://osv.dev/vulnerability/MAL-2026-5326"
+    },
+    {
+      "type": "advisory",
+      "url": "https://osv.dev/vulnerability/MAL-2026-5317"
+    }
   ],
   "timeline": {
     "published": "2026-06-08"

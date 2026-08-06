@@ -1,0 +1,25 @@
+{
+  "id": "MCPA-2026-0012",
+  "title": "Flyto2 Core unauthenticated command execution via HTTP MCP execute_module (CVE-2026-55786)",
+  "summary": "flyto-core versions 2.26.2 before 2.26.4 expose an execute_module operation on the HTTP MCP surface without authentication: a caller who can reach the HTTP listener can invoke arbitrary Flyto modules, including ones that run shell commands, without any credential. Fixed in 2.26.4.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": ["CVE-2026-55786", "GHSA-h9f9-h6gm-wc85", "PYSEC-2026-2482"],
+  "cvss": { "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 8.4 },
+  "cwe": ["CWE-78", "CWE-306"],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "flyto-core",
+      "ranges": [{ "introduced": "2.26.2", "fixed": "2.26.4" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-h9f9-h6gm-wc85" },
+    { "type": "web", "url": "https://osv.dev/vulnerability/PYSEC-2026-2482" },
+    { "type": "web", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-55786" }
+  ],
+  "timeline": {
+    "published": "2026-07-06"
+  }
+}
