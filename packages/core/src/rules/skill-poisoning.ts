@@ -51,6 +51,7 @@ export const skillOverprivilegeRule: Rule = {
   description: 'Detects skill frontmatter that pre-approves dangerous unscoped tool grants (allowed-tools)',
   checkSkill(file, content) {
     const findings = [];
+    const line = content.split(/\r?\n/).findIndex((l) => /^allowed-tools\s*:/i.test(l)) + 1;
     for (const grant of parseAllowedTools(content)) {
       const hit = RISKY_GRANTS.find((r) => r.re.test(grant));
       if (hit) {
@@ -59,6 +60,7 @@ export const skillOverprivilegeRule: Rule = {
             severity: hit.severity,
             target: file,
             file,
+            ...(line > 0 ? { line } : {}),
             message: `Skill pre-approves "${grant}" via allowed-tools — ${hit.risk} without a permission prompt; scope the grant (e.g. Bash(git add *)) or remove it`,
           }),
         );

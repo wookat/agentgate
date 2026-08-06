@@ -69,6 +69,7 @@ describe('scanRepo', () => {
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
     expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
     expect(hits[0].message).toContain('allowed-tools');
+    expect(hits[0].line).toBe(3);
   });
 
   it('accepts scoped grants and YAML-list form without flagging safe tools', () => {

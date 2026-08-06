@@ -155,7 +155,11 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION }), null, 2);
   } else {
     rendered = [
-      pc.dim(`Scanned ${scannedServers.length} server(s) across ${scannedFiles.length} file(s)${opts.live ? ' (live)' : ''}`),
+      pc.dim(
+        scannedServers.length === 0 && scannedFiles.length > 0
+          ? `Scanned ${scannedFiles.length} source file(s), no MCP servers configured`
+          : `Scanned ${scannedServers.length} server(s) across ${scannedFiles.length} file(s)${opts.live ? ' (live)' : ''}`,
+      ),
       renderFindingsTable(sorted),
     ].join('\n');
   }
