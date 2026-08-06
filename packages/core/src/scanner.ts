@@ -7,7 +7,7 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini']);
 const MAX_FILE_BYTES = 1024 * 1024;
 
 /** Run config-level rules over normalized MCP server entries. */
@@ -87,7 +87,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const scannedFiles: string[] = [];
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    const isSkill = path.extname(file).toLowerCase() === '.md' && SKILL_FILE.test(relPosix);
+    const isSkill = SKILL_FILE.test(relPosix);
     if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file))) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;

@@ -20,6 +20,11 @@ Any of these markdown layouts are treated as skill files:
 - Markdown under `skills/`, `commands/`, or `agents/` of an agent config tree
   (`.agents`, `.claude`, `.cursor`, `.codex`, `.opencode`).
 - The same directories inside Claude Code plugins (`plugins/<name>/...`).
+- Windsurf rules and workflows (`.windsurf/rules/`, `.windsurf/workflows/`,
+  root `.windsurfrules`).
+- Cline rules (`.clinerules/` directory or single `.clinerules` file, and the
+  auto-detected `.cursorrules`).
+- Cursor rule files (`.cursor/rules/*.mdc`).
 
 ## What the rules catch
 

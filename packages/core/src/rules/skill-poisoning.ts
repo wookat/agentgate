@@ -2,13 +2,15 @@ import { Rule, finding } from './rule.js';
 import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
 
 /**
- * Agent instruction files that support frontmatter tool grants and dynamic
- * context: `SKILL.md` anywhere; markdown under `skills/`, `commands/`, or
- * `agents/` of an agent config tree (.agents, .claude, .cursor, .codex,
- * .opencode) or of a Claude Code plugin (`plugins/<name>/...`).
+ * Agent instruction files executed verbatim by an agent: `SKILL.md` anywhere;
+ * markdown under `skills/`, `commands/`, or `agents/` of an agent config tree
+ * (.agents, .claude, .cursor, .codex, .opencode) or of a Claude Code plugin
+ * (`plugins/<name>/...`); Windsurf rules/workflows (`.windsurf/rules|workflows`,
+ * `.windsurfrules`); Cline rules (`.clinerules/` dir or file, `.cursorrules`);
+ * Cursor rule files (`.cursor/rules/*.mdc`).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
