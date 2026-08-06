@@ -1,0 +1,42 @@
+name: advisory-watch
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v7.0.0
+        with:
+          node-version: 22
+      - name: Sweep GHSA/OSV for uncovered MCP advisories
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WATCH_REPORT: /tmp/watch-report.md
+          WATCH_DAYS: "8"
+        run: node api/scripts/watch.mjs
+      - name: Open issue when the sweep found anything
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$(tr -d '[:space:]' < /tmp/watch-report.md)" != "" ]; then
+            title="advisory-watch: uncovered MCP advisories ($(date -u +%F))"
+            {
+              echo "Weekly GHSA/OSV sweep found public MCP-related advisories not yet in the MCPA database."
+              echo
+              cat /tmp/watch-report.md
+              echo
+              echo "_Triage: add verifiable entries to \`advisories/\`, or record the non-ingestion rationale in the next GAP report._"
+            } > /tmp/issue-body.md
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file /tmp/issue-body.md --label advisory-watch
+          else
+            echo "Nothing uncovered; no issue created."
+          fi
