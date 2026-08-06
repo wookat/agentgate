@@ -10,9 +10,12 @@ const CLI = path.resolve(__dirname, '..', 'dist', 'index.js');
 
 let dir: string;
 
-async function run(args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
+async function run(args: string[], env?: Record<string, string>): Promise<{ stdout: string; stderr: string; code: number }> {
   try {
-    const { stdout, stderr } = await exec(process.execPath, [CLI, ...args], { cwd: dir });
+    const { stdout, stderr } = await exec(process.execPath, [CLI, ...args], {
+      cwd: dir,
+      env: { ...process.env, GITHUB_ACTIONS: 'false', ...env },
+    });
     return { stdout, stderr, code: 0 };
   } catch (err) {
     const e = err as { stdout?: string; stderr?: string; code?: number };
@@ -40,6 +43,13 @@ describe('agentgate deps (offline)', () => {
     expect(res.stdout).toContain('AG-DP-002');
     expect(res.stdout).toContain('lodahs');
     expect(res.stderr).toContain('offline mode');
+  });
+
+  it('emits GitHub Actions annotations under GITHUB_ACTIONS', async () => {
+    const res = await run(['deps', '.', '--offline'], { GITHUB_ACTIONS: 'true' });
+    expect(res.stdout).toMatch(/^::(error|warning|notice) .*title=agentgate AG-DP-.*::/m);
+    const plain = await run(['deps', '.', '--offline']);
+    expect(plain.stdout).not.toContain('::error');
   });
 
   it('passes without --fail-on and emits JSON report contract', async () => {
