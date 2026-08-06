@@ -18,6 +18,14 @@ test("unparseable versions return null", () => {
   assert.equal(compare("not-a-version", "1.0.0"), null);
 });
 
+test('partial versions parse ("0" introduced ranges match)', () => {
+  assert.equal(compare("1.0.10", "0"), 1);
+  assert.equal(compare("1.2", "1.2.0"), 0);
+  const ranges = [{ introduced: "0", fixed: "1.0.12" }];
+  assert.equal(isAffected("1.0.10", ranges), true);
+  assert.equal(isAffected("1.0.12", ranges), false);
+});
+
 test("isAffected with fixed", () => {
   const ranges = [{ introduced: "0.0.5", fixed: "0.1.16" }];
   assert.equal(isAffected("0.1.15", ranges), true);

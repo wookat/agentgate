@@ -2,10 +2,12 @@
 // introduced / fixed / last_affected range events. No external deps.
 
 function parse(v) {
-  const m = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+.*)?$/.exec(String(v).trim());
+  // Partial versions ("0", "1.2") are common in OSV-style `introduced`
+  // events; missing segments count as 0.
+  const m = /^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?(?:\+.*)?$/.exec(String(v).trim());
   if (!m) return null;
   return {
-    release: [Number(m[1]), Number(m[2]), Number(m[3])],
+    release: [Number(m[1]), Number(m[2] ?? 0), Number(m[3] ?? 0)],
     prerelease: m[4] ? m[4].split(".") : [],
   };
 }
