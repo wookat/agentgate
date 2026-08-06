@@ -18,9 +18,22 @@ const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'co
 });
 
 describe('knownConfigLocations', () => {
-  it('covers all five clients', () => {
+  it('covers all known clients', () => {
     const clients = new Set(knownConfigLocations('/home/u', 'linux').map((l) => l.client));
-    expect(clients).toEqual(new Set(['claude-desktop', 'claude-code', 'cursor', 'vscode', 'codex', 'opencode']));
+    expect(clients).toEqual(
+      new Set(['claude-desktop', 'claude-code', 'cursor', 'vscode', 'codex', 'opencode', 'windsurf', 'cline', 'gemini-cli']),
+    );
+  });
+
+  it('locates windsurf, cline, and gemini-cli configs', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const p = (client: string) =>
+      linux
+        .filter((l) => l.client === client)
+        .map((l) => l.path.split(path.sep).join('/'));
+    expect(p('windsurf')).toEqual(['/home/u/.codeium/windsurf/mcp_config.json', '/home/u/.codeium/mcp_config.json']);
+    expect(p('cline')).toEqual(['/home/u/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json']);
+    expect(p('gemini-cli')).toEqual(['/home/u/.gemini/settings.json']);
   });
 
   it('uses platform-specific paths', () => {

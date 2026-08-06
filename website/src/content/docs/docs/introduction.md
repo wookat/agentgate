@@ -39,7 +39,7 @@ MCP servers run with high trust inside agent toolchains, but the ecosystem has n
                             └──────────────┘
 ```
 
-1. `agentgate scan` finds your MCP servers (Claude, Cursor, VS Code, Codex, OpenCode config auto-discovery), analyzes them, and cross-checks the advisory database.
+1. `agentgate scan` finds your MCP servers (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI config auto-discovery), analyzes them, and cross-checks the advisory database.
 2. `agentgate lock` records the approved tool surface into `agentgate.lock` (SHA-256 over tool names, descriptions, and input schemas).
 3. `agentgate ci` runs in CI: any drift between the live tool surface and the lockfile fails the build with a human-readable diff.
 
