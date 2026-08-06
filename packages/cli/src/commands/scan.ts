@@ -131,6 +131,12 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     );
   }
 
+  if (scannedServers.length === 0 && scannedFiles.length === 0) {
+    warnings.push(
+      'nothing was scanned: no MCP client configs were discovered — pass a config file or directory, or use --config',
+    );
+  }
+
   const sorted = sortFindings(findings);
   const report = {
     version: 1,

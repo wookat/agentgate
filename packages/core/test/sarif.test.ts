@@ -43,4 +43,26 @@ describe('toSarif', () => {
     const winSarif = toSarif([findings[1]!], { baseDir: 'C:\\repo' }) as typeof sarif;
     expect(winSarif.runs[0]!.results[0]!.locations[0]!.physicalLocation.artifactLocation.uri).toBe('sub/mcp.json');
   });
+
+  it('emits per-rule security-severity and stable result fingerprints', () => {
+    const finding: Finding = {
+      ruleId: 'AG-SC-001', category: 'supply-chain', severity: 'medium', message: 'unpinned', target: 'server', file: '/repo/mcp.json',
+    };
+    type Shape = {
+      runs: {
+        tool: { driver: { rules: { id: string; properties: { 'security-severity': string } }[] } };
+        results: { partialFingerprints: Record<string, string> }[];
+      }[];
+    };
+    const run = (toSarif([finding], { baseDir: '/repo' }) as Shape).runs[0]!;
+    const ruleSev = Object.fromEntries(run.tool.driver.rules.map((r) => [r.id, r.properties['security-severity']]));
+    expect(ruleSev['AG-TP-001']).toBe('9.5');
+    expect(ruleSev['AG-SC-001']).toBe('5.0');
+    expect(ruleSev['AG-DP-005']).toBe('4.0');
+
+    const fp = run.results[0]!.partialFingerprints['agentgateFindingKey/v1'];
+    expect(fp).toMatch(/^[0-9a-f]{32}$/);
+    const again = (toSarif([finding], { baseDir: '/repo' }) as Shape).runs[0]!.results[0]!.partialFingerprints['agentgateFindingKey/v1'];
+    expect(again).toBe(fp);
+  });
 });
