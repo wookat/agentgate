@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "changeset": "changeset",
+    "version-packages": "changeset version && node scripts/bump-doc-pins.mjs",
     "release": "pnpm build && pnpm -r publish --access public --no-git-checks"
   },
   "devDependencies": {
