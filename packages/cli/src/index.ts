@@ -110,7 +110,7 @@ advisoryCmd
   .command('check')
   .description('Check a package against the MCPA advisory database; exit 1 on a match')
   .argument('<package>', 'package name, optionally with a version: mcp-remote@0.1.10')
-  .addOption(new Option('-e, --ecosystem <ecosystem>', 'package ecosystem').choices(['npm', 'pypi']).default('npm'))
+  .addOption(new Option('-e, --ecosystem <ecosystem>', 'package ecosystem (default: check both)').choices(['npm', 'pypi']))
   .option('--json', 'output as JSON')
   .option('--offline', 'use only the bundled database; skip the live advisory API')
   .addOption(new Option('-t, --timeout <ms>', 'advisory API timeout').default('5000'))
