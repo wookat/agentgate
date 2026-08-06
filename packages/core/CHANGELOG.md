@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.13.0
+
+### Patch Changes
+
+- 8188b9b: AG-SK-001 prompt-injection matches that sit inside a fenced code block are now reported at `low` severity instead of `critical` — guardrail/security skills legitimately quote jailbreak strings as example data (both real-world false positives found in a 133-skill marketplace sweep were this case). Hidden-Unicode detection is unchanged and stays `critical` everywhere.
+
 ## 0.12.0
 
 ### Minor Changes

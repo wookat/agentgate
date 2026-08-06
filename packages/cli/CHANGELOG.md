@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.13.0
+
+### Minor Changes
+
+- 2a7b052: `scan` (table format) and `ci` emit GitHub Actions workflow-command annotations (`::error file=…,line=…::`) — one per finding, critical/high as errors, medium as warnings, low/info as notices — when `GITHUB_ACTIONS=true`, so findings surface inline on the PR diff without needing SARIF upload. JSON/SARIF stdout is never mixed with annotations.
+
+### Patch Changes
+
+- 8188b9b: AG-SK-001 prompt-injection matches that sit inside a fenced code block are now reported at `low` severity instead of `critical` — guardrail/security skills legitimately quote jailbreak strings as example data (both real-world false positives found in a 133-skill marketplace sweep were this case). Hidden-Unicode detection is unchanged and stays `critical` everywhere.
+- Updated dependencies [8188b9b]
+  - mcp-agentgate-core@0.13.0
+
 ## 0.12.0
 
 ### Minor Changes
