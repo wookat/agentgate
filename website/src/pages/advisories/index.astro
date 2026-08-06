@@ -90,18 +90,33 @@ for (const a of advisories) bySeverity[a.severity]++;
       if (ok) shown++;
     }
     empty.hidden = shown > 0;
+    const params = new URLSearchParams();
+    if (severity) params.set('severity', severity);
+    if (q) params.set('q', q);
+    const query = params.toString();
+    history.replaceState(null, '', query ? `?${query}` : location.pathname);
+  }
+
+  function setSeverity(next: string) {
+    severity = next;
+    for (const b of buttons) {
+      b.setAttribute('aria-pressed', String(b.dataset.severity === severity));
+    }
   }
 
   for (const b of buttons) {
     b.addEventListener('click', () => {
-      severity = severity === b.dataset.severity ? '' : (b.dataset.severity ?? '');
-      for (const other of buttons) {
-        other.setAttribute('aria-pressed', String(other.dataset.severity === severity));
-      }
+      setSeverity(severity === b.dataset.severity ? '' : (b.dataset.severity ?? ''));
       apply();
     });
   }
   search.addEventListener('input', apply);
+
+  const initial = new URLSearchParams(location.search);
+  const initialSeverity = initial.get('severity') ?? '';
+  if (buttons.some((b) => b.dataset.severity === initialSeverity)) setSeverity(initialSeverity);
+  search.value = initial.get('q') ?? '';
+  if (severity || search.value) apply();
 </script>
 
 <style>
