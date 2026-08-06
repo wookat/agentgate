@@ -18,6 +18,7 @@ Use `diff` interactively to inspect drift; use [`agentgate ci`](/docs/cli/ci/) i
 | `-c, --config <file>` | auto-discover | Explicit MCP client config file. |
 | `-s, --server <names...>` | all | Restrict to specific server names. |
 | `-l, --lockfile <file>` | `agentgate.lock` | Lockfile path. |
+| `--skills [dir]` | `.` | Directory to re-hash locked skill files from (only used when the lockfile pinned skills). |
 | `--json` | off | Output the drift report as JSON. |
 | `-t, --timeout <ms>` | `15000` | Per-server connect timeout. |
 
@@ -30,6 +31,8 @@ The drift report shows, per server and per tool:
 - **changed** — which of name / description / input schema drifted (hash mismatch).
 
 A changed *description* deserves special suspicion: it is the most common prompt-injection vector (see [threat model](/docs/threat-model/)).
+
+When the lockfile was generated with [`agentgate lock --skills`](/docs/cli/lock/), the report also includes `skill-added` / `skill-removed` / `skill-changed` entries for pinned skill/instruction files.
 
 ## Exit codes
 

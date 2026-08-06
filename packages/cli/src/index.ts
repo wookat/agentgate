@@ -49,6 +49,7 @@ program
   .addOption(configOption)
   .addOption(serverOption)
   .option('-o, --out <file>', 'lockfile path', 'agentgate.lock')
+  .option('--skills [dir]', 'also pin agent skill/instruction files under a directory (default: current directory)')
   .addOption(timeoutOption)
   .action(async (opts) => {
     process.exitCode = await runLock(opts);
@@ -60,6 +61,7 @@ program
   .addOption(configOption)
   .addOption(serverOption)
   .option('-l, --lockfile <file>', 'lockfile path', 'agentgate.lock')
+  .option('--skills [dir]', 'directory to re-hash locked skill files from (default: current directory)')
   .option('--json', 'output the drift report as JSON')
   .addOption(timeoutOption)
   .action(async (opts) => {
@@ -72,6 +74,7 @@ program
   .addOption(configOption)
   .addOption(serverOption)
   .option('-l, --lockfile <file>', 'lockfile path', 'agentgate.lock')
+  .option('--skills [dir]', 'directory to re-hash locked skill files from (default: current directory)')
   .addOption(new Option('--fail-on <severity>', 'severity gate for static findings').choices([...SEVERITIES]).default('high'))
   .addOption(timeoutOption)
   .action(async (opts) => {

@@ -66,3 +66,17 @@ Scoped grants (`Bash(git add *)`), read-only tools, and benign context
 commands (`` !`git diff HEAD` ``) are not flagged — validated against the
 official Anthropic skills repository and other large public skill
 collections, which scan clean.
+
+## Pinning skills against silent edits
+
+Scanning catches malicious content; it cannot catch a *benign-looking* edit
+to a skill you already reviewed. [`agentgate lock --skills`](/docs/cli/lock/)
+pins every skill/instruction file's SHA-256 into the
+[lockfile](/docs/spec/lockfile/), and [`agentgate diff`](/docs/cli/diff/) /
+[`agentgate ci`](/docs/cli/ci/) fail on any added, removed, or changed file —
+the instruction-file equivalent of the MCP tool-surface rug-pull gate:
+
+```bash
+agentgate lock --skills        # approve the current skill set
+agentgate ci --skills          # in CI: fail if any pinned skill file changed
+```

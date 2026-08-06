@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wookat/agentgate/blob/main/docs/spec/agentgate.lock.v2.schema.json",
+  "title": "agentgate.lock (v2)",
+  "description": "AgentGate lockfile v2: everything in v1 (pinned MCP tool surface) plus an optional `skills` section pinning agent skill / instruction files. All hashes are lowercase hex SHA-256. Input schemas are hashed over their canonical JSON form (object keys sorted recursively, no whitespace).",
+  "type": "object",
+  "required": ["lockfileVersion", "generatedBy", "generatedAt", "servers"],
+  "additionalProperties": false,
+  "properties": {
+    "lockfileVersion": {
+      "const": 2,
+      "description": "Lockfile format version."
+    },
+    "generatedBy": {
+      "type": "string",
+      "description": "Tool and version that generated this lockfile, e.g. \"mcp-agentgate@x.y.z\"."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 generation timestamp. Informational only; not part of drift comparison."
+    },
+    "servers": {
+      "type": "object",
+      "description": "Locked tool surface per MCP server, keyed by the server name from the client config.",
+      "additionalProperties": { "$ref": "#/$defs/serverLock" }
+    },
+    "skills": {
+      "$ref": "#/$defs/skillsLock",
+      "description": "Optional: locked agent skill / instruction files (written by `agentgate lock --skills`)."
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "serverLock": {
+      "type": "object",
+      "required": ["surfaceHash", "tools"],
+      "additionalProperties": false,
+      "properties": {
+        "surfaceHash": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 over the canonical JSON array of [nameHash, descriptionHash, inputSchemaHash] triples of all tools, sorted by tool name."
+        },
+        "tools": {
+          "type": "array",
+          "description": "Locked tools, sorted by name.",
+          "items": { "$ref": "#/$defs/toolLock" }
+        }
+      }
+    },
+    "skillsLock": {
+      "type": "object",
+      "required": ["surfaceHash", "files"],
+      "additionalProperties": false,
+      "properties": {
+        "surfaceHash": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 over the canonical JSON of the files map (path → content hash, keys sorted)."
+        },
+        "files": {
+          "type": "object",
+          "description": "Posix-relative skill/instruction file path → SHA-256 of its UTF-8 content.",
+          "additionalProperties": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "toolLock": {
+      "type": "object",
+      "required": ["name", "nameHash", "descriptionHash", "inputSchemaHash"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Tool name (kept in plaintext for readable diffs)." },
+        "nameHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the UTF-8 tool name." },
+        "descriptionHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the UTF-8 tool description (empty string if absent)." },
+        "inputSchemaHash": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the canonical JSON of the tool input schema ({} if absent)." }
+      }
+    }
+  }
+}

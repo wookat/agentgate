@@ -2,6 +2,8 @@
 
 Status: **frozen** as of 2026-08. Schema: [`agentgate.lock.schema.json`](./agentgate.lock.schema.json).
 The schema is also published at <https://agentgate.zalize.com/spec/agentgate.lock.schema.json>.
+Superseded (but still fully supported) by [v2](./lockfile-v2.md), which adds an
+optional `skills` section.
 
 ## Format
 

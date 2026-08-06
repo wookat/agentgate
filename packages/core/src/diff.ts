@@ -6,12 +6,17 @@ export type DriftKind =
   | 'tool-added'
   | 'tool-removed'
   | 'description-changed'
-  | 'schema-changed';
+  | 'schema-changed'
+  | 'skill-added'
+  | 'skill-removed'
+  | 'skill-changed';
 
 export interface DriftEntry {
   kind: DriftKind;
   server: string;
   tool?: string;
+  /** Skill/instruction file path (skill-* kinds). */
+  file?: string;
   detail: string;
 }
 
@@ -56,6 +61,28 @@ export function diffLockfiles(baseline: Lockfile, current: Lockfile): LockDiff {
       }
     }
   }
+  // Skill drift is only checked when the baseline locked skills.
+  if (baseline.skills && current.skills && baseline.skills.surfaceHash !== current.skills.surfaceHash) {
+    const baseFiles = baseline.skills.files;
+    const currFiles = current.skills.files;
+    for (const file of Object.keys(currFiles)) {
+      if (!(file in baseFiles)) {
+        entries.push({ kind: 'skill-added', server: '(skills)', file, detail: `skill file "${file}" is new — not in the approved baseline` });
+      } else if (baseFiles[file] !== currFiles[file]) {
+        entries.push({
+          kind: 'skill-changed',
+          server: '(skills)',
+          file,
+          detail: `skill file "${file}" changed (${short(baseFiles[file]!)} → ${short(currFiles[file]!)}) — review for injected instructions`,
+        });
+      }
+    }
+    for (const file of Object.keys(baseFiles)) {
+      if (!(file in currFiles)) {
+        entries.push({ kind: 'skill-removed', server: '(skills)', file, detail: `skill file "${file}" is in the baseline but no longer present` });
+      }
+    }
+  }
   return { drifted: entries.length > 0, entries };
 }
 
@@ -95,6 +122,9 @@ export function formatDiff(diff: LockDiff): string {
     'tool-removed': '-',
     'description-changed': '~',
     'schema-changed': '~',
+    'skill-added': '+',
+    'skill-removed': '-',
+    'skill-changed': '~',
   };
   for (const entry of diff.entries) {
     lines.push(`  ${symbol[entry.kind]} [${entry.kind}] ${entry.detail}`);
