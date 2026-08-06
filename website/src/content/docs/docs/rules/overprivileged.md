@@ -24,8 +24,11 @@ Detects servers whose combined tool surface enables exfiltration-class behavior,
 
 ## Agent skill grants (AG-SK-002)
 
-Repo scans also check agent skill files (`SKILL.md`) for frontmatter that
-pre-approves dangerous tool access via `allowed-tools`. An unscoped `Bash`
+Repo scans also check agent skill files (`SKILL.md`) and slash-command /
+agent markdown (under `skills/`, `commands/`, or `agents/` of `.claude`-style
+config trees and Claude Code plugins) for frontmatter that pre-approves
+dangerous tool access via `allowed-tools` (inline, YAML list, or flow-list
+form). An unscoped `Bash`
 grant lets the skill run any shell command without a permission prompt
 (`high`); unscoped `Write`/`Edit` (`medium`) and `WebFetch`/`WebSearch`
 (`medium`, an exfiltration channel) are also flagged. Scoped grants such as
