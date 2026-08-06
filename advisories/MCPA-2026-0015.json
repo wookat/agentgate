@@ -1,0 +1,25 @@
+{
+  "id": "MCPA-2026-0015",
+  "title": "LudusMCP get_credential_from_user command injection via secret-dialog description (CVE-2026-19045)",
+  "summary": "LudusMCP (npm: ludus-mcp) up to and including 1.0.24 is vulnerable to command injection: SecretDialog.showSecretDialog in src/utils/secretDialog.ts (component get_credential_from_user) interpolates the attacker-influenced Description argument into a shell command, so a poisoned tool call or manipulated description can execute arbitrary commands on the local host. The maintainer was notified via a public issue but no fixed release exists as of 2026-08-06.",
+  "type": "rce-vectors",
+  "severity": "medium",
+  "aliases": ["CVE-2026-19045", "GHSA-5ccg-4qw3-g338"],
+  "cvss": { "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L", "score": 5.3 },
+  "cwe": ["CWE-74", "CWE-77"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "ludus-mcp",
+      "ranges": [{ "introduced": "0", "last_affected": "1.0.24" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-5ccg-4qw3-g338" },
+    { "type": "web", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19045" },
+    { "type": "report", "url": "https://github.com/NocteDefensor/LudusMCP/issues/2" }
+  ],
+  "timeline": {
+    "published": "2026-08-06"
+  }
+}

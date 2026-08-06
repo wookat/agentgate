@@ -681,5 +681,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0015",
+    "title": "LudusMCP get_credential_from_user command injection via secret-dialog description (CVE-2026-19045)",
+    "type": "rce-vectors",
+    "severity": "medium",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "ludus-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.24"
+          }
+        ]
+      }
+    ]
   }
 ];
