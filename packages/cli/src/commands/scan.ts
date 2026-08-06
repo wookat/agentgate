@@ -18,7 +18,7 @@ import {
   toSarif,
 } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
-import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
+import { isGitHubActions, maxSeverityAtLeast, renderFindingsTable, renderGitHubAnnotations } from '../output.js';
 import { CLI_VERSION } from '../version.js';
 
 export interface ScanOptions {
@@ -169,6 +169,10 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     console.log(pc.dim(`Report written to ${opts.output}`));
   } else {
     console.log(rendered);
+  }
+
+  if (isGitHubActions() && opts.format === 'table' && sorted.length > 0) {
+    console.log(renderGitHubAnnotations(sorted));
   }
 
   if (opts.failOn && maxSeverityAtLeast(sorted, opts.failOn)) {

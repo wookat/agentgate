@@ -1,7 +1,7 @@
 import pc from 'picocolors';
 import { Severity, formatDiff, scanServers, sortFindings } from 'mcp-agentgate-core';
 import { gatherServers } from '../context.js';
-import { maxSeverityAtLeast, renderFindingsTable } from '../output.js';
+import { isGitHubActions, maxSeverityAtLeast, renderFindingsTable, renderGitHubAnnotations } from '../output.js';
 import { computeDrift } from './diff.js';
 
 export interface CiOptions {
@@ -35,6 +35,9 @@ export async function runCi(opts: CiOptions): Promise<number> {
   const findings = sortFindings(scanServers(servers));
   console.log('');
   console.log(renderFindingsTable(findings));
+  if (isGitHubActions() && findings.length > 0) {
+    console.log(renderGitHubAnnotations(findings));
+  }
   if (maxSeverityAtLeast(findings, opts.failOn)) {
     console.log(pc.red(`\nGate failed: findings at or above "${opts.failOn}" severity`));
     failed = true;

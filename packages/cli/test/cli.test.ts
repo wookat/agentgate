@@ -30,9 +30,12 @@ function writeConfig(variant?: string) {
   );
 }
 
-async function run(args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
+async function run(args: string[], env?: Record<string, string>): Promise<{ stdout: string; stderr: string; code: number }> {
   try {
-    const { stdout, stderr } = await exec(process.execPath, [CLI, ...args], { cwd: dir });
+    const { stdout, stderr } = await exec(process.execPath, [CLI, ...args], {
+      cwd: dir,
+      env: { ...process.env, GITHUB_ACTIONS: 'false', ...env },
+    });
     return { stdout, stderr, code: 0 };
   } catch (err) {
     const e = err as { stdout?: string; stderr?: string; code?: number };
@@ -100,6 +103,20 @@ describe('agentgate scan', () => {
     const res = await run(['scan', '--config', configPath]);
     expect(res.code).toBe(0);
     expect(res.stdout).toMatch(/Scanned 1 server/);
+  });
+
+  it('emits GitHub Actions annotations under GITHUB_ACTIONS', async () => {
+    const badConfig = path.join(dir, 'gha.json');
+    fs.writeFileSync(
+      badConfig,
+      JSON.stringify({ mcpServers: { risky: { command: 'npx', args: ['-y', 'unpinned-server'], env: { API_KEY: FAKE_SK_KEY } } } }),
+    );
+    const gha = await run(['scan', '--config', badConfig], { GITHUB_ACTIONS: 'true' });
+    expect(gha.stdout).toMatch(/^::(error|warning|notice) .*title=agentgate AG-.*::/m);
+    const plain = await run(['scan', '--config', badConfig]);
+    expect(plain.stdout).not.toContain('::error');
+    const json = await run(['scan', '--config', badConfig, '--format', 'json'], { GITHUB_ACTIONS: 'true' });
+    expect(() => JSON.parse(json.stdout)).not.toThrow();
   });
 
   it('respects --fail-on', async () => {
