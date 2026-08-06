@@ -15,7 +15,7 @@ const ajv = new Ajv2020.default({ allErrors: true });
 addFormats.default(ajv);
 const validate = ajv.compile(schema);
 
-const files = (await readdir(advisoriesDir)).filter((f) => f.endsWith(".json"));
+const files = (await readdir(advisoriesDir)).filter((f) => /^MCPA-\d{4}-\d{4}\.json$/.test(f));
 let failed = 0;
 const seen = new Set();
 for (const f of files.sort()) {
