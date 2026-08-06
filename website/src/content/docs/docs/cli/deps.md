@@ -61,7 +61,7 @@ this before installation.
 ## CI usage
 
 ```yaml
-- uses: wookat/agentgate/packages/action@v0.13.1
+- uses: wookat/agentgate/packages/action@v0.13.2
   with:
     command: deps
     args: --fail-on high
