@@ -1,5 +1,15 @@
 # mcp-agentgate
 
+## 0.11.1
+
+### Patch Changes
+
+- 83e6289: Skill scanning covers more real-world layouts: `allowed-tools` YAML flow lists (`["Read", "Bash"]`) on a continuation line are now parsed (previously a silent miss), and slash-command / agent markdown under `skills/`, `commands/`, or `agents/` of agent config trees and Claude Code plugin directories (`plugins/<name>/...`) is scanned with the skill rules.
+- ee9dd16: Scan UX: repo-only scans now summarize as "Scanned N source file(s), no MCP servers configured" instead of the confusing "0 server(s) across N file(s)", and AG-SK-002 findings carry the `allowed-tools` line number (better SARIF annotations).
+- Updated dependencies [83e6289]
+- Updated dependencies [ee9dd16]
+  - mcp-agentgate-core@0.11.1
+
 ## 0.11.0
 
 ### Minor Changes
