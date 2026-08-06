@@ -581,5 +581,23 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0011",
+    "title": "AWS Labs DocumentDB MCP Server read-only mode bypass via write-capable aggregation pipeline stages (CVE-2026-18954)",
+    "type": "auth-missing",
+    "severity": "medium",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "awslabs.documentdb-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.0.12"
+          }
+        ]
+      }
+    ]
   }
 ];
