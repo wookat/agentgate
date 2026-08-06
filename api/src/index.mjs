@@ -1,4 +1,4 @@
-import data from "./data.json";
+import data from "./data.json" with { type: "json" };
 import { isAffected } from "./semver.mjs";
 
 const JSON_HEADERS = {
@@ -61,6 +61,14 @@ export default {
     }
 
     if (path === "/v1/advisories" && request.method === "GET") {
+      const allowed = new Set(["severity", "type", "ecosystem"]);
+      const unknown = [...url.searchParams.keys()].filter((k) => !allowed.has(k));
+      if (unknown.length > 0) {
+        return error(
+          400,
+          `unknown query parameter(s): ${unknown.join(", ")} — supported: severity, type, ecosystem; to match a package use GET /v1/query?name={pkg}`
+        );
+      }
       let items = data.advisories;
       const severity = url.searchParams.get("severity");
       const type = url.searchParams.get("type");
