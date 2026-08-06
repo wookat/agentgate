@@ -18,5 +18,7 @@ export interface McpaAdvisory {
   title: string;
   type: string;
   severity: Severity;
+  /** ISO date the advisory was published (YYYY-MM-DD). */
+  published?: string;
   packages: McpaPackage[];
 }

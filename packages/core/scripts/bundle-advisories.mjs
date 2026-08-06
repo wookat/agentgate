@@ -21,6 +21,7 @@ const entries = fs
       title: a.title,
       type: a.type,
       severity: a.severity,
+      published: a.timeline.published,
       packages: a.packages.map((p) => ({
         ecosystem: p.ecosystem,
         name: p.name,
