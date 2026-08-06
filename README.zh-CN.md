@@ -58,7 +58,7 @@ steps:
       command: ci
 ```
 
-SARIF 上传到 GitHub code scanning 及全部参数见 [packages/action](packages/action/)。
+在 GitHub Actions 下，`ci`/`scan`/`deps` 会为每条发现自动输出 workflow-command 注解，直接内联显示在 PR diff 上，无需额外权限。SARIF 上传到 GitHub code scanning 及全部参数见 [packages/action](packages/action/)。
 
 或使用 pre-commit 钩子：
 

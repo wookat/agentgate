@@ -111,7 +111,7 @@ steps:
       command: ci
 ```
 
-See [packages/action](packages/action/) for SARIF upload to GitHub code scanning and all inputs.
+Findings show up inline on the PR diff automatically — under GitHub Actions, `ci`/`scan`/`deps` emit one workflow-command annotation per finding, no extra permissions needed. See [packages/action](packages/action/) for SARIF upload to GitHub code scanning and all inputs.
 
 Or as a pre-commit hook:
 
