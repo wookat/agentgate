@@ -50,6 +50,20 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'fetch.sh')!.severity).toBe('high');
   });
 
+  it('downgrades metadata-endpoint hits in test paths to low (AG-SS-001)', () => {
+    fs.mkdirSync(path.join(dir, 'tests'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'tests', 'test_ssrf_protection.py'),
+      'BLOCKED = "http://169.254.169.254/latest/meta-data/"\n',
+    );
+    fs.writeFileSync(path.join(dir, 'client.spec.ts'), 'fetch("http://169.254.169.254/")\n');
+    fs.writeFileSync(path.join(dir, 'prod.py'), 'requests.get("http://169.254.169.254/")\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'tests/test_ssrf_protection.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'client.spec.ts')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'prod.py')!.severity).toBe('high');
+  });
+
   it('returns empty findings for a clean repo', () => {
     fs.writeFileSync(path.join(dir, 'index.ts'), 'export const x = 1;\n');
     expect(scanRepo(dir).findings).toHaveLength(0);
