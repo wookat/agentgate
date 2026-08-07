@@ -4,7 +4,7 @@ import { credentialLeakRule } from '../src/rules/credential-leak.js';
 import { checkIncludeToolsCoverage, overprivilegedRule } from '../src/rules/overprivileged.js';
 import { rceVectorsRule } from '../src/rules/rce-vectors.js';
 import { ssrfRule } from '../src/rules/ssrf.js';
-import { opencodePluginRefs, serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
+import { marketplacePluginRefs, opencodePluginRefs, serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
 import { toolPoisoningRule } from '../src/rules/tool-poisoning.js';
 import { toxicFlowRule, toolShadowingRule } from '../src/rules/cross-server.js';
 import { scanConfiguration, scanServers, scanTools } from '../src/scanner.js';
@@ -292,6 +292,24 @@ describe('supply-chain', () => {
     expect(refs[1]).toMatchObject({ name: '@scope/plugin', version: '2.0.1', ecosystem: 'npm' });
     expect(refs[1]?.context).toContain('@scope/plugin@2.0.1');
     expect(opencodePluginRefs('other.json', content)).toHaveLength(0);
+  });
+
+  it('marketplacePluginRefs extracts npm plugin packages for advisory checks', () => {
+    const content = JSON.stringify({
+      name: 'mkt',
+      plugins: [
+        { name: 'npm-pinned', source: { source: 'npm', package: '@acme/pinned', version: '2.1.0' } },
+        { name: 'npm-range', source: { source: 'npm', package: '@acme/ranged', version: '^2.0.0' } },
+        { name: 'git-plugin', source: { source: 'github', repo: 'acme/git-plugin' } },
+        { name: 'local', source: './plugins/local' },
+      ],
+    });
+    const refs = marketplacePluginRefs('.claude-plugin/marketplace.json', content);
+    expect(refs).toHaveLength(2);
+    expect(refs[0]).toMatchObject({ name: '@acme/pinned', version: '2.1.0', ecosystem: 'npm' });
+    expect(refs[1]).toMatchObject({ name: '@acme/ranged', version: undefined, ecosystem: 'npm' });
+    expect(refs[0]?.context).toContain('npm-pinned');
+    expect(marketplacePluginRefs('other.json', content)).toHaveLength(0);
   });
 
   it('serverPackageRef yields the bare name for PEP 508 range specs and extras', () => {

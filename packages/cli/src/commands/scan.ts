@@ -7,6 +7,8 @@ import {
   checkIncludeToolsCoverage,
   fetchLiveMcpaAdvisories,
   matchMcpaAdvisories,
+  MARKETPLACE_CATALOG_FILE,
+  marketplacePluginRefs,
   OPENCODE_CONFIG_FILE,
   opencodePluginRefs,
   queryOsvMalware,
@@ -94,6 +96,16 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
       pkgRefs.push(...opencodePluginRefs('opencode.json', fs.readFileSync(file, 'utf8')).map((r) => ({ ...r, file: path.relative(projectDir, file) })));
     } catch {
       // unreadable config: the repo walk already surfaced what it could
+    }
+  }
+  // npm-distributed marketplace plugins are installed via `npm install`, so
+  // they get the same known-malware advisory checks.
+  for (const file of scannedFiles.filter((f) => MARKETPLACE_CATALOG_FILE.test(f.split(path.sep).join('/')))) {
+    try {
+      const rel = path.relative(projectDir, file).split(path.sep).join('/');
+      pkgRefs.push(...marketplacePluginRefs(rel, fs.readFileSync(file, 'utf8')));
+    } catch {
+      // unreadable catalog: the repo walk already surfaced what it could
     }
   }
   // AgentGate MCP advisory database: bundled copy (works offline) merged
