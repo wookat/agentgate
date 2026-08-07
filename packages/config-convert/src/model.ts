@@ -28,7 +28,8 @@ export type ClientId =
   | "gemini-cli"
   | "kiro"
   | "roo-code"
-  | "zed";
+  | "zed"
+  | "continue";
 
 export const CLIENT_IDS: ClientId[] = [
   "claude-desktop",
@@ -43,6 +44,7 @@ export const CLIENT_IDS: ClientId[] = [
   "kiro",
   "roo-code",
   "zed",
+  "continue",
 ];
 
 export interface ParseResult {

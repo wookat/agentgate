@@ -149,7 +149,7 @@ npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json
 ```
 
 Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode,
-Windsurf, Cline, Gemini CLI, Kiro, Roo Code, and Zed, with
+Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, and Continue.dev, with
 explicit warnings on any lossy conversion. Also available as the standalone
 [mcp-agentgate-config-convert](packages/config-convert/) package.
 
