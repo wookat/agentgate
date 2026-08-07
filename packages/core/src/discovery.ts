@@ -13,13 +13,14 @@ export interface ClientConfigLocation {
     | 'codex-toml'
     | 'opencode-json'
     | 'zed-settings-json'
-    | 'continue-yaml';
+    | 'continue-yaml'
+    | 'amp-settings-json';
 }
 
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, and Continue.dev.
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, and Amp.
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -81,6 +82,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   }
   // Continue.dev — mcpServers list inside config.yaml
   push('continue', path.join(homeDir, '.continue', 'config.yaml'), 'continue-yaml');
+  // Amp (Sourcegraph) — `amp.mcpServers` key inside user settings
+  push('amp', path.join(homeDir, '.config', 'amp', 'settings.json'), 'amp-settings-json');
   // Zed — context_servers key inside settings.json (JSONC)
   if (platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
@@ -102,6 +105,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
   ];
@@ -145,6 +149,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseZedSettingsJson(raw, location);
     case 'continue-yaml':
       return parseContinueYaml(raw, location);
+    case 'amp-settings-json':
+      return parseAmpSettingsJson(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -241,6 +247,12 @@ export function parseContinueYaml(raw: string, location: ClientConfigLocation): 
     out.push(normalizeEntry(name, entry, location));
   }
   return out;
+}
+
+/** Amp `settings.json` (user `~/.config/amp/settings.json` or workspace `.amp/settings.json`): `{ "amp.mcpServers": { ... } }` — standard entry shape. */
+export function parseAmpSettingsJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const json = JSON.parse(raw) as Record<string, unknown>;
+  return collectServers(json['amp.mcpServers'], location);
 }
 
 /** Zed `settings.json`: `{ "context_servers": { ... } }` — same entry shape as mcpServers, JSONC allowed. */

@@ -211,6 +211,29 @@ mcpServers:
     expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
   });
 
+  it("amp parses the amp.mcpServers key and renders a mergeable settings document", () => {
+    const raw = JSON.stringify({
+      "amp.commands.allowlist": ["git status"],
+      "amp.mcpServers": {
+        playwright: { command: "npx", args: ["-y", "@playwright/mcp@latest", "--headless"] },
+        linear: { url: "https://mcp.linear.app/sse" },
+      },
+    });
+    const { config } = ADAPTERS.amp.parse(raw);
+    expect(config.servers.map((s) => s.name).sort()).toEqual(["linear", "playwright"]);
+    const rendered = ADAPTERS.amp.render(config);
+    const doc = JSON.parse(rendered.content) as Record<string, Record<string, unknown>>;
+    expect(Object.keys(doc["amp.mcpServers"]).sort()).toEqual(["linear", "playwright"]);
+    expect(rendered.warnings.some((w) => w.includes("merge the amp.mcpServers key"))).toBe(true);
+  });
+
+  it("cursor -> amp round-trips names and URLs", () => {
+    const { content } = convert("cursor", "amp", CURSOR_CONFIG);
+    const back = ADAPTERS.amp.parse(content).config;
+    expect(back.servers.map((s) => s.name).sort()).toEqual(["filesystem", "linear"]);
+    expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });

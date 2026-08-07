@@ -11,9 +11,10 @@ import {
   parseVsCodeJson,
   parseContinueYaml,
   parseZedSettingsJson,
+  parseAmpSettingsJson,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -37,6 +38,7 @@ describe('knownConfigLocations', () => {
         'roo-code',
         'zed',
         'continue',
+        'amp',
       ]),
     );
   });
@@ -62,6 +64,13 @@ describe('knownConfigLocations', () => {
     expect(p('roo-code')).toEqual(['/home/u/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json']);
     expect(p('zed')).toEqual(['/home/u/.config/zed/settings.json']);
     expect(linux.find((l) => l.client === 'zed')!.format).toBe('zed-settings-json');
+  });
+
+  it('locates the amp user settings', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const amp = linux.filter((l) => l.client === 'amp');
+    expect(amp.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.config/amp/settings.json']);
+    expect(amp[0]!.format).toBe('amp-settings-json');
   });
 
   it('locates the continue.dev global config', () => {
@@ -246,5 +255,25 @@ mcpServers:
   it('returns no servers for configs without an mcpServers list', () => {
     expect(parseContinueYaml('name: x\nmodels: []\n', loc('continue', 'continue-yaml'))).toEqual([]);
     expect(parseContinueYaml('', loc('continue', 'continue-yaml'))).toEqual([]);
+  });
+});
+
+describe('parseAmpSettingsJson', () => {
+  it('parses the amp.mcpServers key with standard entry shapes', () => {
+    const raw = JSON.stringify({
+      'amp.commands.allowlist': ['git status'],
+      'amp.mcpServers': {
+        playwright: { command: 'npx', args: ['-y', '@playwright/mcp@latest', '--headless'] },
+        linear: { url: 'https://mcp.linear.app/sse' },
+      },
+    });
+    const servers = parseAmpSettingsJson(raw, loc('amp', 'amp-settings-json'));
+    expect(servers).toHaveLength(2);
+    expect(servers[0]).toMatchObject({ name: 'playwright', command: 'npx', args: ['-y', '@playwright/mcp@latest', '--headless'], client: 'amp' });
+    expect(servers[1]).toMatchObject({ name: 'linear', url: 'https://mcp.linear.app/sse' });
+  });
+
+  it('returns no servers when amp.mcpServers is absent', () => {
+    expect(parseAmpSettingsJson('{}', loc('amp', 'amp-settings-json'))).toEqual([]);
   });
 });

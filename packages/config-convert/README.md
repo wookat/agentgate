@@ -20,6 +20,7 @@ Supported clients:
 | `roo-code` | JSON `mcpServers` | `<vscode user dir>/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json` / `.roo/mcp.json` |
 | `zed` | JSONC `context_servers` inside settings | `~/.config/zed/settings.json` |
 | `continue` | YAML `mcpServers` list | `~/.continue/config.yaml` / `.continue/mcpServers/*.yaml` |
+| `amp` | `amp.mcpServers` key inside settings | `~/.config/amp/settings.json` / `.amp/settings.json` |
 
 ## CLI
 
