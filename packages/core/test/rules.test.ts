@@ -4,7 +4,7 @@ import { credentialLeakRule } from '../src/rules/credential-leak.js';
 import { checkIncludeToolsCoverage, overprivilegedRule } from '../src/rules/overprivileged.js';
 import { rceVectorsRule } from '../src/rules/rce-vectors.js';
 import { ssrfRule } from '../src/rules/ssrf.js';
-import { serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
+import { opencodePluginRefs, serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
 import { toolPoisoningRule } from '../src/rules/tool-poisoning.js';
 import { toxicFlowRule, toolShadowingRule } from '../src/rules/cross-server.js';
 import { scanConfiguration, scanServers, scanTools } from '../src/scanner.js';
@@ -266,6 +266,23 @@ describe('supply-chain', () => {
     });
     expect(serverPackageRef(server({ command: 'node', args: ['server.js'] }))).toBeUndefined();
     expect(serverPackageRef(server({ command: 'npx', args: ['./local-dir'] }))).toBeUndefined();
+  });
+
+  it('opencodePluginRefs extracts npm plugin packages for advisory checks', () => {
+    const content = JSON.stringify({
+      plugin: [
+        'opencode-wakatime',
+        '@scope/plugin@2.0.1',
+        'superpowers@git+https://github.com/obra/superpowers.git',
+        './plugins/local.ts',
+      ],
+    });
+    const refs = opencodePluginRefs('opencode.json', content);
+    expect(refs).toHaveLength(2);
+    expect(refs[0]).toMatchObject({ name: 'opencode-wakatime', version: undefined, ecosystem: 'npm' });
+    expect(refs[1]).toMatchObject({ name: '@scope/plugin', version: '2.0.1', ecosystem: 'npm' });
+    expect(refs[1]?.context).toContain('@scope/plugin@2.0.1');
+    expect(opencodePluginRefs('other.json', content)).toHaveLength(0);
   });
 
   it('serverPackageRef yields the bare name for PEP 508 range specs and extras', () => {

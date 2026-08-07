@@ -7,6 +7,8 @@ import {
   checkIncludeToolsCoverage,
   fetchLiveMcpaAdvisories,
   matchMcpaAdvisories,
+  OPENCODE_CONFIG_FILE,
+  opencodePluginRefs,
   queryOsvMalware,
   scanConfiguration,
   scanRepo,
@@ -85,6 +87,15 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   // against OSV.dev known-malware entries. Pinned versions in the spec are
   // compared against version-scoped advisories.
   const pkgRefs = servers.map(serverPackageRef).filter((r) => r !== undefined);
+  // OpenCode npm plugins are auto-installed and executed at startup, so they
+  // get the same known-malware advisory checks as server packages.
+  for (const file of scannedFiles.filter((f) => OPENCODE_CONFIG_FILE.test(f.split(path.sep).join('/')))) {
+    try {
+      pkgRefs.push(...opencodePluginRefs('opencode.json', fs.readFileSync(file, 'utf8')).map((r) => ({ ...r, file: path.relative(projectDir, file) })));
+    } catch {
+      // unreadable config: the repo walk already surfaced what it could
+    }
+  }
   // AgentGate MCP advisory database: bundled copy (works offline) merged
   // with any fresher records from the live advisory API.
   if (pkgRefs.length > 0) {
