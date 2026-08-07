@@ -131,7 +131,12 @@ network sandbox) and `default_permissions = ":danger-full-access"`
 prompts) and `sandbox_workspace_write.network_access = true` (egress
 inside the workspace-write sandbox) are `medium`. `read-only` /
 `workspace-write` modes and interactive approval policies are not
-flagged.
+flagged. Named `[permissions.<name>]` profile tables are checked too: a
+filesystem grant of `"write"` on `/`, `/**`, `~`, or `$HOME` (the whole
+filesystem or home directory becomes writable) is `high`, and
+`network.enabled = true` inside a profile (sandboxed egress) is
+`medium`; scoped path grants, deny rules, and disabled networking are
+not flagged.
 
 ## Why it matters
 

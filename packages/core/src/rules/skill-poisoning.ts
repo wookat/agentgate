@@ -336,6 +336,43 @@ function checkCodexConfig(rule: Rule, file: string, content: string) {
       }),
     );
   }
+  const profiles = data['permissions'];
+  if (typeof profiles === 'object' && profiles !== null) {
+    for (const [name, profile] of Object.entries(profiles as Record<string, unknown>)) {
+      if (typeof profile !== 'object' || profile === null) continue;
+      const p = profile as Record<string, unknown>;
+      const filesystem = p['filesystem'];
+      if (typeof filesystem === 'object' && filesystem !== null) {
+        for (const [fsPath, grant] of Object.entries(filesystem as Record<string, unknown>)) {
+          if (grant !== 'write') continue;
+          if (!['/', '/**', '~', '~/', '$HOME'].includes(fsPath)) continue;
+          const line = lineOf(`"${fsPath}"`) || lineOf(fsPath);
+          findings.push(
+            finding(rule, {
+              severity: 'high' as const,
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Codex permission profile [permissions.${name}] grants write access to "${fsPath}" — the entire filesystem or home directory is writable for anyone who trusts this project`,
+            }),
+          );
+        }
+      }
+      const network = p['network'];
+      if (typeof network === 'object' && network !== null && (network as Record<string, unknown>)['enabled'] === true) {
+        const line = lineOf('enabled');
+        findings.push(
+          finding(rule, {
+            severity: 'medium' as const,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Codex permission profile [permissions.${name}] enables sandboxed network access — an exfiltration channel for anyone who trusts this project`,
+          }),
+        );
+      }
+    }
+  }
   return findings;
 }
 
