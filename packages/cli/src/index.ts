@@ -8,6 +8,7 @@ import { runCi } from './commands/ci.js';
 import { runDeps } from './commands/deps.js';
 import { clientChoices, describeClients, runConfigConvert } from './commands/config.js';
 import { runAdvisoryList, runAdvisoryCheck } from './commands/advisory.js';
+import { runAuthLogin, runAuthLogout, runAuthStatus } from './commands/auth.js';
 import { setDebug } from './debug.js';
 import { CLI_VERSION } from './version.js';
 
@@ -123,6 +124,34 @@ advisoryCmd
   .addOption(new Option('-t, --timeout <ms>', 'advisory API timeout').default('5000'))
   .action(async (pkg, opts) => {
     process.exitCode = await runAdvisoryCheck(pkg, opts);
+  });
+
+const authCmd = program
+  .command('auth')
+  .description('Manage OAuth logins for remote MCP servers');
+authCmd
+  .command('login')
+  .description('Log in to a remote (url) MCP server via its OAuth flow (opens a browser)')
+  .argument('<server>', 'configured server name or a server URL')
+  .addOption(configOption)
+  .addOption(new Option('-t, --timeout <ms>', 'how long to wait for the browser callback').default('120000'))
+  .option('--client-id <id>', 'pre-registered OAuth client ID (for servers without dynamic client registration)')
+  .action(async (server, opts) => {
+    process.exitCode = await runAuthLogin(server, opts);
+  });
+authCmd
+  .command('status')
+  .description('Show saved OAuth logins')
+  .action(() => {
+    process.exitCode = runAuthStatus();
+  });
+authCmd
+  .command('logout')
+  .description('Remove the saved OAuth state for a server')
+  .argument('<server>', 'configured server name or a server URL')
+  .addOption(configOption)
+  .action((server, opts) => {
+    process.exitCode = runAuthLogout(server, opts);
   });
 
 const configCmd = program.command('config').description('MCP client configuration utilities');
