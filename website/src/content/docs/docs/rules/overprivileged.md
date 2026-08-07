@@ -78,6 +78,10 @@ sensitive paths, or `true` on a sensitive path (`.env`, `.vscode`,
 `.github`, keys/secrets), is `medium` — the agent can rewrite its own
 guardrails or secrets without approval. The documented safe pattern
 (catch-all plus `false` re-denies for sensitive files) is fine.
+`task.allowAutomaticTasks: "on"` is `medium`: it removes the one prompt
+standing between a checked-in `"runOn": "folderOpen"` task and automatic
+execution in a trusted workspace (the task commands themselves are
+classified under [RCE vectors](/docs/rules/rce-vectors/)).
 
 Zed project settings (`.zed/settings.json`) are checked for the legacy
 `agent.always_allow_tool_actions: true` (`high`) and the newer
