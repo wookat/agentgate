@@ -105,6 +105,16 @@ describe('agentgate scan', () => {
     expect(res.stdout).toMatch(/Scanned 1 server/);
   });
 
+  it('doc-link footer carries per-rule finding counts', async () => {
+    const risky = path.join(dir, 'risky-footer.json');
+    fs.writeFileSync(
+      risky,
+      JSON.stringify({ mcpServers: { risky: { command: 'npx', args: ['-y', 'unpinned-server@latest'] } } }),
+    );
+    const res = await run(['scan', '--config', risky]);
+    expect(res.stdout).toMatch(/AG-SC-001 ×\d+ → https:/);
+  });
+
   it('wraps long paths in the table instead of truncating with an ellipsis', async () => {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-table-'));
     const deep = path.join(repo, '.windsurf', 'workflows');

@@ -35,9 +35,11 @@ export function renderFindingsTable(findings: Finding[]): string {
     .filter(([, n]) => n > 0)
     .map(([sev, n]) => SEVERITY_COLOR[sev](`${n} ${sev}`))
     .join(', ');
+  const ruleCounts = new Map<string, number>();
+  for (const f of findings) ruleCounts.set(f.ruleId, (ruleCounts.get(f.ruleId) ?? 0) + 1);
   const docLinks = [...new Map(findings.map((f) => [f.ruleId, ruleDocUrl(f.ruleId, f.category)]))]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, url]) => pc.dim(`  ${id} → ${url}`))
+    .sort(([a], [b]) => (ruleCounts.get(b)! - ruleCounts.get(a)!) || a.localeCompare(b))
+    .map(([id, url]) => pc.dim(`  ${id} ×${ruleCounts.get(id)} → ${url}`))
     .join('\n');
   return `${table.toString()}\n\n${findings.length} finding(s): ${summary}\n${docLinks}`;
 }
