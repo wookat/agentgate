@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.32.0
+
+### Minor Changes
+
+- 6aed86c: Skill scanning and `lock --skills` cover legacy VS Code chat-mode files (`.github/chatmodes/*.chatmode.md`).
+- db7fa32: AG-SK-002 also checks Claude Code settings files (`.claude/settings.json`, `.claude/settings.local.json`): dangerous unscoped `permissions.allow` grants (bare `Bash`, unscoped `Write`/`Edit`/`WebFetch`/`WebSearch`) and `permissions.defaultMode: "bypassPermissions"` are flagged.
+
 ## 0.31.0
 
 ### Minor Changes
