@@ -28,7 +28,7 @@ export interface ScanOptions {
   server?: string[];
   format: 'table' | 'json' | 'sarif';
   output?: string;
-  failOn?: Severity;
+  failOn?: Severity | 'never';
   ignore?: string[];
   timeout: string;
   /** Skip the interactive confirmation before `--live` spawns stdio servers. */
@@ -179,7 +179,7 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     console.log(renderGitHubAnnotations(sorted));
   }
 
-  if (opts.failOn && maxSeverityAtLeast(sorted, opts.failOn)) {
+  if (opts.failOn && opts.failOn !== 'never' && maxSeverityAtLeast(sorted, opts.failOn)) {
     return 1;
   }
   return 0;

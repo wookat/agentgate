@@ -184,6 +184,9 @@ describe('agentgate scan', () => {
     fs.writeFileSync(badConfig, JSON.stringify({ mcpServers: { r: { url: 'http://mcp.example.com/sse' } } }));
     const res = await run(['scan', '--config', badConfig, '--fail-on', 'high', '--format', 'json']);
     expect(res.code).toBe(1);
+    const never = await run(['scan', '--config', badConfig, '--fail-on', 'never', '--format', 'json']);
+    expect(never.code).toBe(0);
+    expect(JSON.parse(never.stdout).findings.length).toBeGreaterThan(0);
   });
 
   it('scans a repo directory for source-level issues', async () => {
@@ -277,6 +280,10 @@ describe('agentgate lock / diff / ci', () => {
     const ci = await run(['ci', '--config', configPath]);
     expect(ci.code).toBe(1);
     expect(ci.stdout).toMatch(/FAILED/);
+
+    // drift still gates when the static-finding gate is disabled
+    const ciNever = await run(['ci', '--config', configPath, '--fail-on', 'never']);
+    expect(ciNever.code).toBe(1);
 
     writeConfig();
     const ciPass = await run(['ci', '--config', configPath]);
