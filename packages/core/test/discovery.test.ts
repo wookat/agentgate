@@ -44,6 +44,7 @@ describe('knownConfigLocations', () => {
         'warp',
         'lmstudio',
         'qoder',
+        'amazonq',
         'agents',
       ]),
     );
@@ -248,6 +249,27 @@ describe('discoverConfigFiles', () => {
     const q = linux.filter((l) => l.client === 'qoder');
     expect(q.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.qoder/settings.json']);
     expect(q[0]!.format).toBe('mcpServers-json');
+  });
+
+  it('locates the Amazon Q global configs', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const q = linux.filter((l) => l.client === 'amazonq');
+    expect(q.map((l) => l.path.split(path.sep).join('/'))).toEqual([
+      '/home/u/.aws/amazonq/mcp.json',
+      '/home/u/.aws/amazonq/default.json',
+    ]);
+    expect(q.every((l) => l.format === 'mcpServers-json')).toBe(true);
+  });
+
+  it('finds Amazon Q project-level configs', () => {
+    const project = path.join(dir, 'proj6');
+    fs.mkdirSync(path.join(project, '.amazonq'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.amazonq', 'mcp.json'), '{"mcpServers":{}}');
+    fs.writeFileSync(path.join(project, '.amazonq', 'default.json'), '{"mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['amazonq', 'amazonq']);
+    expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['default.json', 'mcp.json']);
   });
 
   it('finds qoder project-level configs', () => {
