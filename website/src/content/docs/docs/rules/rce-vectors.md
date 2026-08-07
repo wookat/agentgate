@@ -60,6 +60,12 @@ non-managed hook by hash before it runs — the finding still matters
 because trust prompts are routinely accepted and can be bypassed with
 `--dangerously-bypass-hook-trust`.)
 
+Gemini CLI hooks (`.gemini/settings.json`, same nested
+`{ Event: [{ hooks: [{ type: "command", command }] }] }` shape) are covered
+too: command hooks run automatically on agent-loop events (SessionStart,
+BeforeTool, BeforeModel, …) for anyone opening the project, so the same
+classification applies.
+
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
 userPromptSubmit, preToolUse, postToolUse) with the same classification.

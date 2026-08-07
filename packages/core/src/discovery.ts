@@ -76,6 +76,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   }
   // Gemini CLI — mcpServers key inside settings.json
   push('gemini-cli', path.join(homeDir, '.gemini', 'settings.json'));
+  // Gemini CLI extensions — each installed extension's manifest carries an optional mcpServers map
+  locations.push(...geminiExtensionLocations(path.join(homeDir, '.gemini', 'extensions')));
   // Kiro — user-level mcp.json, standard mcpServers format
   push('kiro', path.join(homeDir, '.kiro', 'settings', 'mcp.json'));
   // Roo Code (VS Code extension, own settings file under globalStorage)
@@ -128,6 +130,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'claude-code', path: path.join(projectDir, '.mcp.json'), format: 'mcpServers-json' },
     { client: 'opencode', path: path.join(projectDir, 'opencode.json'), format: 'opencode-json' },
     { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
+    { client: 'gemini-extension', path: path.join(projectDir, 'gemini-extension.json'), format: 'mcpServers-json' },
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
@@ -269,6 +272,24 @@ function amazonqAgentLocations(agentsDir: string): ClientConfigLocation[] {
     .filter((f) => f.endsWith('.json'))
     .sort()
     .map((f) => ({ client: 'amazonq', path: path.join(agentsDir, f), format: 'mcpServers-json' as const }));
+}
+
+/**
+ * Gemini CLI extensions: every `<extensionsDir>/<name>/gemini-extension.json`
+ * manifest — its `mcpServers` map starts automatically for anyone with the
+ * extension installed.
+ */
+function geminiExtensionLocations(extensionsDir: string): ClientConfigLocation[] {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(extensionsDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((e) => e.isDirectory())
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((e) => ({ client: 'gemini-extension', path: path.join(extensionsDir, e.name, 'gemini-extension.json'), format: 'mcpServers-json' as const }));
 }
 
 /** Continue.dev workspace MCP blocks: every `.continue/mcpServers/*.yaml` file. */

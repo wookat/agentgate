@@ -295,6 +295,19 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['fs', 'remote']);
   });
 
+  it('finds gemini extension manifests (project root + installed)', () => {
+    const project = path.join(dir, 'proj6');
+    fs.mkdirSync(project, { recursive: true });
+    fs.writeFileSync(path.join(project, 'gemini-extension.json'), '{"name":"my-ext","mcpServers":{}}');
+    fs.mkdirSync(path.join(dir, '.gemini', 'extensions', 'workspace'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.gemini', 'extensions', 'workspace', 'gemini-extension.json'), '{"name":"workspace","mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const ext = found.filter((f) => f.client === 'gemini-extension');
+    expect(ext.map((f) => path.basename(f.path))).toEqual(['gemini-extension.json', 'gemini-extension.json']);
+    expect(ext.some((f) => f.path.includes('extensions'))).toBe(true);
+  });
+
   it('finds qoder project-level configs', () => {
     const project = path.join(dir, 'proj5');
     fs.mkdirSync(path.join(project, '.qoder'), { recursive: true });
