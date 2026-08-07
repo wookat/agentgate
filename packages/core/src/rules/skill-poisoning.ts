@@ -118,6 +118,12 @@ const ROO_MCP_FILE = /(^|\/)\.roo\/mcp\.json$/i;
 /** Auto-approved tool names that suggest shell execution, data mutation, or exfiltration. */
 const DANGEROUS_TOOL_NAME = /exec|shell|command|terminal|run_|sql|migrat|write|delete|remove|drop|deploy|fetch_url/i;
 
+/** VS Code workspace settings whose chat tool auto-approval bypasses all confirmations. */
+const VSCODE_SETTINGS_FILE = /(^|\/)\.vscode\/settings\.json$/i;
+
+/** VS Code settings keys that globally auto-approve chat tool calls (current and legacy names). */
+const VSCODE_AUTOAPPROVE_KEYS = ['chat.tools.global.autoApprove', 'chat.tools.autoApprove'];
+
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
 export function parseJsonc(content: string): unknown {
   try {
@@ -195,7 +201,8 @@ export const skillOverprivilegeRule: Rule = {
     const isOpencode = OPENCODE_CONFIG_FILE.test(file);
     const isGemini = GEMINI_SETTINGS_FILE.test(file);
     const isRooMcp = ROO_MCP_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp) return [];
+    const isVscode = VSCODE_SETTINGS_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -237,6 +244,25 @@ export const skillOverprivilegeRule: Rule = {
               }),
             );
           }
+        }
+      }
+      return findings;
+    }
+    if (isVscode) {
+      const findings = [];
+      for (const key of VSCODE_AUTOAPPROVE_KEYS) {
+        if ((data as Record<string, unknown>)[key] === true) {
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
+          findings.push(
+            finding(this, {
+              severity: 'high',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `VS Code workspace settings set ${key} to true — every chat tool call (including terminal commands and file edits) runs without approval for anyone opening this project`,
+            }),
+          );
+          break;
         }
       }
       return findings;

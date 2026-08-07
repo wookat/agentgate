@@ -500,6 +500,22 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.severity === 'high')!.message).toContain('"everything"');
   });
 
+  it('flags global chat tool auto-approval in VS Code workspace settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      '{\n  "editor.formatOnSave": true,\n  "chat.tools.autoApprove": true\n}\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('high');
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      '{\n  "chat.tools.autoApprove": false,\n  "chat.tools.global.autoApprove": false\n}\n',
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
