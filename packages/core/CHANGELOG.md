@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.34.0
+
+### Minor Changes
+
+- 7d4168f: AG-SK-002 flags `enableAllProjectMcpServers: true` in Claude Code settings files (medium) — it auto-approves every MCP server defined in project `.mcp.json` files without review.
+
 ## 0.33.0
 
 ### Minor Changes
