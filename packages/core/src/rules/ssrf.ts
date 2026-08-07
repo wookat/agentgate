@@ -87,6 +87,21 @@ export const ssrfRule: Rule = {
     // Test/fixture trees reference the metadata IP as a fixture for the very
     // SSRF protections under test; still reported, but quietly.
     const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
+    // Security guidance / defensive code references the endpoint to block it
+    // (e.g. "MUST reject ... the metadata IP"); an exfil vector doesn't.
+    const matchedLine = content.split(/\r?\n/)[line - 1] ?? '';
+    const defensive = /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF)\b/i.test(matchedLine);
+    if (defensive && !testPath) {
+      return [
+        finding(this, {
+          severity: 'low',
+          target: file,
+          file,
+          line,
+          message: 'Source references a cloud metadata endpoint in a blocking/defensive context (SSRF guidance or guard); confirm it blocks rather than fetches',
+        }),
+      ];
+    }
     return [
       finding(this, {
         severity: testPath ? 'low' : 'high',

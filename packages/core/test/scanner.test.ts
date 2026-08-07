@@ -92,6 +92,19 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'prod.py')!.severity).toBe('high');
   });
 
+  it('downgrades metadata-endpoint hits in blocking/defensive context to low (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'guard.py'),
+      'GUIDANCE = "it MUST reject loopback and link-local 169.254.169.254 (cloud metadata)"\n',
+    );
+    fs.writeFileSync(path.join(dir, 'prod2.py'), 'requests.get("http://169.254.169.254/")\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    const guard = hits.find((f) => f.file === 'guard.py')!;
+    expect(guard.severity).toBe('low');
+    expect(guard.message).toContain('defensive');
+    expect(hits.find((f) => f.file === 'prod2.py')!.severity).toBe('high');
+  });
+
   it('returns empty findings for a clean repo', () => {
     fs.writeFileSync(path.join(dir, 'index.ts'), 'export const x = 1;\n');
     expect(scanRepo(dir).findings).toHaveLength(0);
