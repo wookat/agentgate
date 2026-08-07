@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.24.1
+
+### Patch Changes
+
+- 14a5a0e: Also discover LM Studio's `~/.cache/lm-studio/mcp.json` — current builds write the MCP config there (on macOS and Windows too) even though the documented location is `~/.lmstudio/mcp.json`.
+
 ## 0.24.0
 
 ### Minor Changes
