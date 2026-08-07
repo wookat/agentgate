@@ -1,5 +1,18 @@
 # mcp-agentgate-core
 
+## 0.50.0
+
+### Minor Changes
+
+- 101f737: Qwen Code agent surfaces: `hooks` in project `.qwen/settings.json` (same nested shape as Claude Code/Gemini CLI settings hooks, fire on lifecycle events) run through the shared dangerous-command classifier (AG-SK-003); `.qwen/agents/*.md` sub-agents, `.qwen/commands/**.md` custom commands (incl. deprecated `.qwen/commands/**.toml`), and `.qwen/skills`/`.qwen/commands` markdown get skill scanning (AG-SK-001 injection/hidden-Unicode + AG-SK-003 `!{...}` shell blocks).
+- adf18de: Qwen Code extensions: `qwen-extension.json` manifests (project root + installed under `~/.qwen/extensions/<name>/`) are discovered and their `mcpServers` run through the full config rule set and advisory checks — extensions start these servers automatically for anyone who installs them.
+- b5e2c64: Qwen Code context files: `QWEN.md`, `QWEN.local.md`, and `.qwen/rules/**.md` (auto-loaded into the model context every session) now get AG-SK-001 injection/hidden-Unicode checks and AG-SK-003 dynamic-context command classification.
+- 9727d24: Copilot custom agents: `.github/agents/*.md` agent profiles with an `mcp-servers` frontmatter map (official Copilot CLI / cloud agent custom-agent format) are discovered and their servers run through the full config rule set and advisory checks — the servers start for anyone who runs the agent.
+
+### Patch Changes
+
+- f62fab4: Precision fixes from a flagship-repo false-positive sweep: AG-SS-001 reads surrounding comment lines (and guard/validate vocabulary) for the defensive downgrade; AG-SK-001 treats inline code spans (`...`) as quoted like fenced blocks; AG-RC-001 downgrades curl|sh matches on `#`-comment lines and ignores quoted-heredoc usage banners in shell scripts (a live match is still preferred over a commented one).
+
 ## 0.49.0
 
 ### Minor Changes
