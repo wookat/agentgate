@@ -650,6 +650,40 @@ export const amp: ClientAdapter = {
   },
 };
 
+/** Warp — `~/.warp/.mcp.json` (or project `.warp/.mcp.json`); standard `mcpServers`, `working_directory` for cwd. */
+export const warp: ClientAdapter = {
+  id: "warp",
+  defaultPath: "~/.warp/.mcp.json",
+  parse(content): ParseResult {
+    const data = parseJson("warp", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcpServers;
+    const servers: CanonicalMcpServer[] = [];
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("warp", "mcpServers must be an object");
+    }
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      const s = parseCommonEntry("warp", name, entry, warnings);
+      if (!s) continue;
+      if (isRecord(entry) && typeof entry.working_directory === "string") {
+        s.cwd = entry.working_directory;
+      }
+      servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      const entry = renderCommonEntry(s, false);
+      if (s.transport === "stdio" && s.cwd) entry.working_directory = s.cwd;
+      mcpServers[s.name] = entry;
+    }
+    return { content: `${JSON.stringify({ mcpServers }, null, 2)}\n`, warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -665,4 +699,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   zed,
   continue: continueDev,
   amp,
+  warp,
 };

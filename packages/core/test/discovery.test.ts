@@ -41,6 +41,8 @@ describe('knownConfigLocations', () => {
         'zed',
         'continue',
         'amp',
+        'warp',
+        'agents',
       ]),
     );
   });
@@ -73,6 +75,15 @@ describe('knownConfigLocations', () => {
     const amp = linux.filter((l) => l.client === 'amp');
     expect(amp.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.config/amp/settings.json']);
     expect(amp[0]!.format).toBe('amp-settings-json');
+  });
+
+  it('locates warp and generic agents configs', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const p = (client: string) =>
+      linux.filter((l) => l.client === client).map((l) => l.path.split(path.sep).join('/'));
+    expect(p('warp')).toEqual(['/home/u/.warp/.mcp.json']);
+    expect(p('agents')).toEqual(['/home/u/.agents/.mcp.json']);
+    expect(linux.find((l) => l.client === 'warp')!.format).toBe('mcpServers-json');
   });
 
   it('locates the continue.dev global config', () => {
