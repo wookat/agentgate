@@ -23,7 +23,8 @@ export interface ClientConfigLocation {
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
  * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp,
- * Warp, and LM Studio (plus the generic `.agents/.mcp.json` convention).
+ * Warp, and LM Studio (plus the generic `.agents/.mcp.json` convention);
+ * project-level discovery also covers Trae (`.trae/mcp.json`).
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -119,6 +120,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
+    { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
