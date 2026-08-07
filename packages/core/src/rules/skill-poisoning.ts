@@ -1,3 +1,4 @@
+import { parse as parseToml } from 'smol-toml';
 import { parse as parseYaml } from 'yaml';
 import { Rule, finding } from './rule.js';
 import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
@@ -273,6 +274,71 @@ export function parseJsonc(content: string): unknown {
   }
 }
 
+/** Codex project-scoped config overrides, loaded for anyone who trusts the project. */
+const CODEX_CONFIG_FILE = /(^|\/)\.codex\/config\.toml$/i;
+
+/** Check a project-scoped Codex config.toml for sandbox/approval opt-outs. */
+function checkCodexConfig(rule: Rule, file: string, content: string) {
+  let data: Record<string, unknown>;
+  try {
+    data = parseToml(content) as Record<string, unknown>;
+  } catch {
+    return [];
+  }
+  const findings = [];
+  const lineOf = (needle: string) => content.split(/\r?\n/).findIndex((l) => l.includes(needle)) + 1;
+  if (data['sandbox_mode'] === 'danger-full-access') {
+    const line = lineOf('sandbox_mode');
+    findings.push(
+      finding(rule, {
+        severity: 'high' as const,
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: 'Codex project config sets sandbox_mode = "danger-full-access" — commands run with no filesystem or network sandbox for anyone who trusts this project',
+      }),
+    );
+  }
+  if (data['default_permissions'] === ':danger-full-access') {
+    const line = lineOf('default_permissions');
+    findings.push(
+      finding(rule, {
+        severity: 'high' as const,
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: 'Codex project config sets default_permissions = ":danger-full-access" — sandboxed tool calls get full filesystem and network access for anyone who trusts this project',
+      }),
+    );
+  }
+  if (data['approval_policy'] === 'never') {
+    const line = lineOf('approval_policy');
+    findings.push(
+      finding(rule, {
+        severity: 'medium' as const,
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: 'Codex project config sets approval_policy = "never" — commands execute without approval prompts for anyone who trusts this project',
+      }),
+    );
+  }
+  const workspaceWrite = data['sandbox_workspace_write'];
+  if (typeof workspaceWrite === 'object' && workspaceWrite !== null && (workspaceWrite as Record<string, unknown>)['network_access'] === true) {
+    const line = lineOf('network_access');
+    findings.push(
+      finding(rule, {
+        severity: 'medium' as const,
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: 'Codex project config enables network access inside the workspace-write sandbox — an exfiltration channel for anyone who trusts this project',
+      }),
+    );
+  }
+  return findings;
+}
+
 export const skillOverprivilegeRule: Rule = {
   id: 'AG-SK-002',
   category: 'overprivileged',
@@ -319,6 +385,7 @@ export const skillOverprivilegeRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (CODEX_CONFIG_FILE.test(file)) return checkCodexConfig(this, file, content);
     const isClaude = CLAUDE_SETTINGS_FILE.test(file);
     const isOpencode = OPENCODE_CONFIG_FILE.test(file);
     const isGemini = GEMINI_SETTINGS_FILE.test(file);

@@ -1025,6 +1025,28 @@ describe('scanRepo', () => {
     expect(hits[0]?.message).toContain('Kiro agent hook command');
   });
 
+  it('flags Codex project config sandbox/approval opt-outs (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.codex', 'config.toml'),
+      ['approval_policy = "never"', 'sandbox_mode = "danger-full-access"', 'default_permissions = ":danger-full-access"', '', '[sandbox_workspace_write]', 'network_access = true', ''].join('\n'),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'high', 'medium', 'medium']);
+    expect(hits.some((f) => f.message.includes('danger-full-access'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('approval_policy'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('network access'))).toBe(true);
+  });
+
+  it('does not flag safe Codex project configs (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.codex', 'config.toml'),
+      ['model = "gpt-5.1-codex"', 'approval_policy = "on-request"', 'sandbox_mode = "workspace-write"', '', '[sandbox_workspace_write]', 'network_access = false', ''].join('\n'),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('flags prompt injection in Kiro agent hook askAgent prompts (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.kiro', 'hooks'), { recursive: true });
     fs.writeFileSync(
