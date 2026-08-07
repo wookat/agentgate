@@ -124,6 +124,20 @@ const VSCODE_SETTINGS_FILE = /(^|\/)\.vscode\/settings\.json$/i;
 /** VS Code settings keys that globally auto-approve chat tool calls (current and legacy names). */
 const VSCODE_AUTOAPPROVE_KEYS = ['chat.tools.global.autoApprove', 'chat.tools.autoApprove'];
 
+/** Commands VS Code itself ships as default-deny in terminal auto-approval, plus shells/privilege escalation. */
+const VSCODE_DANGEROUS_COMMANDS = new Set([
+  'rm', 'rmdir', 'del', 'kill', 'curl', 'wget', 'eval', 'chmod', 'chown',
+  'sudo', 'sh', 'bash', 'zsh', 'fish', 'powershell', 'pwsh', 'cmd', 'iex', 'invoke-expression',
+]);
+
+/** Regex sources that match any command (catch-all terminal auto-approval). */
+const CATCH_ALL_REGEX = new Set(['.*', '^.*$', '.+', '^.+$', '.', '^.']);
+
+/** True when a terminal auto-approve map value means "approve". */
+function vscodeApproves(value: unknown): boolean {
+  return value === true || (typeof value === 'object' && value !== null && (value as { approve?: unknown }).approve === true);
+}
+
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
 export function parseJsonc(content: string): unknown {
   try {
@@ -263,6 +277,28 @@ export const skillOverprivilegeRule: Rule = {
             }),
           );
           break;
+        }
+      }
+      const terminal = (data as Record<string, unknown>)['chat.tools.terminal.autoApprove'];
+      if (typeof terminal === 'object' && terminal !== null) {
+        for (const [key, value] of Object.entries(terminal)) {
+          if (!vscodeApproves(value)) continue;
+          const regexMatch = /^\/(.*)\/[a-z]*$/i.exec(key);
+          const isCatchAll = regexMatch !== null && CATCH_ALL_REGEX.has(regexMatch[1]!.trim());
+          const commandWord = (regexMatch ? '' : key).trim().split(/\s+/)[0]!.toLowerCase();
+          if (!isCatchAll && !VSCODE_DANGEROUS_COMMANDS.has(commandWord)) continue;
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
+          findings.push(
+            finding(this, {
+              severity: isCatchAll ? 'high' : 'medium',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: isCatchAll
+                ? `VS Code workspace settings auto-approve every terminal command ("${key}" in chat.tools.terminal.autoApprove) — arbitrary shell execution without approval for anyone opening this project`
+                : `VS Code workspace settings auto-approve terminal command "${key}" — ${commandWord} is in VS Code's own default-deny list; it runs without approval for anyone opening this project`,
+            }),
+          );
         }
       }
       return findings;
