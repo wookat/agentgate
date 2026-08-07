@@ -85,8 +85,11 @@ Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`) are
 checked for `allowedTools` pre-approvals: a catch-all (`"*"`) is `high`,
 unscoped `execute_bash`/`use_aws` are `high`, unscoped `fs_write` is
 `medium`, and a whole-MCP-server allow (`"@server"` / `"@server/*"`) is
-`medium`. Tools scoped by a matching `toolsSettings` allowlist
-(`allowedCommands`, `allowedServices`, `allowedPaths`) are not flagged.
+`medium`. Glob entries (`fs_*`, `*_bash`) are expanded against the
+built-in tool names, so a wildcard that matches `execute_bash`,
+`use_aws`, or `fs_write` is flagged like the exact name. Tools scoped
+by a matching `toolsSettings` allowlist (`allowedCommands`,
+`allowedServices`, `allowedPaths`) are not flagged.
 
 ## Why it matters
 

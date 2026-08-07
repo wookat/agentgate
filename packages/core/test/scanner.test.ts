@@ -630,6 +630,18 @@ describe('scanRepo', () => {
     expect(hits[0]!.severity).toBe('high');
   });
 
+  it('expands allowedTools globs against built-in tool names (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.amazonq', 'cli-agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.amazonq', 'cli-agents', 'dev.json'),
+      JSON.stringify({ name: 'dev', allowedTools: ['*_bash', 'fs_*', 'fs_?ead'] }, null, 2),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
+    expect(hits.find((f) => f.severity === 'high')!.message).toContain('matches execute_bash');
+    expect(hits.find((f) => f.severity === 'medium')!.message).toContain('matches fs_write');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(

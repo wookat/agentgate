@@ -148,6 +148,13 @@ const AMAZONQ_AGENT_FILE = /(^|\/)\.amazonq\/cli-agents\/[^/]+\.json$/i;
 /** Amazon Q built-in tools whose unrestricted pre-approval means shell execution or AWS API access. */
 const AMAZONQ_HIGH_RISK_TOOLS = new Set(['execute_bash', 'use_aws']);
 
+/** True when an allowedTools glob entry (using * and ?) matches the given built-in tool name. */
+function amazonqGlobMatches(entry: string, tool: string): boolean {
+  if (!/[*?]/.test(entry) || entry.startsWith('@')) return false;
+  const re = new RegExp(`^${entry.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`);
+  return re.test(tool);
+}
+
 /** toolsSettings keys that scope a pre-approved Amazon Q tool to an allowlist. */
 const AMAZONQ_SCOPING_KEYS: Record<string, string> = {
   execute_bash: 'allowedCommands',
@@ -352,26 +359,29 @@ export const skillOverprivilegeRule: Rule = {
           );
           continue;
         }
-        if (AMAZONQ_HIGH_RISK_TOOLS.has(entry) && !isScoped(entry)) {
+        const highTool = AMAZONQ_HIGH_RISK_TOOLS.has(entry)
+          ? entry
+          : [...AMAZONQ_HIGH_RISK_TOOLS].find((t) => amazonqGlobMatches(entry, t));
+        if (highTool && !isScoped(highTool)) {
           findings.push(
             finding(this, {
               severity: 'high',
               target: file,
               file,
               ...(line > 0 ? { line } : {}),
-              message: `Amazon Q agent pre-approves "${entry}" without a toolsSettings allowlist — ${entry === 'execute_bash' ? 'arbitrary shell commands run' : 'AWS CLI calls run'} without prompting for anyone using this checked-in agent`,
+              message: `Amazon Q agent pre-approves "${entry}"${entry === highTool ? '' : ` (matches ${highTool})`} without a toolsSettings allowlist — ${highTool === 'execute_bash' ? 'arbitrary shell commands run' : 'AWS CLI calls run'} without prompting for anyone using this checked-in agent`,
             }),
           );
           continue;
         }
-        if (entry === 'fs_write' && !isScoped(entry)) {
+        if ((entry === 'fs_write' || amazonqGlobMatches(entry, 'fs_write')) && !isScoped('fs_write')) {
           findings.push(
             finding(this, {
               severity: 'medium',
               target: file,
               file,
               ...(line > 0 ? { line } : {}),
-              message: 'Amazon Q agent pre-approves "fs_write" without a toolsSettings allowedPaths allowlist — unrestricted file writes without prompting',
+              message: `Amazon Q agent pre-approves "${entry}"${entry === 'fs_write' ? '' : ' (matches fs_write)'} without a toolsSettings allowedPaths allowlist — unrestricted file writes without prompting`,
             }),
           );
           continue;
