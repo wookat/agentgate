@@ -1,3 +1,4 @@
+import http from 'node:http';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { fetchToolSurface } from '../src/live.js';
@@ -33,4 +34,38 @@ describe('fetchToolSurface', () => {
       fetchToolSurface(server({ args: ['-e', 'setInterval(() => {}, 1000)'] }), { timeoutMs: 1500 }),
     ).rejects.toThrow(/Timed out/);
   }, 20000);
+
+  describe('remote auth errors', () => {
+    async function with401Server(fn: (url: string) => Promise<void>): Promise<void> {
+      const srv = http.createServer((_req, res) => {
+        res.writeHead(401, { 'Content-Type': 'text/plain' }).end('Unauthorized');
+      });
+      await new Promise<void>((resolve) => srv.listen(0, '127.0.0.1', resolve));
+      const { port } = srv.address() as { port: number };
+      try {
+        await fn(`http://127.0.0.1:${port}/mcp`);
+      } finally {
+        srv.close();
+      }
+    }
+
+    it('suggests configuring headers when a remote server returns 401 and none are set', async () => {
+      await with401Server(async (url) => {
+        await expect(
+          fetchToolSurface(server({ command: undefined, args: undefined, url }), { timeoutMs: 5000 }),
+        ).rejects.toThrow(/no auth headers are configured.*"headers"/s);
+      });
+    }, 20000);
+
+    it('points at the rejected headers when a remote server returns 401 despite configured headers', async () => {
+      await with401Server(async (url) => {
+        await expect(
+          fetchToolSurface(
+            server({ command: undefined, args: undefined, url, headers: { Authorization: 'Bearer bad' } }),
+            { timeoutMs: 5000 },
+          ),
+        ).rejects.toThrow(/header\(s\) \(Authorization\) were rejected/);
+      });
+    }, 20000);
+  });
 });
