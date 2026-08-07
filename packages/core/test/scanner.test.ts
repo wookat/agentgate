@@ -1086,6 +1086,31 @@ describe('scanRepo', () => {
     expect(hits.every((f) => f.message.includes('Codex hook command'))).toBe(true);
   });
 
+  it('flags marketplace catalog plugins served from mutable git sources (AG-SC-001)', () => {
+    fs.mkdirSync(path.join(dir, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude-plugin', 'marketplace.json'),
+      JSON.stringify({
+        name: 'acme-tools',
+        owner: { name: 'Acme' },
+        plugins: [
+          { name: 'deploy-helper', source: { source: 'github', repo: 'acme/deploy-plugin' } },
+          { name: 'branch-tracker', source: { source: 'git-subdir', url: 'https://github.com/acme/mono.git', path: 'plugins/tracker', ref: 'main' } },
+          { name: 'pinned-sha', source: { source: 'github', repo: 'acme/pinned', sha: 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678' } },
+          { name: 'release-ref', source: { source: 'url', url: 'https://github.com/acme/rel.git', ref: 'v2.1.0' } },
+          { name: 'local-plugin', source: './plugins/local-plugin' },
+        ],
+      }),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits).toHaveLength(2);
+    expect(hits.every((f) => f.severity === 'medium')).toBe(true);
+    expect(hits.map((f) => f.message)).toEqual([
+      expect.stringContaining('"deploy-helper"'),
+      expect.stringContaining('"branch-tracker"'),
+    ]);
+  });
+
   it('flags root write grants and network access in named Codex permission profiles (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
     fs.writeFileSync(
