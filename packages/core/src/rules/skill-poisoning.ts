@@ -102,6 +102,16 @@ function opencodePermissionBlocks(data: object): { scope: string; permission: un
   return out;
 }
 
+/** Gemini CLI project settings whose `tools.allowed` bypasses the confirmation dialog. */
+const GEMINI_SETTINGS_FILE = /(^|\/)\.gemini\/settings\.json$/i;
+
+/** Dangerous Gemini CLI tool names when granted without a scoping `(...)` suffix. */
+const GEMINI_RISKY_TOOLS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] = [
+  { re: /^run_shell_command$/i, severity: 'high', risk: 'unrestricted shell execution' },
+  { re: /^(write_file|replace)$/i, severity: 'medium', risk: 'unrestricted file writes' },
+  { re: /^(web_fetch|google_web_search)$/i, severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
+];
+
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
 export function parseJsonc(content: string): unknown {
   try {
@@ -177,9 +187,45 @@ export const skillOverprivilegeRule: Rule = {
   checkSource(file, content) {
     const isClaude = CLAUDE_SETTINGS_FILE.test(file);
     const isOpencode = OPENCODE_CONFIG_FILE.test(file);
-    if (!isClaude && !isOpencode) return [];
+    const isGemini = GEMINI_SETTINGS_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
+    if (isGemini) {
+      const findings = [];
+      const tools = (data as { tools?: { allowed?: unknown } }).tools;
+      const allowed = Array.isArray(tools?.allowed) ? tools.allowed : [];
+      for (const entry of allowed) {
+        if (typeof entry !== 'string') continue;
+        const hit = GEMINI_RISKY_TOOLS.find((r) => r.re.test(entry));
+        if (hit) {
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
+          findings.push(
+            finding(this, {
+              severity: hit.severity,
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Gemini CLI settings pre-approve "${entry}" via tools.allowed — ${hit.risk} without a confirmation dialog; scope the grant (e.g. run_shell_command(git)) or remove it`,
+            }),
+          );
+        }
+      }
+      const general = (data as { general?: { defaultApprovalMode?: unknown } }).general;
+      if (general?.defaultApprovalMode === 'auto_edit') {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes('auto_edit')) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'Gemini CLI settings set general.defaultApprovalMode to "auto_edit" — edit tools run without approval for anyone opening this project',
+          }),
+        );
+      }
+      return findings;
+    }
     if (isOpencode) {
       const findings = [];
       for (const { scope, permission } of opencodePermissionBlocks(data)) {

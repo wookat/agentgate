@@ -50,6 +50,13 @@ per-tool `bash` (`high`) / `edit` / `write` / `webfetch` (`medium`) rules
 whose effective action is `"allow"` are flagged. Granular rules such as
 `"git *": "allow"` under an `"ask"` catch-all are fine.
 
+Gemini CLI project settings (`.gemini/settings.json`) get the same
+treatment: a bare `run_shell_command` (`high`), `write_file`/`replace`, or
+`web_fetch`/`google_web_search` (`medium`) in `tools.allowed` bypasses the
+confirmation dialog, and `general.defaultApprovalMode: "auto_edit"`
+(`medium`) auto-approves edit tools. Scoped grants such as
+`run_shell_command(git)` are fine.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
