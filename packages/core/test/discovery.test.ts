@@ -308,6 +308,22 @@ describe('discoverConfigFiles', () => {
     expect(qwen.flatMap((f) => parseConfigFile(f)).map((s) => s.name)).toEqual(['fs']);
   });
 
+  it('finds qwen extension manifests (project root + installed)', () => {
+    const project = path.join(dir, 'proj8');
+    fs.mkdirSync(project, { recursive: true });
+    fs.writeFileSync(path.join(project, 'qwen-extension.json'), '{"name":"my-ext","mcpServers":{"fs":{"command":"npx","args":["-y","fs-mcp"]}}}');
+    fs.mkdirSync(path.join(dir, '.qwen', 'extensions', 'gcp'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.qwen', 'extensions', 'gcp', 'qwen-extension.json'),
+      '{"name":"gcp","mcpServers":{"gcp":{"command":"node","args":["dist/index.js"]}}}',
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const ext = found.filter((f) => f.client === 'qwen-extension');
+    expect(ext).toHaveLength(2);
+    expect(ext.some((f) => f.path.includes('extensions'))).toBe(true);
+    expect(ext.flatMap((f) => parseConfigFile(f)).map((s) => s.name).sort()).toEqual(['fs', 'gcp']);
+  });
+
   it('finds gemini extension manifests (project root + installed)', () => {
     const project = path.join(dir, 'proj6');
     fs.mkdirSync(project, { recursive: true });
