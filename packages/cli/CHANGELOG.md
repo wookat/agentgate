@@ -1,5 +1,14 @@
 # mcp-agentgate
 
+## 0.23.2
+
+### Patch Changes
+
+- d1640b0: `agentgate auth login <server-name>` now warns when the server config has static `headers` configured, since those take precedence over cached OAuth tokens during live scans.
+- c02b53d: AG-CL-001 no longer reports secret-shaped placeholder values (e.g. `xoxb-your-bot-token`, `sk-my-anthropic-api-key`) found in source files or command-line args — the placeholder check that already covered env/header values now applies everywhere the secret patterns are matched.
+- Updated dependencies [c02b53d]
+  - mcp-agentgate-core@0.23.2
+
 ## 0.23.1
 
 ### Patch Changes
