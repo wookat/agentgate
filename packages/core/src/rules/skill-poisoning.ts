@@ -1110,7 +1110,8 @@ export const skillDynamicContextRule: Rule = {
     const isPluginLsp = PLUGIN_LSP_FILE.test(file);
     const isPluginMonitors = PLUGIN_MONITORS_FILE.test(file);
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog;
+    const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1285,6 +1286,24 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Claude Code plugin hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isGeminiSettings) {
+      // Same nested { Event: [{ matcher, hooks: [{ type: "command", command }] }] } shape as Claude Code settings hooks.
+      for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Gemini CLI hook command ${hit.risk.replace('at skill load time', 'automatically on agent-loop events for anyone opening this project')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
