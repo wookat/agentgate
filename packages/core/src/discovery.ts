@@ -17,6 +17,7 @@ export interface ClientConfigLocation {
     | 'amp-settings-json'
     | 'skill-mcp-json'
     | 'skill-frontmatter-yaml'
+    | 'agent-frontmatter-yaml'
     | 'marketplace-json';
 }
 
@@ -150,6 +151,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
+    ...copilotAgentServerLocations(path.join(projectDir, '.github', 'agents')),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
     ...skillServerLocations(path.join(projectDir, '.claude', 'skills'), 'skill'),
     ...pluginServerLocations(projectDir),
@@ -248,6 +250,33 @@ function skillServerLocations(skillsRoot: string, client: string): ClientConfigL
     }
   }
   return out;
+}
+
+/**
+ * Copilot custom agents (`.github/agents/*.md`): agent profiles can carry an
+ * `mcp-servers` frontmatter map — those servers start for anyone who runs the
+ * agent (Copilot CLI / cloud agent), so they get the full config rule set.
+ */
+function copilotAgentServerLocations(agentsDir: string): ClientConfigLocation[] {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(agentsDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((e) => e.isFile() && /\.md$/i.test(e.name))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((e) => path.join(agentsDir, e.name))
+    .filter((p) => {
+      try {
+        const fm = extractFrontmatter(fs.readFileSync(p, 'utf8'));
+        return typeof fm?.['mcp-servers'] === 'object' && fm['mcp-servers'] !== null;
+      } catch {
+        return false;
+      }
+    })
+    .map((p) => ({ client: 'copilot-agent', path: p, format: 'agent-frontmatter-yaml' as const }));
 }
 
 function frontmatterHasMcpServers(skillMdPath: string): boolean {
@@ -357,6 +386,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseMarketplaceJson(raw, location);
     case 'skill-frontmatter-yaml':
       return parseSkillFrontmatter(raw, location);
+    case 'agent-frontmatter-yaml':
+      return parseAgentFrontmatter(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -477,6 +508,11 @@ export function parseMarketplaceJson(raw: string, location: ClientConfigLocation
 /** `SKILL.md` frontmatter `mcpServers` map — same entry shape as `mcp.json`. */
 export function parseSkillFrontmatter(raw: string, location: ClientConfigLocation): McpServerConfig[] {
   return collectServers(extractFrontmatter(raw)?.mcpServers, location);
+}
+
+/** Copilot agent profile frontmatter `mcp-servers` map — YAML form of the repo MCP JSON config (stdio→local type). */
+export function parseAgentFrontmatter(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  return collectServers(extractFrontmatter(raw)?.['mcp-servers'], location);
 }
 
 /** Zed `settings.json`: `{ "context_servers": { ... } }` — same entry shape as mcpServers, JSONC allowed. */
