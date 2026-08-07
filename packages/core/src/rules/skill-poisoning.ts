@@ -1096,4 +1096,41 @@ export const skillPoisoningRule: Rule = {
     }
     return findings;
   },
+  checkSource(file, content) {
+    if (!KIRO_AGENT_HOOK_FILE.test(file)) return [];
+    const data = parseJsonc(content);
+    if (typeof data !== 'object' || data === null) return [];
+    if ((data as { enabled?: unknown }).enabled === false) return [];
+    const then = (data as { then?: { type?: unknown; prompt?: unknown } }).then;
+    if (then?.type !== 'askAgent' || typeof then.prompt !== 'string') return [];
+    const prompt = then.prompt;
+    const findings = [];
+    const hidden = findHiddenInSource(prompt);
+    if (hidden) {
+      const codepoint = `U+${hidden.char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+      findings.push(
+        finding(this, {
+          severity: 'critical',
+          target: file,
+          file,
+          message: `Kiro agent hook prompt contains a hidden/invisible Unicode character (${codepoint}) — the prompt is injected automatically on IDE events`,
+        }),
+      );
+    }
+    for (const { re, label } of INJECTION_PATTERNS) {
+      const m = prompt.match(re);
+      if (!m) continue;
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes(m[0].slice(0, 40))) + 1;
+      findings.push(
+        finding(this, {
+          severity: 'critical',
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: `Kiro agent hook prompt matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — it is injected automatically on IDE events (file save, prompt submit, tool use)`,
+        }),
+      );
+    }
+    return findings;
+  },
 };

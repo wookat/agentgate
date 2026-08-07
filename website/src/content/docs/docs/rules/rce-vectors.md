@@ -42,8 +42,10 @@ data-exfiltration commands report while local lint/setup commands and agent
 prompt actions stay clean. Kiro agent hook files (`.kiro/hooks/*.kiro.hook`,
 when/then schema) are covered too: `then.type: "runCommand"` actions execute
 automatically on IDE events (file save, prompt submit, tool use) and get the
-same classification; disabled hooks and `askAgent` prompt actions are not
-flagged.
+same classification; disabled hooks are not flagged. `askAgent` prompt
+actions are checked for hidden Unicode and prompt-injection patterns
+instead (AG-SK-001) — a poisoned prompt is injected automatically on the
+same events.
 
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
