@@ -23,8 +23,9 @@ export interface ClientConfigLocation {
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
  * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp,
- * Warp, and LM Studio (plus the generic `.agents/.mcp.json` convention);
- * project-level discovery also covers Trae (`.trae/mcp.json`).
+ * Warp, LM Studio, and Qoder (plus the generic `.agents/.mcp.json`
+ * convention); project-level discovery also covers Trae (`.trae/mcp.json`)
+ * and Qoder (`.qoder/settings.json`, `.qoder/settings.local.json`).
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -94,6 +95,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   // but current builds write ~/.cache/lm-studio on macOS and Windows too
   push('lmstudio', path.join(homeDir, '.lmstudio', 'mcp.json'));
   push('lmstudio', path.join(homeDir, '.cache', 'lm-studio', 'mcp.json'));
+  // Qoder — user-level settings.json with an `mcpServers` map
+  push('qoder', path.join(homeDir, '.qoder', 'settings.json'));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -121,6 +124,8 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.json'), format: 'mcpServers-json' },
+    { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.local.json'), format: 'mcpServers-json' },
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
