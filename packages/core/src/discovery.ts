@@ -89,8 +89,10 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('amp', path.join(homeDir, '.config', 'amp', 'settings.json'), 'amp-settings-json');
   // Warp — file-based MCP servers, standard `mcpServers` map
   push('warp', path.join(homeDir, '.warp', '.mcp.json'));
-  // LM Studio — Cursor-style mcp.json (same path on every platform)
+  // LM Studio — Cursor-style mcp.json; the documented path is ~/.lmstudio,
+  // but current builds write ~/.cache/lm-studio on macOS and Windows too
   push('lmstudio', path.join(homeDir, '.lmstudio', 'mcp.json'));
+  push('lmstudio', path.join(homeDir, '.cache', 'lm-studio', 'mcp.json'));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
