@@ -1017,6 +1017,28 @@ export function extractHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/** Copilot CLI hook files (repo `.github/hooks/*.json`, user `~/.copilot/hooks/*.json`); command hooks run on lifecycle events. */
+export const COPILOT_HOOKS_FILE = /(^|\/)(\.github|\.copilot)\/hooks\/[^/]+\.json$/i;
+
+/** Collect commands from a Copilot CLI hooks file (`{ hooks: { event: [{ type: "command", bash, powershell }] } }`). */
+export function extractCopilotHookCommands(hooks: unknown): string[] {
+  if (typeof hooks !== 'object' || hooks === null) return [];
+  const out: string[] = [];
+  for (const entries of Object.values(hooks)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      const h = entry as { type?: unknown; command?: unknown; bash?: unknown; powershell?: unknown };
+      if (h?.type !== 'command') continue;
+      if (typeof h.bash === 'string') out.push(h.bash);
+      // Some in-the-wild files use a Claude-style `command` key instead of bash/powershell.
+      if (typeof h.command === 'string') out.push(h.command);
+      // The powershell key is the Windows counterpart; a dangerous command can hide in either.
+      if (typeof h.powershell === 'string') out.push(h.powershell);
+    }
+  }
+  return out;
+}
+
 /** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
 const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 
@@ -1173,6 +1195,7 @@ export const skillDynamicContextRule: Rule = {
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
+    const isCopilotHooks = COPILOT_HOOKS_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
     const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
@@ -1181,7 +1204,7 @@ export const skillDynamicContextRule: Rule = {
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
     const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
     const isQwenSettings = QWEN_SETTINGS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1280,6 +1303,23 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isCopilotHooks) {
+      for (const command of extractCopilotHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Copilot CLI hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, prompt submit, tool use)')}: "${command.slice(0, 80)}"`,
           }),
         );
       }

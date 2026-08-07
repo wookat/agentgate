@@ -68,6 +68,14 @@ classification applies. Qwen Code hooks (project `.qwen/settings.json`,
 same nested shape) get the same treatment — they fire on lifecycle events
 (PreToolUse, SessionStart, …) for anyone opening the project.
 
+Copilot CLI hooks (repo-level `.github/hooks/*.json`, user-level
+`~/.copilot/hooks/*.json`; `{ hooks: { event: [{ type: "command", bash,
+powershell }] } }`) are covered too: command hooks run automatically on
+lifecycle events (sessionStart, preToolUse, userPromptSubmitted, …) for
+anyone who opens the repository in Copilot CLI. Both the `bash` and
+`powershell` command keys are classified — a dangerous command can hide in
+either platform's variant — while local helper scripts stay clean.
+
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
 userPromptSubmit, preToolUse, postToolUse) with the same classification.
