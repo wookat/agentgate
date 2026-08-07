@@ -83,8 +83,12 @@ Zed project settings (`.zed/settings.json`) are checked for the legacy
 `agent.always_allow_tool_actions: true` (`high`) and the newer
 `agent.tool_permissions`: a global `default: "allow"` is `high`, a
 per-tool `default: "allow"` is `high` for `terminal` and `medium` for
-file-write/delete/fetch tools. `always_allow` pattern rules with a
-`confirm` default are fine.
+file-write/delete/fetch tools. MCP tool keys (`mcp:<server>:<tool>`)
+defaulted to `"allow"` are `medium` when the tool name looks
+destructive (exec/sql/write/delete/deploy, …); read-only-named MCP
+allows are not flagged — rug-pull risk is covered by the tool-surface
+lockfile. `always_allow` pattern rules with a `confirm` default are
+fine.
 
 Cursor CLI project permission configs (`.cursor/cli.json`) are checked
 for risky `permissions.allow` tokens: `Shell(*)` and `Mcp(*:*)` are

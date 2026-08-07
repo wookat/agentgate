@@ -694,6 +694,32 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags destructive-named MCP tool allows in Zed settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.zed'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.zed', 'settings.json'),
+      JSON.stringify(
+        {
+          agent: {
+            tool_permissions: {
+              tools: {
+                'mcp:localdb:execute_sql': { default: 'allow' },
+                'mcp:vmaf-mcp:list_models': { default: 'allow' },
+                'mcp:github:create_issue': { default: 'confirm' },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('medium');
+    expect(hits[0]!.message).toContain('mcp:localdb:execute_sql');
+  });
+
   it('flags unscoped pre-approved tools in Amazon Q agent files (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.amazonq', 'cli-agents'), { recursive: true });
     fs.writeFileSync(
