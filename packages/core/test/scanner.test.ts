@@ -367,6 +367,18 @@ describe('scanRepo', () => {
     ]);
   });
 
+  it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.json'),
+      '{\n  // team permissions\n  "permissions": {\n    "allow": [\n      "Bash(find:*)",\n      "WebFetch",\n    ],\n    "deny": []\n  }\n}\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('medium');
+    expect(hits[0]!.message).toContain('"WebFetch"');
+  });
+
   it('scans Amazon Q project rules (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.amazonq', 'rules', 'frontend'), { recursive: true });
     fs.writeFileSync(
