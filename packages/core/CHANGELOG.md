@@ -1,5 +1,15 @@
 # mcp-agentgate-core
 
+## 0.45.0
+
+### Minor Changes
+
+- 6c34295: AG-SK-003 checks Kiro agent hook files (`.kiro/hooks/*.kiro.hook`, when/then schema): `then.type: "runCommand"` actions execute automatically on IDE events (file save, prompt submit, tool use) for anyone who opens the project, so their commands get the shared dangerous-command classification (remote-script pipes critical, data-exfil/credential reads high). Disabled hooks and `askAgent` prompt actions are not flagged.
+- cd7e9ff: AG-SK-001 checks Kiro agent hook askAgent prompts (`.kiro/hooks/*.kiro.hook`): the prompt text is injected automatically on IDE events (file save, prompt submit, tool use), so hidden Unicode characters and prompt-injection patterns (instruction override, concealment, exfiltration instructions) report critical. Disabled hooks and benign guard/review prompts are not flagged.
+- ad4eb87: AG-SK-002 checks Codex project-scoped config overrides (`.codex/config.toml`, loaded for anyone who trusts the project): `sandbox_mode = "danger-full-access"` and `default_permissions = ":danger-full-access"` report high (no filesystem/network sandbox), `approval_policy = "never"` and `sandbox_workspace_write.network_access = true` report medium. Safe modes (`read-only`/`workspace-write`, interactive approval policies) are not flagged.
+- 70dcd07: AG-SK-003 checks Codex project hook files (`.codex/hooks.json`): command hooks run on lifecycle events (SessionStart, PreToolUse, UserPromptSubmit, …) for anyone who trusts the project's `.codex/` layer, so their commands get the shared dangerous-command classification (remote-script pipes critical, data-exfil/credential reads high). Local policy/lint scripts stay clean.
+- c91b6b0: AG-SK-003 also checks inline `[hooks]` tables in Codex project config (`.codex/config.toml`): they use the same event schema as `hooks.json`, so dangerous lifecycle hook commands (remote-script pipes, data-exfil/credential reads) report identically wherever they are declared.
+
 ## 0.44.0
 
 ### Minor Changes
