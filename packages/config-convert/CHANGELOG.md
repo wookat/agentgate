@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.5.0
+
+### Minor Changes
+
+- 754deef: Discover Amp (Sourcegraph) MCP configs — the `amp.mcpServers` key in `~/.config/amp/settings.json` and workspace `.amp/settings.json` — and support `amp` in `config convert` (14 clients total).
+
 ## 0.4.0
 
 ### Minor Changes
