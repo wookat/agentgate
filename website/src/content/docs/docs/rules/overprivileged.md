@@ -64,6 +64,12 @@ and auto-approved tools with destructive-looking names (`execute_sql`,
 `apply_migration`, shell/write/delete-style tools) are `medium`.
 Auto-approving clearly read-only tools is not flagged.
 
+VS Code workspace settings (`.vscode/settings.json`) are checked for
+`chat.tools.global.autoApprove: true` (or the legacy
+`chat.tools.autoApprove`) — `high`, since it bypasses every chat tool
+approval, including terminal commands and file edits, for anyone opening
+the project.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
