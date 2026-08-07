@@ -820,6 +820,9 @@ export function extractHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
+const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
+
 /** VS Code workspace task definitions; `runOn: "folderOpen"` tasks auto-run when the folder opens. */
 const VSCODE_TASKS_FILE = /(^|\/)\.vscode\/tasks\.json$/i;
 
@@ -894,7 +897,8 @@ export const skillDynamicContextRule: Rule = {
     const isKiroHook = KIRO_HOOK_FILE.test(file);
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks) return [];
+    const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -929,6 +933,24 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `VS Code folderOpen task ${hit.risk.replace('at skill load time', 'automatically when the folder is opened')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isCursorHooks) {
+      // Same flat `{ event: [{ command }] }` shape as Amazon Q agent hooks.
+      for (const command of extractAmazonqHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${command.slice(0, 80)}"`,
           }),
         );
       }

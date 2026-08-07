@@ -50,6 +50,12 @@ run automatically when the folder opens in a trusted workspace, so their
 commands get the same classification too; ordinary run-on-demand tasks and
 benign watch/build tasks stay clean.
 
+Cursor project hooks (`.cursor/hooks.json`) are covered as well: their
+`hooks` field runs command scripts around agent-loop stages (sessionStart,
+beforeShellExecution, afterFileEdit, …) — including in Cursor cloud agents —
+so the same dangerous-command classification applies while guard scripts
+and local formatters stay clean.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.
