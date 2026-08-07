@@ -9,10 +9,11 @@ import {
   parseMcpServersJson,
   parseOpenCodeJson,
   parseVsCodeJson,
+  parseContinueYaml,
   parseZedSettingsJson,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -35,6 +36,7 @@ describe('knownConfigLocations', () => {
         'kiro',
         'roo-code',
         'zed',
+        'continue',
       ]),
     );
   });
@@ -60,6 +62,13 @@ describe('knownConfigLocations', () => {
     expect(p('roo-code')).toEqual(['/home/u/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json']);
     expect(p('zed')).toEqual(['/home/u/.config/zed/settings.json']);
     expect(linux.find((l) => l.client === 'zed')!.format).toBe('zed-settings-json');
+  });
+
+  it('locates the continue.dev global config', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const cont = linux.filter((l) => l.client === 'continue');
+    expect(cont.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.continue/config.yaml']);
+    expect(cont[0]!.format).toBe('continue-yaml');
   });
 
   it('uses platform-specific paths', () => {
@@ -196,5 +205,46 @@ describe('discoverConfigFiles', () => {
 
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client).sort()).toEqual(['kiro', 'roo-code']);
+  });
+
+  it('finds every .continue/mcpServers/*.yaml workspace block', () => {
+    const project = path.join(dir, 'proj3');
+    fs.mkdirSync(path.join(project, '.continue', 'mcpServers'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.continue', 'mcpServers', 'a.yaml'), 'mcpServers: []\n');
+    fs.writeFileSync(path.join(project, '.continue', 'mcpServers', 'b.yml'), 'mcpServers: []\n');
+    fs.writeFileSync(path.join(project, '.continue', 'mcpServers', 'notes.txt'), 'ignored');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['a.yaml', 'b.yml']);
+    expect(found.every((f) => f.client === 'continue' && f.format === 'continue-yaml')).toBe(true);
+  });
+});
+
+describe('parseContinueYaml', () => {
+  it('parses the mcpServers list with command, env, and url entries', () => {
+    const raw = `name: My Config
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: browser
+    command: npx
+    args:
+      - "@playwright/mcp@latest"
+    env:
+      K: v
+  - name: remote
+    type: streamable-http
+    url: https://mcp.example.com/mcp
+  - command: missing-name-is-skipped
+`;
+    const servers = parseContinueYaml(raw, loc('continue', 'continue-yaml'));
+    expect(servers).toHaveLength(2);
+    expect(servers[0]).toMatchObject({ name: 'browser', command: 'npx', args: ['@playwright/mcp@latest'], env: { K: 'v' }, client: 'continue' });
+    expect(servers[1]).toMatchObject({ name: 'remote', url: 'https://mcp.example.com/mcp', transport: 'streamable-http' });
+  });
+
+  it('returns no servers for configs without an mcpServers list', () => {
+    expect(parseContinueYaml('name: x\nmodels: []\n', loc('continue', 'continue-yaml'))).toEqual([]);
+    expect(parseContinueYaml('', loc('continue', 'continue-yaml'))).toEqual([]);
   });
 });

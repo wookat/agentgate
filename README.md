@@ -137,7 +137,7 @@ repos:
 The full test suite — including a live stdio MCP fixture server — runs on all
 three operating systems in CI. Client config discovery covers the
 platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
-OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, and Zed on each OS.
+OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, and Continue.dev on each OS.
 
 ## Config portability
 

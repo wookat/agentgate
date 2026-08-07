@@ -1,18 +1,25 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import YAML from 'yaml';
 import { McpServerConfig } from './types.js';
 
 export interface ClientConfigLocation {
   client: string;
   path: string;
-  format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json';
+  format:
+    | 'mcpServers-json'
+    | 'vscode-mcp-json'
+    | 'codex-toml'
+    | 'opencode-json'
+    | 'zed-settings-json'
+    | 'continue-yaml';
 }
 
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, and Zed.
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, and Continue.dev.
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -72,6 +79,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   } else {
     push('roo-code', path.join(homeDir, '.config', 'Code', 'User', rooRel));
   }
+  // Continue.dev — mcpServers list inside config.yaml
+  push('continue', path.join(homeDir, '.continue', 'config.yaml'), 'continue-yaml');
   // Zed — context_servers key inside settings.json (JSONC)
   if (platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
@@ -94,7 +103,23 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
+    ...continueWorkspaceLocations(projectDir),
   ];
+}
+
+/** Continue.dev workspace MCP blocks: every `.continue/mcpServers/*.yaml` file. */
+function continueWorkspaceLocations(projectDir: string): ClientConfigLocation[] {
+  const dir = path.join(projectDir, '.continue', 'mcpServers');
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'))
+    .sort()
+    .map((f) => ({ client: 'continue', path: path.join(dir, f), format: 'continue-yaml' as const }));
 }
 
 /** Discover existing config files among the known locations. */
@@ -118,6 +143,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseOpenCodeJson(raw, location);
     case 'zed-settings-json':
       return parseZedSettingsJson(raw, location);
+    case 'continue-yaml':
+      return parseContinueYaml(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -197,6 +224,21 @@ export function parseOpenCodeJson(raw: string, location: ClientConfigLocation): 
       source: location.path,
       client: location.client,
     });
+  }
+  return out;
+}
+
+/** Continue.dev `config.yaml` / `.continue/mcpServers/*.yaml`: `mcpServers` is a list of `{ name, command, args, env, url, type }`. */
+export function parseContinueYaml(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const doc = YAML.parse(raw) as Record<string, unknown> | null;
+  if (typeof doc !== 'object' || doc === null || !Array.isArray(doc.mcpServers)) return [];
+  const out: McpServerConfig[] = [];
+  for (const entryRaw of doc.mcpServers) {
+    if (typeof entryRaw !== 'object' || entryRaw === null) continue;
+    const entry = entryRaw as Record<string, unknown>;
+    const name = typeof entry.name === 'string' ? entry.name : undefined;
+    if (!name) continue;
+    out.push(normalizeEntry(name, entry, location));
   }
   return out;
 }
