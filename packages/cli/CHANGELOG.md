@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.17.0
+
+### Minor Changes
+
+- c6c0d55: Skill/instruction scanning (AG-SK rules) and `lock --skills` now cover Continue.dev workspace rules (`.continue/rules/*.md`), which are joined verbatim into the model's system message.
+
+### Patch Changes
+
+- b506be0: Skill scanning and `lock --skills` also cover Continue.dev workspace prompts (`.continue/prompts/*.md`), verified against Continue's own workspace-block loader source.
+- Updated dependencies [c6c0d55]
+- Updated dependencies [b506be0]
+  - mcp-agentgate-core@0.17.0
+
 ## 0.16.0
 
 ### Minor Changes
