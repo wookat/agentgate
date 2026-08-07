@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import {
   Finding,
   Severity,
+  checkIncludeToolsCoverage,
   fetchLiveMcpaAdvisories,
   matchMcpaAdvisories,
   queryOsvMalware,
@@ -121,6 +122,8 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
       }
       for (const [name, tools] of Object.entries(surfaces)) {
         findings.push(...scanTools(name, tools));
+        const server = servers.find((s) => s.name === name);
+        if (server) findings.push(...checkIncludeToolsCoverage(server, tools));
       }
       findings.push(...scanConfiguration(surfaces));
     } else {
