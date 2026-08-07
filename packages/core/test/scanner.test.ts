@@ -544,6 +544,55 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags auto-approved agent tool actions in Zed project settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.zed'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.zed', 'settings.json'),
+      JSON.stringify({ agent: { always_allow_tool_actions: true } }, null, 2),
+    );
+    let hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('high');
+    fs.writeFileSync(
+      path.join(dir, '.zed', 'settings.json'),
+      JSON.stringify(
+        {
+          agent: {
+            tool_permissions: {
+              default: 'allow',
+              tools: {
+                terminal: { default: 'allow' },
+                edit_file: { default: 'allow' },
+                grep: { default: 'allow' },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'high', 'medium']);
+    fs.writeFileSync(
+      path.join(dir, '.zed', 'settings.json'),
+      JSON.stringify(
+        {
+          agent: {
+            always_allow_tool_actions: false,
+            tool_permissions: {
+              default: 'confirm',
+              tools: { terminal: { default: 'confirm', always_allow: [{ pattern: '^npm test' }] } },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
