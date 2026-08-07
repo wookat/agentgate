@@ -50,6 +50,7 @@ export default defineConfig({
             { label: 'agentgate ci', slug: 'docs/cli/ci' },
             { label: 'agentgate deps', slug: 'docs/cli/deps' },
             { label: 'agentgate advisory', slug: 'docs/cli/advisory' },
+            { label: 'agentgate auth', slug: 'docs/cli/auth' },
             { label: 'agentgate config convert', slug: 'docs/cli/config-convert' },
           ],
         },
