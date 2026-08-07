@@ -29,7 +29,7 @@ pnpm build
 alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
-Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed / Continue.dev / Amp / Warp / LM Studio / Trae / Qoder) are configured to use — config paths are discovered automatically:
+Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed / Continue.dev / Amp / Warp / LM Studio / Trae / Qoder / Amazon Q Developer) are configured to use — config paths are discovered automatically:
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
@@ -83,7 +83,7 @@ the whole loop in one tool:
 The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
 
 ```bash
-# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder auto-discovered)
+# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q auto-discovered)
 npx mcp-agentgate scan
 
 # Pin the current tool surface into agentgate.lock
@@ -139,7 +139,7 @@ The full test suite — including a live stdio MCP fixture server — runs on al
 three operating systems in CI. Client config discovery covers the
 platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
 OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev,
-Amp, Warp, LM Studio, Trae, and Qoder on each OS.
+Amp, Warp, LM Studio, Trae, Qoder, and Amazon Q Developer on each OS.
 
 ## Config portability
 
@@ -151,7 +151,7 @@ npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json
 ```
 
 Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode,
-Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, and Qoder, with
+Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, and Amazon Q Developer, with
 explicit warnings on any lossy conversion. Also available as the standalone
 [mcp-agentgate-config-convert](packages/config-convert/) package.
 
