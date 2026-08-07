@@ -1108,10 +1108,34 @@ export const skillDynamicContextRule: Rule = {
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
     const isPluginLsp = PLUGIN_LSP_FILE.test(file);
     const isPluginMonitors = PLUGIN_MONITORS_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks && !isPluginLsp && !isPluginMonitors) return [];
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors;
+    // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
+    // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
+    if (!isNamedSurface && !/\.json$/i.test(file)) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
+    if (!isNamedSurface) {
+      const shaped = Array.isArray(data)
+        ? extractMonitorCommands(data.filter((m) => typeof (m as { name?: unknown })?.name === 'string' && typeof (m as { description?: unknown })?.description === 'string'))
+        : extractHookCommands((data as { hooks?: unknown }).hooks);
+      const kind = Array.isArray(data) ? 'monitor' : 'hook';
+      for (const command of shaped) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Agent ${kind}-config-shaped file declares a command ${hit.risk.replace('at skill load time', 'that runs automatically if this config is referenced by a plugin manifest')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
     if (isKiroHook) {
       // v1 schema wraps hooks in a `hooks` array; some in-the-wild files put a single hook at the root.
       const hookList = (data as { hooks?: unknown }).hooks ?? [data];
