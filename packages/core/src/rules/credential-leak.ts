@@ -10,7 +10,8 @@ const SECRET_VALUE_PATTERNS: RegExp[] = [
   /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/, // Slack
   /\bAKIA[0-9A-Z]{16}\b/, // AWS access key id
   /\bAIza[0-9A-Za-z_-]{35}\b/, // Google API key
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  // Require key material after the header so detector code quoting the marker doesn't match.
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\\"'nr]{0,8}[A-Za-z0-9+/]{40}/,
   /\beyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/, // JWT
 ];
 
