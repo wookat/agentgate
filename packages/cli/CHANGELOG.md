@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.24.0
+
+### Minor Changes
+
+- 67a0bcf: Discover LM Studio MCP configs (`~/.lmstudio/mcp.json`, Cursor-style `mcpServers` notation, same path on every platform) and support `lmstudio` as a source/target in `config convert`.
+
+### Patch Changes
+
+- Updated dependencies [67a0bcf]
+  - mcp-agentgate-core@0.24.0
+  - mcp-agentgate-config-convert@0.7.0
+
 ## 0.23.2
 
 ### Patch Changes
