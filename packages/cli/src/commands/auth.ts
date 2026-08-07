@@ -26,6 +26,13 @@ function resolveServerUrl(target: string, opts: { config?: string }): string {
     );
   }
   if (!match.url) throw new Error(`Server "${target}" is a stdio server — OAuth login only applies to remote (url) servers`);
+  if (match.headers && Object.keys(match.headers).length > 0) {
+    console.log(
+      pc.yellow(
+        `warning: "${target}" has static headers configured (${Object.keys(match.headers).join(', ')}) — they take precedence, so live scans will not use the OAuth tokens until the headers are removed.`,
+      ),
+    );
+  }
   return match.url;
 }
 

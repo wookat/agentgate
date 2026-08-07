@@ -180,6 +180,21 @@ describe('agentgate auth', () => {
     if (process.platform !== 'win32') expect(mode).toBe(0o600);
   });
 
+  it('warns when logging in to a server whose config has static headers (they take precedence)', async () => {
+    const cfg = path.join(dir, 'mcp.json');
+    fs.writeFileSync(
+      cfg,
+      JSON.stringify({
+        mcpServers: {
+          hosted: { url: 'http://127.0.0.1:1/mcp', headers: { Authorization: 'Bearer x' } },
+        },
+      }),
+    );
+    const exit = await runAuthLogin('hosted', { timeout: '1000', config: cfg });
+    expect(exit).toBe(1); // nothing listening on that port — the flow itself fails
+    expect(logs.join('\n')).toMatch(/static headers configured \(Authorization\).*take precedence/);
+  });
+
   it('fails fast with a helpful error for stdio-only server names', async () => {
     const cfg = path.join(dir, 'mcp.json');
     fs.writeFileSync(cfg, JSON.stringify({ mcpServers: { local: { command: 'node' } } }));
