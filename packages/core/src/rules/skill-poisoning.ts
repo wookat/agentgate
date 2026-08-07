@@ -133,6 +133,15 @@ const VSCODE_DANGEROUS_COMMANDS = new Set([
 /** Regex sources that match any command (catch-all terminal auto-approval). */
 const CATCH_ALL_REGEX = new Set(['.*', '^.*$', '.+', '^.+$', '.', '^.']);
 
+/** Zed project settings whose agent permissions auto-approve tool actions for anyone opening the project. */
+const ZED_SETTINGS_FILE = /(^|\/)\.zed\/settings\.json$/i;
+
+/** Zed tools whose auto-approval means arbitrary shell execution. */
+const ZED_HIGH_RISK_TOOLS = new Set(['terminal']);
+
+/** Zed tools whose auto-approval means unrestricted writes/deletes or network egress. */
+const ZED_MEDIUM_RISK_TOOLS = new Set(['edit_file', 'write_file', 'delete_path', 'move_path', 'fetch']);
+
 /** True when a terminal auto-approve map value means "approve". */
 function vscodeApproves(value: unknown): boolean {
   return value === true || (typeof value === 'object' && value !== null && (value as { approve?: unknown }).approve === true);
@@ -216,7 +225,8 @@ export const skillOverprivilegeRule: Rule = {
     const isGemini = GEMINI_SETTINGS_FILE.test(file);
     const isRooMcp = ROO_MCP_FILE.test(file);
     const isVscode = VSCODE_SETTINGS_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode) return [];
+    const isZed = ZED_SETTINGS_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -299,6 +309,60 @@ export const skillOverprivilegeRule: Rule = {
                 : `VS Code workspace settings auto-approve terminal command "${key}" — ${commandWord} is in VS Code's own default-deny list; it runs without approval for anyone opening this project`,
             }),
           );
+        }
+      }
+      return findings;
+    }
+    if (isZed) {
+      const findings = [];
+      const agent = (data as { agent?: Record<string, unknown> }).agent;
+      if (typeof agent === 'object' && agent !== null) {
+        const lineOf = (needle: string) => content.split(/\r?\n/).findIndex((l) => l.includes(needle)) + 1;
+        if (agent['always_allow_tool_actions'] === true) {
+          const line = lineOf('"always_allow_tool_actions"');
+          findings.push(
+            finding(this, {
+              severity: 'high',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: 'Zed project settings set agent.always_allow_tool_actions to true — every agent tool action (terminal commands, file edits) runs without approval for anyone opening this project',
+            }),
+          );
+        }
+        const perms = agent['tool_permissions'];
+        if (typeof perms === 'object' && perms !== null) {
+          if ((perms as Record<string, unknown>)['default'] === 'allow') {
+            const line = lineOf('"default"');
+            findings.push(
+              finding(this, {
+                severity: 'high',
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: 'Zed project settings set agent.tool_permissions.default to "allow" — tool actions without a matching deny/confirm rule run unapproved for anyone opening this project',
+              }),
+            );
+          }
+          const tools = (perms as { tools?: Record<string, unknown> }).tools;
+          if (typeof tools === 'object' && tools !== null) {
+            for (const [name, cfg] of Object.entries(tools)) {
+              if (typeof cfg !== 'object' || cfg === null) continue;
+              if ((cfg as Record<string, unknown>)['default'] !== 'allow') continue;
+              const severity = ZED_HIGH_RISK_TOOLS.has(name) ? 'high' : ZED_MEDIUM_RISK_TOOLS.has(name) ? 'medium' : undefined;
+              if (!severity) continue;
+              const line = lineOf(`"${name}"`);
+              findings.push(
+                finding(this, {
+                  severity,
+                  target: file,
+                  file,
+                  ...(line > 0 ? { line } : {}),
+                  message: `Zed project settings default the "${name}" tool to "allow" — its actions run without approval for anyone opening this project`,
+                }),
+              );
+            }
+          }
         }
       }
       return findings;

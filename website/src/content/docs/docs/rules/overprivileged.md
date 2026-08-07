@@ -74,6 +74,13 @@ from VS Code's own default-deny list (`rm`, `curl`, `chmod`, shells,
 `sudo`, ...) is `medium`. Approving scoped safe commands (`git status`,
 `npm test`) is fine.
 
+Zed project settings (`.zed/settings.json`) are checked for the legacy
+`agent.always_allow_tool_actions: true` (`high`) and the newer
+`agent.tool_permissions`: a global `default: "allow"` is `high`, a
+per-tool `default: "allow"` is `high` for `terminal` and `medium` for
+file-write/delete/fetch tools. `always_allow` pattern rules with a
+`confirm` default are fine.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.

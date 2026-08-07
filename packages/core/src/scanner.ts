@@ -7,11 +7,11 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
-const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json'])]]);
+const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json'])], ['.zed', new Set(['settings.json'])]]);
 const MAX_FILE_BYTES = 1024 * 1024;
 
 /** Run config-level rules over normalized MCP server entries. */
