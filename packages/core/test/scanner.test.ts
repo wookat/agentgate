@@ -349,6 +349,24 @@ describe('scanRepo', () => {
     expect(hits[0]!.severity).toBe('critical');
   });
 
+  it('flags dangerous unscoped grants in Claude Code settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.json'),
+      JSON.stringify({ permissions: { allow: ['Bash', 'Bash(npm run lint)', 'WebFetch', 'Read(~/.zshrc)'] } }, null, 2),
+    );
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.local.json'),
+      JSON.stringify({ permissions: { allow: ['Bash(git add *)'], defaultMode: 'bypassPermissions' } }, null, 2),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.file, f.severity, f.message.includes('bypassPermissions')])).toEqual([
+      ['.claude/settings.json', 'high', false],
+      ['.claude/settings.json', 'medium', false],
+      ['.claude/settings.local.json', 'high', true],
+    ]);
+  });
+
   it('scans Amazon Q project rules (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.amazonq', 'rules', 'frontend'), { recursive: true });
     fs.writeFileSync(

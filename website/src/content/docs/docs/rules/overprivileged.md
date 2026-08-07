@@ -36,6 +36,12 @@ grant lets the skill run any shell command without a permission prompt
 (`medium`, an exfiltration channel) are also flagged. Scoped grants such as
 `Bash(git add *)` and read-only tools are fine.
 
+The same analysis covers Claude Code settings files (`.claude/settings.json`
+and `.claude/settings.local.json`): entries in `permissions.allow` such as a
+bare `Bash` or unscoped `WebFetch` pre-approve those tools for everyone who
+opens the project, and `permissions.defaultMode: "bypassPermissions"`
+(`high`) disables permission prompts entirely.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
