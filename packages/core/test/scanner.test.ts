@@ -986,6 +986,24 @@ describe('scanRepo', () => {
     expect(hits.every((f) => f.message.includes('Amazon Q agent hook command'))).toBe(true);
   });
 
+  it('flags unpinned OpenCode npm plugins (AG-SC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'opencode.json'),
+      JSON.stringify(
+        {
+          $schema: 'https://opencode.ai/config.json',
+          plugin: ['opencode-wakatime', '@my-org/custom-plugin', 'opencode-helicone-session@1.2.0', './plugins/local.ts'],
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits.map((f) => f.severity)).toEqual(['medium', 'medium']);
+    expect(hits[0]?.message).toContain('opencode-wakatime');
+    expect(hits[1]?.message).toContain('@my-org/custom-plugin');
+  });
+
   it('flags dangerous Cursor hook commands (AG-SK-003)', () => {
     fs.mkdirSync(path.join(dir, '.cursor'), { recursive: true });
     fs.writeFileSync(

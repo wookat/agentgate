@@ -1,6 +1,7 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
+import { parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
 const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
@@ -68,6 +69,9 @@ function isPinned(spec: string): boolean {
   return /^\d+\.\d+\.\d+([-+][\w.]+)?$/.test(version);
 }
 
+/** OpenCode config files; npm packages in their `plugin` array are auto-installed by Bun and executed at startup. */
+const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+
 export const supplyChainRule: Rule = {
   id: 'AG-SC-001',
   category: 'supply-chain',
@@ -116,6 +120,30 @@ export const supplyChainRule: Rule = {
           }),
         );
       }
+    }
+    return findings;
+  },
+  checkSource(file, content) {
+    if (!OPENCODE_CONFIG_FILE.test(file)) return [];
+    const data = parseJsonc(content);
+    if (typeof data !== 'object' || data === null) return [];
+    const plugins = (data as { plugin?: unknown }).plugin;
+    const findings = [];
+    for (const spec of Array.isArray(plugins) ? plugins : []) {
+      if (typeof spec !== 'string') continue;
+      // Local plugin files/paths are loaded from the repo, not fetched from npm.
+      if (spec.startsWith('.') || spec.startsWith('/') || spec.includes('://') || /\.[cm]?[jt]s$/.test(spec)) continue;
+      if (isPinned(spec)) continue;
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${spec}"`)) + 1;
+      findings.push(
+        finding(this, {
+          severity: 'medium',
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: `OpenCode plugin "${spec}" is auto-installed from npm and executed at startup without a pinned version — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${spec}@1.2.3)`,
+        }),
+      );
     }
     return findings;
   },
