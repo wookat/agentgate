@@ -1,5 +1,14 @@
 # mcp-agentgate
 
+## 0.21.1
+
+### Patch Changes
+
+- 44f6d1e: Remote live-scan auth failures (HTTP 401/403) now explain how to fix them: if no `headers` are configured the error shows the exact `"headers": { "Authorization": "Bearer …" }` snippet to add; if headers were configured it names the rejected header(s). Auth errors also no longer trigger a pointless SSE fallback attempt.
+- 209957f: `scan --live`, `lock`, `diff`, and `ci` now connect to servers with a concurrency of 4 instead of strictly one at a time. Measured on 6 stdio servers with 500 ms startup each: `lock` 4.2 s → 1.6 s. Lockfile output is byte-identical (ordering preserved); per-server errors are still reported individually.
+- Updated dependencies [44f6d1e]
+  - mcp-agentgate-core@0.21.1
+
 ## 0.21.0
 
 ### Minor Changes
