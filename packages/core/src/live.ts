@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { StreamableHTTPClientTransport, StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { McpServerConfig, ToolSurface } from './types.js';
@@ -33,12 +33,25 @@ export async function fetchToolSurface(server: McpServerConfig, opts: LiveScanOp
   try {
     return await listAllTools(server, new StreamableHTTPClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
   } catch (httpErr) {
+    if (isAuthError(httpErr)) throw authHint(server, httpErr);
     try {
       return await listAllTools(server, new SSEClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
     } catch {
       throw httpErr instanceof Error ? httpErr : new Error(String(httpErr));
     }
   }
+}
+
+function isAuthError(err: unknown): err is StreamableHTTPError {
+  return err instanceof StreamableHTTPError && (err.code === 401 || err.code === 403);
+}
+
+function authHint(server: McpServerConfig, err: Error): Error {
+  const configured = Object.keys(server.headers ?? {});
+  const detail = configured.length > 0
+    ? `the configured header(s) (${configured.join(', ')}) were rejected — check the token value and scope`
+    : `no auth headers are configured — add the required token under "headers" in the server config (e.g. "headers": { "Authorization": "Bearer …" })`;
+  return new Error(`${err.message.trim()} — ${detail}. Interactive OAuth flows are not supported.`);
 }
 
 async function listAllTools(server: McpServerConfig, transport: Transport, timeoutMs: number): Promise<ToolSurface[]> {
