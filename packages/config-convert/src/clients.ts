@@ -153,6 +153,9 @@ export const lmstudio = mcpServersAdapter("lmstudio", "~/.lmstudio/mcp.json", { 
 /** Trae (ByteDance) — project `.trae/mcp.json`, standard `mcpServers` notation. */
 export const trae = mcpServersAdapter("trae", ".trae/mcp.json", { withType: false });
 
+/** Amazon Q Developer — project `.amazonq/mcp.json` (also `~/.aws/amazonq/mcp.json`), standard `mcpServers` notation. */
+export const amazonq = mcpServersAdapter("amazonq", ".amazonq/mcp.json", { withType: false });
+
 /** VS Code — `.vscode/mcp.json` with a `servers` map and optional `inputs`. */
 export const vscode: ClientAdapter = {
   id: "vscode",
@@ -708,4 +711,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   warp,
   lmstudio,
   trae,
+  amazonq,
 };
