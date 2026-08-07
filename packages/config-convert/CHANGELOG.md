@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.9.0
+
+### Minor Changes
+
+- d324bde: `config convert` supports `amazonq` (Amazon Q Developer, standard `mcpServers` notation at `.amazonq/mcp.json`) as source and target.
+
 ## 0.8.0
 
 ### Minor Changes

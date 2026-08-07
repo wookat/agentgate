@@ -1,5 +1,19 @@
 # mcp-agentgate
 
+## 0.30.0
+
+### Minor Changes
+
+- ec0827e: Discover Amazon Q CLI named custom agents — every `~/.aws/amazonq/cli-agents/*.json` (global) and `.amazonq/cli-agents/*.json` (workspace) agent file's `mcpServers` are now scanned.
+- d324bde: `config convert` supports `amazonq` (Amazon Q Developer, standard `mcpServers` notation at `.amazonq/mcp.json`) as source and target.
+
+### Patch Changes
+
+- Updated dependencies [ec0827e]
+- Updated dependencies [d324bde]
+  - mcp-agentgate-core@0.30.0
+  - mcp-agentgate-config-convert@0.9.0
+
 ## 0.29.0
 
 ### Minor Changes
