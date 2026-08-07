@@ -808,6 +808,23 @@ export function extractHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/** Amazon Q CLI agent files, whose `hooks` field runs commands at lifecycle trigger points. */
+const AMAZONQ_AGENT_HOOKS_FILE = /(^|\/)\.amazonq\/cli-agents\/[^/]+\.json$/i;
+
+/** Collect commands from an Amazon Q agent `hooks` field ({ trigger: [{ command }] }). */
+export function extractAmazonqHookCommands(hooks: unknown): string[] {
+  if (typeof hooks !== 'object' || hooks === null) return [];
+  const out: string[] = [];
+  for (const entries of Object.values(hooks)) {
+    if (!Array.isArray(entries)) continue;
+    for (const entry of entries) {
+      const command = (entry as { command?: unknown })?.command;
+      if (typeof command === 'string') out.push(command);
+    }
+  }
+  return out;
+}
+
 /** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
 const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
 
@@ -847,7 +864,8 @@ export const skillDynamicContextRule: Rule = {
   },
   checkSource(file, content) {
     const isKiroHook = KIRO_HOOK_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook) return [];
+    const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -865,6 +883,23 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Kiro hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isAmazonqAgent) {
+      for (const command of extractAmazonqHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Amazon Q agent hook command ${hit.risk.replace('at skill load time', 'automatically on agent lifecycle events')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
