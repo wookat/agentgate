@@ -110,28 +110,29 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   }
 
   const stdioServers = servers.filter((s) => s.command);
+  const remoteServers = servers.filter((s) => !s.command && s.url);
   if (opts.live) {
     const allowed =
       stdioServers.length === 0 ||
       opts.yes ||
       (await confirmSpawn(stdioServers.map((s) => [s.command, ...(s.args ?? [])].join(' '))));
-    if (allowed) {
-      const { surfaces, errors } = await gatherSurfaces(servers, Number(opts.timeout));
-      for (const { server, error } of errors) {
-        warnings.push(`live scan skipped for "${server}": ${error}`);
-      }
-      for (const [name, tools] of Object.entries(surfaces)) {
-        findings.push(...scanTools(name, tools));
-        const server = servers.find((s) => s.name === name);
-        if (server) findings.push(...checkIncludeToolsCoverage(server, tools));
-      }
-      findings.push(...scanConfiguration(surfaces));
-    } else {
-      warnings.push(`live scan declined: ${stdioServers.length} stdio server(s) were not started; only static checks ran`);
+    if (!allowed) {
+      warnings.push(`live scan declined: ${stdioServers.length} stdio server(s) were not started${remoteServers.length > 0 ? '; remote servers were still checked' : '; only static checks ran'}`);
     }
-  } else if (stdioServers.length > 0) {
+    const targets = allowed ? servers : remoteServers;
+    const { surfaces, errors } = await gatherSurfaces(targets, Number(opts.timeout));
+    for (const { server, error } of errors) {
+      warnings.push(`live scan skipped for "${server}": ${error}`);
+    }
+    for (const [name, tools] of Object.entries(surfaces)) {
+      findings.push(...scanTools(name, tools));
+      const server = servers.find((s) => s.name === name);
+      if (server) findings.push(...checkIncludeToolsCoverage(server, tools));
+    }
+    findings.push(...scanConfiguration(surfaces));
+  } else if (stdioServers.length + remoteServers.length > 0) {
     warnings.push(
-      `${stdioServers.length} stdio server(s) were not started, so their live tool surface (descriptions, schemas) was not inspected — re-run with --live to catch tool poisoning`,
+      `${stdioServers.length + remoteServers.length} server(s) were not contacted, so their live tool surface (descriptions, schemas) was not inspected — re-run with --live to catch tool poisoning`,
     );
   }
 

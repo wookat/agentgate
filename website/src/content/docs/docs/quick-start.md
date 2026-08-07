@@ -23,7 +23,7 @@ Audit every MCP server your clients (Claude Desktop, Claude Code, Cursor, VS Cod
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
-agentgate scan --live          # also connect to stdio servers and audit their live tool surface
+agentgate scan --live          # also connect to servers (stdio + remote) and audit their live tool surface
 ```
 
 Machine-readable output:

@@ -61,12 +61,12 @@ export async function gatherSurfaces(servers: McpServerConfig[], timeoutMs: numb
   const surfaces: Record<string, ToolSurface[]> = {};
   const errors: { server: string; error: string }[] = [];
   for (const server of servers) {
-    if (!server.command) {
-      errors.push({ server: server.name, error: 'not a stdio server (remote transports are analyzed statically only)' });
+    if (!server.command && !server.url) {
+      errors.push({ server: server.name, error: 'has neither a stdio command nor a url' });
       continue;
     }
     try {
-      debugLog(`connecting to "${server.name}" (${server.command}) with timeout ${timeoutMs}ms`);
+      debugLog(`connecting to "${server.name}" (${server.command ?? server.url}) with timeout ${timeoutMs}ms`);
       surfaces[server.name] = await fetchToolSurface(server, { timeoutMs });
       debugLog(`"${server.name}" exposed ${surfaces[server.name]?.length ?? 0} tool(s)`);
     } catch (err) {

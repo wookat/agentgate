@@ -16,19 +16,21 @@ Without a target, AgentGate auto-discovers MCP client configs (Claude Desktop, C
 | Mode | What it does |
 |---|---|
 | static (default) | Analyzes client configs and (for a directory target) source files. Never executes server code. |
-| `--live` | Additionally connects to each stdio server, performs the MCP handshake, and analyzes the tool surface the server *actually* exposes. Explicit opt-in because it runs server code. |
+| `--live` | Additionally connects to each server — stdio (spawned locally) or remote `url` (Streamable HTTP, with SSE fallback for legacy servers) — performs the MCP handshake, and analyzes the tool surface the server *actually* exposes. Explicit opt-in because it runs server code / contacts remote endpoints. |
 
 Scanning a config means *starting the commands it names*, so `--live` first
 prints every command it is about to run and asks for confirmation. In a
 non-interactive session (CI, piped output) nothing is started unless you pass
-`--yes`. A static scan that skips stdio servers says so — it warns that their
-live tool surface was not inspected rather than reporting a clean bill.
+`--yes`. Remote `url` servers are not spawned locally, so they don't need
+spawn consent; configured `headers` are sent with each request. A static scan
+that skips servers says so — it warns that their live tool surface was not
+inspected rather than reporting a clean bill.
 
 ## Options
 
 | Flag | Default | Description |
 |---|---|---|
-| `--live` | off | Connect to stdio servers and analyze their live tool surface. |
+| `--live` | off | Connect to stdio and remote servers and analyze their live tool surface. |
 | `-y, --yes` | off | With `--live`, start the configured stdio servers without asking for confirmation (required in CI). |
 | `-c, --config <file>` | auto-discover | Explicit MCP client config file (skips auto-discovery). Codex `config.toml` and OpenCode `opencode.json` are also understood. |
 | `-s, --server <names...>` | all | Restrict to specific server names. |
