@@ -24,6 +24,7 @@ Supported clients:
 | `warp` | standard `mcpServers` (`working_directory` for cwd) | `~/.warp/.mcp.json` / `.warp/.mcp.json` |
 | `lmstudio` | standard `mcpServers` (Cursor notation) | `~/.lmstudio/mcp.json` |
 | `trae` | standard `mcpServers` | `.trae/mcp.json` (project) |
+| `amazonq` | standard `mcpServers` | `.amazonq/mcp.json` (project; also `~/.aws/amazonq/mcp.json`) |
 
 ## CLI
 

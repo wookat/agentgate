@@ -270,6 +270,13 @@ mcpServers:
     expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
   });
 
+  it("cursor -> amazonq round-trips names and URLs", () => {
+    const { content } = convert("cursor", "amazonq", CURSOR_CONFIG);
+    const back = ADAPTERS.amazonq.parse(content).config;
+    expect(back.servers.map((s) => s.name).sort()).toEqual(["filesystem", "linear"]);
+    expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });
