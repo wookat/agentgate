@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.36.0
+
+### Minor Changes
+
+- 0f6d6ba: AG-SK-002 checks Roo Code project MCP configs (`.roo/mcp.json`): a wildcard `"*"` in a server's `alwaysAllow`/`autoApprove` list (high) and auto-approved destructive-looking tools such as `execute_sql`/`apply_migration` (medium) are flagged.
+- 0329425: AG-SK-002 checks VS Code workspace settings (`.vscode/settings.json`): `chat.tools.global.autoApprove: true` (or the legacy `chat.tools.autoApprove`) is flagged high — it bypasses every chat tool approval for anyone opening the project. `.vscode` is walked for settings/MCP configs only.
+
+### Patch Changes
+
+- Updated dependencies [0f6d6ba]
+- Updated dependencies [0329425]
+  - mcp-agentgate-core@0.36.0
+
 ## 0.35.0
 
 ### Minor Changes
