@@ -27,7 +27,9 @@ export function originKey(serverUrl: string | URL): string {
 
 export function readStore(): OAuthStore {
   try {
-    return JSON.parse(fs.readFileSync(storePath(), 'utf8')) as OAuthStore;
+    const parsed: unknown = JSON.parse(fs.readFileSync(storePath(), 'utf8'));
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {};
+    return parsed as OAuthStore;
   } catch {
     return {};
   }
@@ -37,6 +39,10 @@ export function writeStore(store: OAuthStore): void {
   const file = storePath();
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   fs.writeFileSync(file, `${JSON.stringify(store, null, 2)}\n`, { mode: 0o600 });
+  if (process.platform !== 'win32') {
+    // writeFileSync's mode only applies on create; re-tighten existing files.
+    fs.chmodSync(file, 0o600);
+  }
 }
 
 export function updateServerAuth(serverUrl: string | URL, patch: Partial<StoredServerAuth>): void {

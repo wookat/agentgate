@@ -166,6 +166,20 @@ describe('agentgate auth', () => {
     }
   }, 20000);
 
+  it('treats a corrupted or non-object token store as empty', async () => {
+    const { writeStore } = await import('../src/oauth/store.js');
+    fs.mkdirSync(path.dirname(storePath()), { recursive: true });
+    fs.writeFileSync(storePath(), 'not json');
+    expect(readStore()).toEqual({});
+    fs.writeFileSync(storePath(), '[1,2]');
+    expect(readStore()).toEqual({});
+    // Writing over a loosened existing file re-tightens permissions.
+    fs.chmodSync(storePath(), 0o644);
+    writeStore({});
+    const mode = fs.statSync(storePath()).mode & 0o777;
+    if (process.platform !== 'win32') expect(mode).toBe(0o600);
+  });
+
   it('fails fast with a helpful error for stdio-only server names', async () => {
     const cfg = path.join(dir, 'mcp.json');
     fs.writeFileSync(cfg, JSON.stringify({ mcpServers: { local: { command: 'node' } } }));
