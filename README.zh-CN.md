@@ -81,7 +81,7 @@ repos:
 | Windows | 每个 PR CI 实测（`windows-latest`） |
 | Node.js | >= 22（`engines` 强制） |
 
-完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed 的平台特定路径。
+完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed、Continue.dev 的平台特定路径。
 
 ## 配置可移植转换
 
