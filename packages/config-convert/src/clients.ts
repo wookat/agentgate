@@ -150,6 +150,9 @@ export const cursor = mcpServersAdapter("cursor", ".cursor/mcp.json", { withType
 /** LM Studio — `~/.lmstudio/mcp.json`, follows Cursor's `mcpServers` notation. */
 export const lmstudio = mcpServersAdapter("lmstudio", "~/.lmstudio/mcp.json", { withType: false });
 
+/** Trae (ByteDance) — project `.trae/mcp.json`, standard `mcpServers` notation. */
+export const trae = mcpServersAdapter("trae", ".trae/mcp.json", { withType: false });
+
 /** VS Code — `.vscode/mcp.json` with a `servers` map and optional `inputs`. */
 export const vscode: ClientAdapter = {
   id: "vscode",
@@ -704,4 +707,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   amp,
   warp,
   lmstudio,
+  trae,
 };

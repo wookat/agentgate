@@ -23,6 +23,7 @@ Supported clients:
 | `amp` | `amp.mcpServers` key inside settings | `~/.config/amp/settings.json` / `.amp/settings.json` |
 | `warp` | standard `mcpServers` (`working_directory` for cwd) | `~/.warp/.mcp.json` / `.warp/.mcp.json` |
 | `lmstudio` | standard `mcpServers` (Cursor notation) | `~/.lmstudio/mcp.json` |
+| `trae` | standard `mcpServers` | `.trae/mcp.json` (project) |
 
 ## CLI
 

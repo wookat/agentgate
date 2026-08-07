@@ -242,6 +242,16 @@ describe('discoverConfigFiles', () => {
     expect(found.map((f) => f.client).sort()).toEqual(['kiro', 'roo-code']);
   });
 
+  it('finds the trae project-level config', () => {
+    const project = path.join(dir, 'proj4');
+    fs.mkdirSync(path.join(project, '.trae'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.trae', 'mcp.json'), '{"mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['trae']);
+    expect(found[0]!.format).toBe('mcpServers-json');
+  });
+
   it('finds every .continue/mcpServers/*.yaml workspace block', () => {
     const project = path.join(dir, 'proj3');
     fs.mkdirSync(path.join(project, '.continue', 'mcpServers'), { recursive: true });
