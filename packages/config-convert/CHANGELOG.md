@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.8.0
+
+### Minor Changes
+
+- 84d246b: Discover Trae (ByteDance) project-level MCP configs (`.trae/mcp.json`, standard `mcpServers` notation) and support `trae` as a source/target in `config convert`.
+
 ## 0.7.0
 
 ### Minor Changes

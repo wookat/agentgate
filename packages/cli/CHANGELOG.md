@@ -1,5 +1,21 @@
 # mcp-agentgate
 
+## 0.25.0
+
+### Minor Changes
+
+- 84d246b: Discover Trae (ByteDance) project-level MCP configs (`.trae/mcp.json`, standard `mcpServers` notation) and support `trae` as a source/target in `config convert`.
+- 7aad2ea: Skill/instruction scanning (and `lock --skills`) now covers Trae project rules — `.trae/rules/*.md` plus the older `.trae/project_rules.md` / `.trae/user_rules.md` conventions.
+- 506e6b9: Discover Qoder MCP configs — user-level `~/.qoder/settings.json` plus project-level `.qoder/settings.json` and `.qoder/settings.local.json` (standard `mcpServers` map; Qoder's project `.mcp.json` was already covered).
+
+### Patch Changes
+
+- Updated dependencies [84d246b]
+- Updated dependencies [7aad2ea]
+- Updated dependencies [506e6b9]
+  - mcp-agentgate-core@0.25.0
+  - mcp-agentgate-config-convert@0.8.0
+
 ## 0.24.1
 
 ### Patch Changes
