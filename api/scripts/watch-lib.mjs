@@ -123,7 +123,9 @@ export function renderReport({ days, ghsa, osv }) {
   for (const e of [ghsa.error, osv.error].filter(Boolean)) {
     lines.push(`> warning: ${e}`);
   }
-  if (ghsa.hits.length > 0) {
+  // npm/PyPI OSV ids are usually GHSA mirrors, so the same --draft flow applies.
+  const draftIds = [...ghsa.hits.map((a) => a.ghsa_id), ...osv.hits.map((h) => h.id).filter((id) => /^GHSA-/.test(id))];
+  if (draftIds.length > 0) {
     lines.push(
       "",
       "### Triage",
@@ -131,7 +133,7 @@ export function renderReport({ days, ghsa, osv }) {
       "For each true hit, prefill an MCPA draft (review every field, then run `node api/scripts/validate.mjs`):",
       "",
       "```bash",
-      ...ghsa.hits.map((a) => `node api/scripts/watch.mjs --draft ${a.ghsa_id}`),
+      ...draftIds.map((id) => `node api/scripts/watch.mjs --draft ${id}`),
       "```",
       "",
       "False positives: add the GHSA/CVE id to `api/advisories/watch-ignore.json`.",

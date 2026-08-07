@@ -127,11 +127,21 @@ test("renderReport includes sections and warnings", () => {
   assert.match(report, /api\/advisories\/watch-ignore\.json/);
 });
 
-test("renderReport omits the triage section when only OSV hits exist", () => {
+test("renderReport carries triage commands for GHSA-mirrored OSV hits", () => {
   const report = renderReport({
     days: 8,
     ghsa: { error: null, hits: [] },
     osv: { error: null, hits: [{ id: "GHSA-xxxx-1", pkgs: [{ ecosystem: "npm", name: "known-pkg" }], published: "2026-08-05" }] },
+  });
+  assert.match(report, /### Triage/);
+  assert.match(report, /node api\/scripts\/watch\.mjs --draft GHSA-xxxx-1/);
+});
+
+test("renderReport omits the triage section when no hit has a GHSA id", () => {
+  const report = renderReport({
+    days: 8,
+    ghsa: { error: null, hits: [] },
+    osv: { error: null, hits: [{ id: "PYSEC-2026-1", pkgs: [{ ecosystem: "pypi", name: "known-pkg" }], published: "2026-08-05" }] },
   });
   assert.doesNotMatch(report, /### Triage/);
 });
