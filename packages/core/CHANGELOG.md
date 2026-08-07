@@ -1,5 +1,15 @@
 # mcp-agentgate-core
 
+## 0.33.0
+
+### Minor Changes
+
+- 51b4fba: AG-SK-003 also checks Claude Code hooks in `.claude/settings.json` / `.claude/settings.local.json`: `type: "command"` hooks that pipe remote downloads into a shell (critical), exfiltrate data, or read credential material (high) are flagged — they run automatically on session events for everyone opening the project.
+
+### Patch Changes
+
+- f4fa24f: AG-SK-002 parses Claude Code settings files tolerantly (JSONC comments and trailing commas), matching what Claude Code itself accepts — real-world settings with trailing commas are no longer silently skipped.
+
 ## 0.32.0
 
 ### Minor Changes
