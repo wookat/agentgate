@@ -15,6 +15,10 @@ Three concrete failure modes, all with real-world precedent (see the [threat mod
 
 The default static scan never executes server code — it only reads configs (and source files for a repo target). `--live` explicitly opts in to launching stdio servers (after a confirmation prompt) and to contacting remote `url` servers over Streamable HTTP/SSE to read their real tool surface; only use it with servers you'd run or call anyway.
 
+## How do I scan a remote server that requires login?
+
+For OAuth-protected hosted servers, run `agentgate auth login <server-name>` once — live scans then pick up the cached tokens automatically. For servers using static tokens, add them under `headers` in the server config. See the [OAuth guide](/docs/guides/remote-oauth/).
+
 ## Which MCP clients are supported?
 
 Auto-discovery covers Claude Desktop, Claude Code, Cursor, VS Code, Codex (`config.toml`), OpenCode (`opencode.json`), Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, and the generic `.agents/.mcp.json` convention. Any other client works via `--config path/to/config`.

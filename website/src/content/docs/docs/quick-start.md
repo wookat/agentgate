@@ -26,6 +26,8 @@ agentgate scan                 # static config analysis, terminal table
 agentgate scan --live          # also connect to servers (stdio + remote) and audit their live tool surface
 ```
 
+For OAuth-protected hosted servers, [log in once](/docs/guides/remote-oauth/) with `agentgate auth login <server-name>` — live scans pick up the cached tokens automatically.
+
 Machine-readable output:
 
 ```bash
