@@ -106,7 +106,7 @@ type MarketplaceSource = { source?: unknown; repo?: unknown; url?: unknown; ref?
 
 /** True when a marketplace source fetches a mutable remote catalog (git-based, no sha, no release-style ref). */
 function isMutableMarketplaceSource(src: MarketplaceSource): boolean {
-  if (typeof src.source !== 'string' || !['github', 'git', 'url'].includes(src.source)) return false;
+  if (typeof src.source !== 'string' || !['github', 'git', 'url', 'git-subdir'].includes(src.source)) return false;
   if (typeof src.sha === 'string' && /^[0-9a-f]{7,40}$/i.test(src.sha)) return false;
   return !(typeof src.ref === 'string' && VERSION_REF.test(src.ref));
 }
@@ -135,6 +135,39 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string) {
         file,
         ...(line > 0 ? { line } : {}),
         message: `Claude Code plugin "${pluginSpec}" is auto-enabled from marketplace "${marketplaceName}" fetched from a mutable source (${where}${typeof market.source.ref === 'string' ? `#${market.source.ref}` : ''}) — plugins install hooks, MCP servers, and skills for anyone who trusts this folder, and every fetch picks up whatever the branch points at. Pin a release ref or sha`,
+      }),
+    );
+  }
+  return findings;
+}
+
+/** In-repo plugin marketplace catalog; each entry's `source` tells installers where plugin code comes from. */
+const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
+
+/** Findings for marketplace catalog plugin entries served from mutable git sources. */
+function checkMarketplaceCatalog(rule: Rule, file: string, content: string) {
+  const data = parseJsonc(content);
+  if (typeof data !== 'object' || data === null) return [];
+  const plugins = (data as { plugins?: unknown }).plugins;
+  if (!Array.isArray(plugins)) return [];
+  const findings = [];
+  for (const entry of plugins) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { name, source } = entry as { name?: unknown; source?: unknown };
+    // String sources are relative paths inside the marketplace repo — not remote fetches.
+    if (typeof source !== 'object' || source === null) continue;
+    if (!isMutableMarketplaceSource(source as MarketplaceSource)) continue;
+    const src = source as MarketplaceSource;
+    const where = typeof src.repo === 'string' ? src.repo : typeof src.url === 'string' ? src.url : 'remote source';
+    const pluginName = typeof name === 'string' ? name : 'unknown';
+    const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${pluginName}"`)) + 1;
+    findings.push(
+      finding(rule, {
+        severity: 'medium',
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: `Marketplace plugin "${pluginName}" is served from a mutable git source (${where}${typeof src.ref === 'string' ? `#${src.ref}` : ''}) — everyone who installs it gets whatever the branch points at (rug-pull exposure). Pin a sha or release ref`,
       }),
     );
   }
@@ -194,6 +227,7 @@ export const supplyChainRule: Rule = {
   },
   checkSource(file, content) {
     if (CLAUDE_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content);
+    if (MARKETPLACE_CATALOG_FILE.test(file)) return checkMarketplaceCatalog(this, file, content);
     if (!OPENCODE_CONFIG_FILE.test(file)) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
