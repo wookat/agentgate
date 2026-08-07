@@ -18,6 +18,7 @@ export interface ClientConfigLocation {
     | 'skill-mcp-json'
     | 'skill-frontmatter-yaml'
     | 'agent-frontmatter-yaml'
+    | 'copilot-mcp-json'
     | 'marketplace-json';
 }
 
@@ -113,6 +114,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('amazonq', path.join(homeDir, '.aws', 'amazonq', 'default.json'));
   // Amazon Q CLI named custom agents (global) — per-agent JSON with `mcpServers`
   locations.push(...amazonqAgentLocations(path.join(homeDir, '.aws', 'amazonq', 'cli-agents')));
+  // GitHub Copilot CLI — `copilot mcp add` / `/mcp add` write the user config here
+  push('copilot-cli', path.join(homeDir, '.copilot', 'mcp-config.json'));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -151,6 +154,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
+    { client: 'copilot-cli', path: path.join(projectDir, '.github', 'mcp.json'), format: 'copilot-mcp-json' },
     ...copilotAgentServerLocations(path.join(projectDir, '.github', 'agents')),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
     ...skillServerLocations(path.join(projectDir, '.claude', 'skills'), 'skill'),
@@ -388,6 +392,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseSkillFrontmatter(raw, location);
     case 'agent-frontmatter-yaml':
       return parseAgentFrontmatter(raw, location);
+    case 'copilot-mcp-json':
+      return parseCopilotMcpJson(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -439,6 +445,19 @@ export function parseMcpServersJson(raw: string, location: ClientConfigLocation)
     }
   }
   return out;
+}
+
+/** Copilot CLI project MCP config (`.github/mcp.json`): an `mcpServers` wrapper or a bare top-level server map. */
+export function parseCopilotMcpJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const json = JSON.parse(raw) as Record<string, unknown>;
+  if (typeof json.mcpServers === 'object' && json.mcpServers !== null) return collectServers(json.mcpServers, location);
+  const bare: Record<string, unknown> = {};
+  for (const [name, entry] of Object.entries(json)) {
+    if (typeof entry === 'object' && entry !== null && !Array.isArray(entry) && ('command' in entry || 'url' in entry || 'type' in entry)) {
+      bare[name] = entry;
+    }
+  }
+  return collectServers(bare, location);
 }
 
 /** VS Code `mcp.json`: `{ "servers": { ... } }` (also accepts `mcpServers`). */

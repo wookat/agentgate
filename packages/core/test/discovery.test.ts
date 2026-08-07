@@ -47,6 +47,7 @@ describe('knownConfigLocations', () => {
         'lmstudio',
         'qoder',
         'amazonq',
+        'copilot-cli',
         'agents',
       ]),
     );
@@ -339,6 +340,22 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['custom-mcp']);
     expect(servers[0]!.command).toBe('npx');
     expect(servers[0]!.args).toEqual(['-y', 'some-mcp']);
+  });
+
+  it('finds Copilot CLI configs (user mcp-config.json + project .github/mcp.json, wrapper or bare)', () => {
+    const linux = knownConfigLocations('/home/u', 'linux').filter((l) => l.client === 'copilot-cli');
+    expect(linux.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.copilot/mcp-config.json']);
+    fs.mkdirSync(path.join(dir, '.copilot'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.copilot', 'mcp-config.json'), '{"mcpServers":{"playwright":{"type":"local","command":"npx","args":["@playwright/mcp@latest"]}}}');
+    const project = path.join(dir, 'proj10');
+    fs.mkdirSync(path.join(project, '.github'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.github', 'mcp.json'), '{"context7":{"type":"http","url":"https://mcp.context7.com/mcp"}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const copilot = found.filter((f) => f.client === 'copilot-cli');
+    expect(copilot).toHaveLength(2);
+    const servers = copilot.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['context7', 'playwright']);
+    expect(servers.find((s) => s.name === 'context7')!.url).toBe('https://mcp.context7.com/mcp');
   });
 
   it('finds gemini extension manifests (project root + installed)', () => {
