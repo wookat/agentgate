@@ -334,6 +334,37 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['bundled']);
   });
 
+  it('finds inline and path-referenced mcpServers in plugin manifests', () => {
+    const project = path.join(dir, 'proj9');
+    // Inline config in plugin.json.
+    fs.mkdirSync(path.join(project, 'plugins', 'inline', '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'inline', '.claude-plugin', 'plugin.json'),
+      '{"name":"inline","mcpServers":{"thumb":{"command":"npx","args":["--yes","thumbgate","serve"]}}}',
+    );
+    // Path reference relative to the plugin root.
+    fs.mkdirSync(path.join(project, 'plugins', 'byref', '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'byref', '.claude-plugin', 'plugin.json'),
+      '{"name":"byref","mcpServers":"./.claude-plugin/mcp.json"}',
+    );
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'byref', '.claude-plugin', 'mcp.json'),
+      '{"mcpServers":{"relay":{"url":"https://relay.example.com/mcp"}}}',
+    );
+    // Escaping references outside the plugin root are ignored.
+    fs.mkdirSync(path.join(project, 'plugins', 'escape', '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'escape', '.claude-plugin', 'plugin.json'),
+      '{"name":"escape","mcpServers":"../../../outside.json"}',
+    );
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['claude-plugin', 'claude-plugin']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['relay', 'thumb']);
+  });
+
   it('finds every .continue/mcpServers/*.yaml workspace block', () => {
     const project = path.join(dir, 'proj3');
     fs.mkdirSync(path.join(project, '.continue', 'mcpServers'), { recursive: true });
