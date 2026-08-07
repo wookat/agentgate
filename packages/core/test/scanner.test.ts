@@ -1086,6 +1086,52 @@ describe('scanRepo', () => {
     expect(hits.every((f) => f.message.includes('Codex hook command'))).toBe(true);
   });
 
+  it('flags root write grants and network access in named Codex permission profiles (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.codex', 'config.toml'),
+      [
+        'default_permissions = "loose"',
+        '',
+        '[permissions.loose]',
+        'description = "everything"',
+        '',
+        '[permissions.loose.filesystem]',
+        '"/" = "write"',
+        '',
+        '[permissions.loose.network]',
+        'enabled = true',
+        '',
+      ].join('\n'),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
+    expect(hits.some((f) => f.message.includes('write access to "/"'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('sandboxed network access'))).toBe(true);
+  });
+
+  it('does not flag scoped Codex permission profiles (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.codex', 'config.toml'),
+      [
+        'default_permissions = "scoped"',
+        '',
+        '[permissions.scoped]',
+        'extends = ":workspace"',
+        '',
+        '[permissions.scoped.filesystem]',
+        '"/tmp/build" = "write"',
+        '":workspace_roots"."**/*.env" = "deny"',
+        '',
+        '[permissions.scoped.network]',
+        'enabled = false',
+        '',
+      ].join('\n'),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('flags dangerous Windows-only Codex hook command overrides (AG-SK-003)', () => {
     fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
     fs.writeFileSync(
