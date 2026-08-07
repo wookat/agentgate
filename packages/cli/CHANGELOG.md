@@ -1,5 +1,16 @@
 # mcp-agentgate
 
+## 0.31.0
+
+### Minor Changes
+
+- 0c9d836: Skill scanning and `lock --skills` cover VS Code custom agent files (`.github/agents/*.md` — `*.agent.md` and legacy `*.chatmode.md`).
+
+### Patch Changes
+
+- Updated dependencies [0c9d836]
+  - mcp-agentgate-core@0.31.0
+
 ## 0.30.1
 
 ### Patch Changes
