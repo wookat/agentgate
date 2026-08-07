@@ -1,5 +1,16 @@
 # mcp-agentgate
 
+## 0.23.0
+
+### Minor Changes
+
+- 6807ece: Live scans of remote (`url`) MCP servers now transparently use OAuth tokens cached by `agentgate auth login`. Precedence: configured static `headers` → cached OAuth tokens → anonymous. 401/403 hints now point at `agentgate auth login <name>` (and distinguish rejected cached tokens from missing credentials). CI stays non-interactive — a browser flow is never started during scans.
+
+### Patch Changes
+
+- Updated dependencies [6807ece]
+  - mcp-agentgate-core@0.23.0
+
 ## 0.22.0
 
 ### Minor Changes
