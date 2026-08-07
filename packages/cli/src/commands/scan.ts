@@ -75,7 +75,8 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   }
 
   const { servers, files } = gatherServers({ config: opts.config, projectDir, server: opts.server });
-  scannedFiles.push(...files);
+  // the repo walk may have already visited a discovered config (e.g. a skill's mcp.json)
+  scannedFiles.push(...files.filter((f) => !scannedFiles.includes(f)));
   scannedServers.push(...servers.map((s) => s.name));
   findings.push(...scanServers(servers));
 
