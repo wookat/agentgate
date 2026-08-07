@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
-import { buildContext, filterGhsa, collectOsvCandidates, filterOsvDetail, renderReport } from "./watch-lib.mjs";
+import { buildContext, filterGhsa, collectOsvCandidates, filterOsvDetail, renderReport, draftFromGhsa } from "./watch-lib.mjs";
 
 const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..", "..");
 const DAYS = Number(process.env.WATCH_DAYS ?? 8);
@@ -27,6 +27,30 @@ const advisories = files.map((f) => JSON.parse(fs.readFileSync(path.join(ROOT, "
 const ignoreList = JSON.parse(fs.readFileSync(path.join(ROOT, "advisories", "watch-ignore.json"), "utf8"));
 
 const ctx = buildContext({ advisories, ignoreList });
+
+// `node watch.mjs --draft GHSA-xxxx-xxxx-xxxx` prints a prefilled MCPA
+// advisory JSON skeleton for a triaged hit. Review every field (especially
+// FIXME markers and the summary) before committing; validate.mjs is the gate.
+const draftIdx = process.argv.indexOf("--draft");
+if (draftIdx !== -1) {
+  const ghsaId = process.argv[draftIdx + 1];
+  if (!/^GHSA-[\w-]+$/.test(ghsaId ?? "")) {
+    console.error("usage: watch.mjs --draft GHSA-xxxx-xxxx-xxxx");
+    process.exit(2);
+  }
+  const headers = { accept: "application/vnd.github+json" };
+  if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const res = await fetch(`https://api.github.com/advisories/${ghsaId}`, { headers });
+  if (!res.ok) {
+    console.error(`GitHub Advisory API ${res.status} for ${ghsaId}`);
+    process.exit(1);
+  }
+  const year = new Date().getFullYear();
+  const next = files.map((f) => Number(f.slice(10, 14))).reduce((a, b) => Math.max(a, b), 0) + 1;
+  const nextId = `MCPA-${year}-${String(next).padStart(4, "0")}`;
+  console.log(JSON.stringify(draftFromGhsa(await res.json(), nextId), null, 2));
+  process.exit(0);
+}
 
 function iso(d) {
   return d.toISOString().slice(0, 10);

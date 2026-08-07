@@ -4,6 +4,7 @@ import {
   buildContext,
   isIgnored,
   filterGhsa,
+  draftFromGhsa,
   collectOsvCandidates,
   filterOsvDetail,
   renderReport,
@@ -121,4 +122,45 @@ test("renderReport includes sections and warnings", () => {
   assert.match(report, /GHSA-new1-new1-new1.*high, CVE-2026-3333/);
   assert.match(report, /`npm:known-pkg` \(published 2026-08-05\)/);
   assert.match(report, /> warning: OSV querybatch 500/);
+});
+
+test("draftFromGhsa prefills an MCPA skeleton from a GHSA detail payload", () => {
+  const detail = {
+    ghsa_id: "GHSA-6j8j-xrrf-px36",
+    cve_id: "CVE-2026-19046",
+    html_url: "https://github.com/advisories/GHSA-6j8j-xrrf-px36",
+    summary: "LudusMCP path traversal via guide_name",
+    description: "A path traversal in ludus_environment_guides_search allows reading files outside the guides directory.",
+    severity: "low",
+    published: "2026-08-06T10:00:00Z",
+    cvss: { vector_string: "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N", score: 3.3 },
+    cwes: [{ cwe_id: "CWE-22" }],
+    source_code_location: "https://github.com/NocteDefensor/LudusMCP",
+    vulnerabilities: [
+      { package: { ecosystem: "npm", name: "ludus-mcp" }, vulnerable_version_range: "<= 1.0.24", last_patched_version: null },
+    ],
+  };
+  const draft = draftFromGhsa(detail, "MCPA-2026-0018");
+  assert.equal(draft.id, "MCPA-2026-0018");
+  assert.equal(draft.type, "path-traversal");
+  assert.equal(draft.severity, "low");
+  assert.deepEqual(draft.aliases, ["CVE-2026-19046", "GHSA-6j8j-xrrf-px36"]);
+  assert.deepEqual(draft.packages, [
+    { ecosystem: "npm", name: "ludus-mcp", ranges: [{ introduced: "0", last_affected: "1.0.24" }] },
+  ]);
+  assert.equal(draft.cvss.score, 3.3);
+  assert.deepEqual(draft.cwe, ["CWE-22"]);
+  assert.equal(draft.timeline.published, "2026-08-06");
+  assert.equal(draft.references.length, 3);
+});
+
+test("draftFromGhsa marks unknowns as FIXME and maps moderate to medium", () => {
+  const draft = draftFromGhsa(
+    { ghsa_id: "GHSA-zzzz-zzzz-zzzz", severity: "moderate", summary: "Weird MCP bug", vulnerabilities: [] },
+    "MCPA-2026-0019",
+  );
+  assert.equal(draft.severity, "medium");
+  assert.equal(draft.type, "FIXME-type");
+  assert.equal(draft.packages[0].ecosystem, "FIXME");
+  assert.equal(draft.timeline.published, "FIXME");
 });
