@@ -23,7 +23,9 @@ export function isIgnored(ctx, id, pkgs = []) {
 export function filterGhsa(ctx, ghsaAdvisories) {
   return ghsaAdvisories.filter((a) => {
     const text = `${a.summary ?? ""} ${a.description ?? ""}`.toLowerCase();
-    if (!(text.includes("mcp") || text.includes("model context protocol"))) return false;
+    // "mcp" must sit at a word edge ("mcp-server", "LudusMCP", "MCPServer"):
+    // a bare substring check drowns the report in false hits from e.g. "memcpy".
+    if (!/\bmcp|mcp\b|model context protocol/.test(text)) return false;
     if (isIgnored(ctx, a.ghsa_id) || (a.cve_id && ctx.ignoredIds.has(a.cve_id))) return false;
     return !(ctx.knownAliases.has(a.ghsa_id) || (a.cve_id && ctx.knownAliases.has(a.cve_id)));
   });

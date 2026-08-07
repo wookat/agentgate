@@ -67,6 +67,19 @@ test("filterGhsa keeps only MCP-related, unknown, non-ignored advisories", () =>
   assert.deepEqual(filterGhsa(ctx, input).map((a) => a.ghsa_id), ["GHSA-new1-new1-new1"]);
 });
 
+test("filterGhsa matches mcp only at word edges", () => {
+  const input = [
+    { ghsa_id: "GHSA-ffmp-ffmp-ffmp", cve_id: null, summary: "FFmpeg overflow", description: "invoking memcpy() with attacker-controlled data" },
+    { ghsa_id: "GHSA-ldus-ldus-ldus", cve_id: null, summary: "LudusMCP command injection", description: "" },
+    { ghsa_id: "GHSA-caml-caml-caml", cve_id: null, summary: "MCPServer path traversal", description: "" },
+    { ghsa_id: "GHSA-hyph-hyph-hyph", cve_id: null, summary: "mcp-server-foo RCE", description: "" },
+  ];
+  assert.deepEqual(
+    filterGhsa(ctx, input).map((a) => a.ghsa_id),
+    ["GHSA-ldus-ldus-ldus", "GHSA-caml-caml-caml", "GHSA-hyph-hyph-hyph"],
+  );
+});
+
 test("collectOsvCandidates dedupes ids across packages and skips known aliases", () => {
   const results = [
     { vulns: [{ id: "GHSA-xxxx-1" }, { id: "MAL-2026-2222" }] },
