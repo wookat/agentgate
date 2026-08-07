@@ -142,7 +142,40 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     ...continueWorkspaceLocations(projectDir),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
     ...skillServerLocations(path.join(projectDir, '.claude', 'skills'), 'skill'),
+    ...pluginServerLocations(projectDir),
   ];
+}
+
+/** Directory names never descended into while looking for plugin roots. */
+const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
+
+/**
+ * MCP servers bundled by Claude Code plugins: a plugin root is any directory
+ * carrying `.claude-plugin/plugin.json`, and its sibling `.mcp.json` starts
+ * automatically for everyone who enables the plugin. Nested roots matter for
+ * marketplace repos hosting many plugins; the project root's own `.mcp.json`
+ * is already covered by the claude-code location.
+ */
+function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocation[] {
+  if (depth > 4) return [];
+  const out: ClientConfigLocation[] = [];
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(projectDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && entry.name !== '.claude-plugin')) continue;
+    const dir = path.join(projectDir, entry.name);
+    if (entry.name === '.claude-plugin' && depth > 0 && fs.existsSync(path.join(dir, 'plugin.json'))) {
+      const mcpJson = path.join(projectDir, '.mcp.json');
+      if (fs.existsSync(mcpJson)) out.push({ client: 'claude-plugin', path: mcpJson, format: 'mcpServers-json' });
+      continue;
+    }
+    out.push(...pluginServerLocations(dir, depth + 1));
+  }
+  return out;
 }
 
 /**
