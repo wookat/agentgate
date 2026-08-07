@@ -35,6 +35,7 @@ Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS C
 agentgate scan                 # static config analysis, terminal table
 agentgate scan --live          # also connect to servers (stdio + remote) and audit their live tool surface
                                # (asks before starting them; add --yes in CI)
+agentgate auth login <server>  # OAuth login for hosted servers — live scans pick up the cached tokens
 agentgate scan --format json   # machine-readable report
 agentgate scan --format sarif -o report.sarif   # for GitHub code scanning
 agentgate scan path/to/repo    # scan an MCP server repo for source-level issues

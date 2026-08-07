@@ -72,6 +72,7 @@ export default defineConfig({
           items: [
             { label: 'CI integration', slug: 'docs/guides/ci' },
             { label: 'Scanning agent skills', slug: 'docs/guides/skills' },
+            { label: 'OAuth for remote servers', slug: 'docs/guides/remote-oauth' },
             { label: 'FAQ', slug: 'docs/guides/faq' },
             { label: 'Troubleshooting', slug: 'docs/guides/troubleshooting' },
           ],
