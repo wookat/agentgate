@@ -879,8 +879,12 @@ export function extractHookCommands(hooks: unknown): string[] {
       const inner = (matcher as { hooks?: unknown })?.hooks;
       if (!Array.isArray(inner)) continue;
       for (const hook of inner) {
-        const h = hook as { type?: unknown; command?: unknown };
-        if (h?.type === 'command' && typeof h.command === 'string') out.push(h.command);
+        const h = hook as { type?: unknown; command?: unknown; commandWindows?: unknown; command_windows?: unknown };
+        if (h?.type !== 'command') continue;
+        if (typeof h.command === 'string') out.push(h.command);
+        // Codex hooks accept a Windows-only override; a dangerous command can hide there.
+        const win = h.commandWindows ?? h.command_windows;
+        if (typeof win === 'string') out.push(win);
       }
     }
   }

@@ -52,7 +52,8 @@ Codex project hook files (`.codex/hooks.json`, and equivalent inline
 command hooks run on lifecycle events (SessionStart, PreToolUse,
 UserPromptSubmit, …) for anyone who trusts the project's `.codex/` layer,
 so remote-script pipes and data-exfiltration commands report while local
-policy/lint scripts stay clean. (Codex asks you to review and trust each
+policy/lint scripts stay clean. Windows-only overrides
+(`commandWindows`/`command_windows`) are classified too. (Codex asks you to review and trust each
 non-managed hook by hash before it runs — the finding still matters
 because trust prompts are routinely accepted and can be bypassed with
 `--dangerously-bypass-hook-trust`.)
