@@ -43,6 +43,7 @@ describe('knownConfigLocations', () => {
         'amp',
         'warp',
         'lmstudio',
+        'qoder',
         'agents',
       ]),
     );
@@ -240,6 +241,24 @@ describe('discoverConfigFiles', () => {
 
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client).sort()).toEqual(['kiro', 'roo-code']);
+  });
+
+  it('locates the qoder user settings.json', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const q = linux.filter((l) => l.client === 'qoder');
+    expect(q.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.qoder/settings.json']);
+    expect(q[0]!.format).toBe('mcpServers-json');
+  });
+
+  it('finds qoder project-level configs', () => {
+    const project = path.join(dir, 'proj5');
+    fs.mkdirSync(path.join(project, '.qoder'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.qoder', 'settings.json'), '{"mcpServers":{}}');
+    fs.writeFileSync(path.join(project, '.qoder', 'settings.local.json'), '{"mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['qoder', 'qoder']);
+    expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['settings.json', 'settings.local.json']);
   });
 
   it('finds the trae project-level config', () => {
