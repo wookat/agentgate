@@ -221,6 +221,24 @@ const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string 
   { re: /(^|[\s;|&])(cat|grep|head|tail|cp|base64)\b[^\n]*\.env\b/, severity: 'high', risk: 'reads .env secrets into the prompt at skill load time' },
 ];
 
+/** Collect `type: "command"` hook commands from a Claude Code settings `hooks` object. */
+export function extractHookCommands(hooks: unknown): string[] {
+  if (typeof hooks !== 'object' || hooks === null) return [];
+  const out: string[] = [];
+  for (const matchers of Object.values(hooks)) {
+    if (!Array.isArray(matchers)) continue;
+    for (const matcher of matchers) {
+      const inner = (matcher as { hooks?: unknown })?.hooks;
+      if (!Array.isArray(inner)) continue;
+      for (const hook of inner) {
+        const h = hook as { type?: unknown; command?: unknown };
+        if (h?.type === 'command' && typeof h.command === 'string') out.push(h.command);
+      }
+    }
+  }
+  return out;
+}
+
 export const skillDynamicContextRule: Rule = {
   id: 'AG-SK-003',
   category: 'rce-vectors',
@@ -237,6 +255,28 @@ export const skillDynamicContextRule: Rule = {
             file,
             line,
             message: `Skill dynamic-context command ${hit.risk}: "${command.slice(0, 80)}" — it runs before anyone reviews the rendered prompt`,
+          }),
+        );
+      }
+    }
+    return findings;
+  },
+  checkSource(file, content) {
+    if (!CLAUDE_SETTINGS_FILE.test(file)) return [];
+    const data = parseJsonc(content);
+    if (typeof data !== 'object' || data === null) return [];
+    const findings = [];
+    for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
+      const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+      if (hit) {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Claude Code hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
