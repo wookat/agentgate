@@ -73,6 +73,18 @@ describe('credential-leak', () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]!.line).toBe(1);
   });
+
+  it('skips secret-shaped placeholders in source files and args', () => {
+    expect(
+      credentialLeakRule.checkSource!(
+        'README.md',
+        'SLACK_BOT_TOKEN: "xoxb-your-bot-token"\napi_key="sk-my-anthropic-api-key"',
+      ),
+    ).toHaveLength(0);
+    expect(
+      credentialLeakRule.checkServer!(server({ args: ['--token', 'xoxb-your-bot-token'] })),
+    ).toHaveLength(0);
+  });
 });
 
 describe('overprivileged', () => {
