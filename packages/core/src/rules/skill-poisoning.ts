@@ -858,8 +858,19 @@ export function extractDynamicCommands(content: string): { command: string; line
 
 /** Load-time command patterns that go beyond gathering local context. */
 const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
-  { re: /\b(curl|wget)\b[^|;&]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
+  { re: /\b(curl|wget)\b[^|;&\n]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
   { re: /\b(curl|wget)\b[^\n]*\s(-d|--data(-\w+)?|-F|--form|--upload-file|-T)\b/, severity: 'high', risk: 'sends data to a remote host at skill load time' },
+  // PowerShell download-and-execute idioms: `irm … | iex` and `iex (irm …)`.
+  {
+    re: /\b(irm|iwr|invoke-restmethod|invoke-webrequest)\b[^|;&\n]*\|\s*(iex|invoke-expression)\b/i,
+    severity: 'critical',
+    risk: 'downloads and executes a remote script at skill load time',
+  },
+  {
+    re: /\b(iex|invoke-expression)\b\s*\(\s*(irm|iwr|invoke-restmethod|invoke-webrequest)\b/i,
+    severity: 'critical',
+    risk: 'downloads and executes a remote script at skill load time',
+  },
   // A read verb is required so guard hooks that merely pattern-match credential paths stay clean.
   {
     re: /(^|[\s;|&])(cat|grep|head|tail|cp|scp|base64|openssl|dd|less|more|curl|wget|type|Get-Content)\b[^\n]*(~\/\.ssh\b|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc\b|\.netrc\b)/i,
