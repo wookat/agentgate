@@ -25,6 +25,8 @@ export interface McpServerConfig {
   /** remote transports (sse / streamable http) */
   url?: string;
   headers?: Record<string, string>;
+  /** Tool-name allowlist (Amp skill convention) limiting which tools the server exposes. */
+  includeTools?: string[];
   transport?: string;
   /** Path of the config file this entry came from. */
   source: string;

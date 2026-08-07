@@ -62,6 +62,16 @@ export const overprivilegedRule: Rule = {
         );
       }
     }
+    if ((server.client === 'skill' || server.client === 'amp-skill') && !server.includeTools?.length) {
+      findings.push(
+        finding(this, {
+          severity: 'low',
+          target: server.name,
+          file: server.source,
+          message: `Skill-declared server "${server.name}" has no includeTools allowlist — the skill exposes the server's full tool surface; list the tools it actually needs`,
+        }),
+      );
+    }
     if (args.includes('--dangerously-skip-permissions') || args.includes('--yolo')) {
       findings.push(
         finding(this, {
