@@ -39,8 +39,10 @@ grant lets the skill run any shell command without a permission prompt
 The same analysis covers Claude Code settings files (`.claude/settings.json`
 and `.claude/settings.local.json`): entries in `permissions.allow` such as a
 bare `Bash` or unscoped `WebFetch` pre-approve those tools for everyone who
-opens the project, and `permissions.defaultMode: "bypassPermissions"`
-(`high`) disables permission prompts entirely.
+opens the project, `permissions.defaultMode: "bypassPermissions"`
+(`high`) disables permission prompts entirely, and
+`enableAllProjectMcpServers: true` (`medium`) auto-approves every MCP
+server defined in project `.mcp.json` files.
 
 ## Why it matters
 

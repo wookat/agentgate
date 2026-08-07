@@ -367,6 +367,23 @@ describe('scanRepo', () => {
     ]);
   });
 
+  it('flags enableAllProjectMcpServers in Claude Code settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.json'),
+      JSON.stringify({ enableAllProjectMcpServers: true, permissions: { allow: ['Bash(npm run lint)'] } }, null, 2),
+    );
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.local.json'),
+      JSON.stringify({ enableAllProjectMcpServers: false }, null, 2),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.file).toBe('.claude/settings.json');
+    expect(hits[0]!.severity).toBe('medium');
+    expect(hits[0]!.message).toContain('enableAllProjectMcpServers');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
