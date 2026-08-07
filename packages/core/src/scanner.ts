@@ -4,7 +4,7 @@ import { ALL_RULES, Rule } from './rules/index.js';
 import { SKILL_FILE } from './rules/skill-poisoning.js';
 import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 
-const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh']);
+const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
 const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq']);

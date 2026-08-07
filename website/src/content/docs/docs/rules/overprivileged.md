@@ -44,6 +44,12 @@ opens the project, `permissions.defaultMode: "bypassPermissions"`
 `enableAllProjectMcpServers: true` (`medium`) auto-approves every MCP
 server defined in project `.mcp.json` files.
 
+OpenCode project configs (`opencode.json` / `opencode.jsonc`) are checked
+too: a catch-all `"permission": "allow"` (or `"*": "allow"`) is `high`, and
+per-tool `bash` (`high`) / `edit` / `write` / `webfetch` (`medium`) rules
+whose effective action is `"allow"` are flagged. Granular rules such as
+`"git *": "allow"` under an `"ask"` catch-all are fine.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
