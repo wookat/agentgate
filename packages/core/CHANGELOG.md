@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.26.0
+
+### Minor Changes
+
+- a0b661c: Skill/instruction scanning (and `lock --skills`) now covers Kiro steering files (`.kiro/steering/*.md`, auto-loaded into every chat session in the workspace).
+
 ## 0.25.0
 
 ### Minor Changes
