@@ -211,6 +211,23 @@ export const skillOverprivilegeRule: Rule = {
           );
         }
       }
+      const servers = (data as { mcpServers?: unknown }).mcpServers;
+      if (typeof servers === 'object' && servers !== null) {
+        for (const [name, server] of Object.entries(servers)) {
+          if (typeof server === 'object' && server !== null && (server as { trust?: unknown }).trust === true) {
+            const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${name}"`)) + 1;
+            findings.push(
+              finding(this, {
+                severity: 'medium',
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: `Gemini CLI settings mark MCP server "${name}" as trusted — all its tool calls bypass confirmation for anyone opening this project`,
+              }),
+            );
+          }
+        }
+      }
       const general = (data as { general?: { defaultApprovalMode?: unknown } }).general;
       if (general?.defaultApprovalMode === 'auto_edit') {
         const line = content.split(/\r?\n/).findIndex((l) => l.includes('auto_edit')) + 1;

@@ -457,6 +457,27 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags trusted MCP servers in Gemini CLI settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.gemini'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.gemini', 'settings.json'),
+      JSON.stringify(
+        {
+          mcpServers: {
+            docs: { httpUrl: 'https://docs.example/mcp', trust: true },
+            search: { command: 'npx', args: ['-y', 'mcp-search'] },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('medium');
+    expect(hits[0]!.message).toContain('"docs" as trusted');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(

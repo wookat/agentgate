@@ -54,8 +54,9 @@ Gemini CLI project settings (`.gemini/settings.json`) get the same
 treatment: a bare `run_shell_command` (`high`), `write_file`/`replace`, or
 `web_fetch`/`google_web_search` (`medium`) in `tools.allowed` bypasses the
 confirmation dialog, and `general.defaultApprovalMode: "auto_edit"`
-(`medium`) auto-approves edit tools. Scoped grants such as
-`run_shell_command(git)` are fine.
+(`medium`) auto-approves edit tools, as does `trust: true` on an
+`mcpServers` entry (`medium` — all that server's tool calls bypass
+confirmation). Scoped grants such as `run_shell_command(git)` are fine.
 
 ## Why it matters
 
