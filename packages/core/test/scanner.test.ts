@@ -478,6 +478,28 @@ describe('scanRepo', () => {
     expect(hits[0]!.message).toContain('"docs" as trusted');
   });
 
+  it('flags dangerous auto-approvals in Roo Code MCP config (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.roo'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.roo', 'mcp.json'),
+      JSON.stringify(
+        {
+          mcpServers: {
+            db: { command: 'npx', args: ['-y', 'db-mcp'], alwaysAllow: ['list_tables', 'execute_sql', 'apply_migration'] },
+            everything: { url: 'https://mcp.example/mcp', autoApprove: ['*'] },
+            docs: { url: 'https://docs.example/mcp', alwaysAllow: ['search_docs', 'get_page'] },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
+    expect(hits.find((f) => f.severity === 'medium')!.message).toContain('"execute_sql"');
+    expect(hits.find((f) => f.severity === 'high')!.message).toContain('"everything"');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(

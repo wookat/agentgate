@@ -112,6 +112,12 @@ const GEMINI_RISKY_TOOLS: { re: RegExp; severity: 'high' | 'medium'; risk: strin
   { re: /^(web_fetch|google_web_search)$/i, severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
 ];
 
+/** Roo Code project MCP config whose per-server `alwaysAllow`/`autoApprove` lists skip tool approval. */
+const ROO_MCP_FILE = /(^|\/)\.roo\/mcp\.json$/i;
+
+/** Auto-approved tool names that suggest shell execution, data mutation, or exfiltration. */
+const DANGEROUS_TOOL_NAME = /exec|shell|command|terminal|run_|sql|migrat|write|delete|remove|drop|deploy|fetch_url/i;
+
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
 export function parseJsonc(content: string): unknown {
   try {
@@ -188,9 +194,53 @@ export const skillOverprivilegeRule: Rule = {
     const isClaude = CLAUDE_SETTINGS_FILE.test(file);
     const isOpencode = OPENCODE_CONFIG_FILE.test(file);
     const isGemini = GEMINI_SETTINGS_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini) return [];
+    const isRooMcp = ROO_MCP_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
+    if (isRooMcp) {
+      const findings = [];
+      const servers = (data as { mcpServers?: unknown }).mcpServers;
+      if (typeof servers === 'object' && servers !== null) {
+        for (const [name, server] of Object.entries(servers)) {
+          if (typeof server !== 'object' || server === null) continue;
+          const approved = ['alwaysAllow', 'autoApprove'].flatMap((key) => {
+            const list = (server as Record<string, unknown>)[key];
+            return Array.isArray(list) ? list.filter((t): t is string => typeof t === 'string') : [];
+          });
+          if (approved.includes('*')) {
+            const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${name}"`)) + 1;
+            findings.push(
+              finding(this, {
+                severity: 'high',
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: `Roo Code MCP config auto-approves every tool of server "${name}" ("*") — all its tool calls run without approval for anyone opening this project`,
+              }),
+            );
+            continue;
+          }
+          const dangerous = approved.filter((t) => DANGEROUS_TOOL_NAME.test(t));
+          if (dangerous.length > 0) {
+            const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${dangerous[0]}"`)) + 1;
+            findings.push(
+              finding(this, {
+                severity: 'medium',
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: `Roo Code MCP config auto-approves destructive-looking tool(s) ${dangerous
+                  .slice(0, 4)
+                  .map((t) => `"${t}"`)
+                  .join(', ')} of server "${name}" — they run without approval for anyone opening this project`,
+              }),
+            );
+          }
+        }
+      }
+      return findings;
+    }
     if (isGemini) {
       const findings = [];
       const tools = (data as { tools?: { allowed?: unknown } }).tools;
