@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.20.0
+
+### Minor Changes
+
+- 0935dc3: `deps` now gates by default: `--fail-on` defaults to `high` (matching `ci`), so a bare `agentgate deps` exits 1 on hallucinated/typosquatted/malicious dependencies instead of silently passing. Use `--fail-on never` to report without gating.
+- 24011e5: `scan --live` correlates a server's `includeTools` allowlist against its actual tool surface: entries matching no live tool report a low AG-OP-001 finding (stale or typoed allowlist entries scope nothing).
+
+### Patch Changes
+
+- Updated dependencies [24011e5]
+  - mcp-agentgate-core@0.20.0
+
 ## 0.19.0
 
 ### Minor Changes
