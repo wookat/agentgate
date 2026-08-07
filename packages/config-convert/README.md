@@ -21,6 +21,7 @@ Supported clients:
 | `zed` | JSONC `context_servers` inside settings | `~/.config/zed/settings.json` |
 | `continue` | YAML `mcpServers` list | `~/.continue/config.yaml` / `.continue/mcpServers/*.yaml` |
 | `amp` | `amp.mcpServers` key inside settings | `~/.config/amp/settings.json` / `.amp/settings.json` |
+| `warp` | standard `mcpServers` (`working_directory` for cwd) | `~/.warp/.mcp.json` / `.warp/.mcp.json` |
 
 ## CLI
 

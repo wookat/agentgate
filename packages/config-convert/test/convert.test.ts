@@ -234,6 +234,28 @@ mcpServers:
     expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
   });
 
+  it("warp maps working_directory to cwd and back", () => {
+    const raw = JSON.stringify({
+      mcpServers: {
+        fs: { command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem"], working_directory: "/srv/app" },
+        docs: { url: "https://mcp.example.com/mcp" },
+      },
+    });
+    const { config } = ADAPTERS.warp.parse(raw);
+    expect(config.servers.find((s) => s.name === "fs")!.cwd).toBe("/srv/app");
+    const rendered = ADAPTERS.warp.render(config);
+    const doc = JSON.parse(rendered.content) as { mcpServers: Record<string, Record<string, unknown>> };
+    expect(doc.mcpServers.fs.working_directory).toBe("/srv/app");
+    expect(doc.mcpServers.docs.url).toBe("https://mcp.example.com/mcp");
+  });
+
+  it("cursor -> warp round-trips names and URLs", () => {
+    const { content } = convert("cursor", "warp", CURSOR_CONFIG);
+    const back = ADAPTERS.warp.parse(content).config;
+    expect(back.servers.map((s) => s.name).sort()).toEqual(["filesystem", "linear"]);
+    expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });

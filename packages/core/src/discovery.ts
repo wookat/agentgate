@@ -22,7 +22,8 @@ export interface ClientConfigLocation {
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, and Amp.
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, and
+ * Warp (plus the generic `.agents/.mcp.json` convention).
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -86,6 +87,10 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('continue', path.join(homeDir, '.continue', 'config.yaml'), 'continue-yaml');
   // Amp (Sourcegraph) — `amp.mcpServers` key inside user settings
   push('amp', path.join(homeDir, '.config', 'amp', 'settings.json'), 'amp-settings-json');
+  // Warp — file-based MCP servers, standard `mcpServers` map
+  push('warp', path.join(homeDir, '.warp', '.mcp.json'));
+  // Generic "other agents" convention (read by Warp and others)
+  push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
   // Zed — context_servers key inside settings.json (JSONC)
   if (platform === 'win32') {
@@ -109,6 +114,8 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
+    { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
+    { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),

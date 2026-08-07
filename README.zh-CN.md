@@ -81,7 +81,7 @@ repos:
 | Windows | 每个 PR CI 实测（`windows-latest`） |
 | Node.js | >= 22（`engines` 强制） |
 
-完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed、Continue.dev、Amp 的平台特定路径。
+完整测试套件（含真实 stdio MCP fixture server）在三个操作系统上跑 CI；客户端配置发现覆盖各 OS 下 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed、Continue.dev、Amp、Warp 的平台特定路径。
 
 ## 配置可移植转换
 
@@ -91,7 +91,7 @@ repos:
 npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
 ```
 
-支持 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed、Continue.dev、Amp，任何有损转换都会显式告警。也可用独立包 [mcp-agentgate-config-convert](packages/config-convert/)。
+支持 Claude Desktop、Claude Code、Cursor、VS Code、Codex、OpenCode、Windsurf、Cline、Gemini CLI、Kiro、Roo Code、Zed、Continue.dev、Amp、Warp，任何有损转换都会显式告警。也可用独立包 [mcp-agentgate-config-convert](packages/config-convert/)。
 
 ## 为什么不只用扫描器（或只用 lockfile）？
 

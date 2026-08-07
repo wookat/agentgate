@@ -30,7 +30,8 @@ export type ClientId =
   | "roo-code"
   | "zed"
   | "continue"
-  | "amp";
+  | "amp"
+  | "warp";
 
 export const CLIENT_IDS: ClientId[] = [
   "claude-desktop",
@@ -47,6 +48,7 @@ export const CLIENT_IDS: ClientId[] = [
   "zed",
   "continue",
   "amp",
+  "warp",
 ];
 
 export interface ParseResult {
