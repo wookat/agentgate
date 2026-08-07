@@ -111,6 +111,17 @@ describe('collectDependencies', () => {
     expect(refs.find((r) => r.name === 'ws')).toBeUndefined();
   });
 
+  it('treats deno.json(c) import-map keys as declared, not npm imports', () => {
+    fs.writeFileSync(
+      path.join(dir, 'deno.jsonc'),
+      '{\n  // std from jsr\n  "imports": {\n    "@std/assert": "jsr:@std/assert@^1.0.3",\n    "hono/jsx/jsx-runtime": "../src/jsx/jsx-runtime.ts",\n  },\n}\n',
+    );
+    fs.writeFileSync(path.join(dir, 'a.test.ts'), "import { assertEquals } from '@std/assert';\nimport { jsx } from 'hono/jsx/jsx-runtime';\nimport x from 'undeclared-pkg';\n");
+    const { refs } = collectDependencies(dir);
+    const names = refs.map((r) => r.name);
+    expect(names).toEqual(['undeclared-pkg']);
+  });
+
   it('respects ignore globs and --no-imports', () => {
     fs.mkdirSync(path.join(dir, 'vendor'));
     fs.writeFileSync(path.join(dir, 'vendor', 'requirements.txt'), 'vendored-pkg\n');
