@@ -592,6 +592,27 @@ describe('scanRepo', () => {
     expect(hits).toHaveLength(0);
   });
 
+  it('flags pre-approved secret-path reads/writes in Cursor CLI config (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.cursor'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.cursor', 'cli.json'),
+      JSON.stringify(
+        {
+          permissions: {
+            allow: ['Read(.env*)', 'Write(**/*.pem)', 'Read(src/**/*.ts)', 'Write(package.json)'],
+            deny: ['Write(**)'],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['medium', 'medium']);
+    expect(hits.some((f) => f.message.includes('"Read(.env*)"') && f.message.includes('reads'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('"Write(**/*.pem)"') && f.message.includes('writes'))).toBe(true);
+  });
+
   it('flags dangerous edit auto-approvals in VS Code workspace settings (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
     fs.writeFileSync(

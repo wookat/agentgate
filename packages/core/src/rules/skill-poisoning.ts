@@ -154,6 +154,9 @@ const CURSOR_RISKY_TOKENS: { re: RegExp; severity: 'high' | 'medium'; risk: stri
   { re: /^Mcp\(\s*[^:*)]+\s*:\s*\*\s*\)$/i, severity: 'medium', risk: 'every tool of that MCP server runs' },
 ];
 
+/** Secret-shaped path fragments whose pre-approved Read/Write means silent credential access. */
+const CURSOR_SENSITIVE_PATH = /\.env|\.pem|\.key\b|\.p12|\.pfx|secret|credential|id_rsa/i;
+
 /** Glob patterns that match every file (catch-all edit auto-approval). */
 const CATCH_ALL_GLOB = new Set(['**', '**/*', '*']);
 
@@ -387,16 +390,20 @@ export const skillOverprivilegeRule: Rule = {
         if (typeof token !== 'string') continue;
         // Deny rules take precedence over allow rules.
         if (deny.has(token.replace(/\s+/g, ''))) continue;
-        const hit = CURSOR_RISKY_TOKENS.find((r) => r.re.test(token.trim()));
-        if (!hit) continue;
+        const trimmed = token.trim();
+        const hit = CURSOR_RISKY_TOKENS.find((r) => r.re.test(trimmed));
+        const sensitiveMatch = !hit && /^(Read|Write)\((.+)\)$/i.exec(trimmed);
+        if (!hit && !(sensitiveMatch && CURSOR_SENSITIVE_PATH.test(sensitiveMatch[2]!))) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${token}"`)) + 1;
         findings.push(
           finding(this, {
-            severity: hit.severity,
+            severity: hit ? hit.severity : 'medium',
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Cursor CLI project config pre-approves "${token}" in permissions.allow — ${hit.risk} without prompting for anyone using this checked-in config`,
+            message: hit
+              ? `Cursor CLI project config pre-approves "${token}" in permissions.allow — ${hit.risk} without prompting for anyone using this checked-in config`
+              : `Cursor CLI project config pre-approves "${token}" in permissions.allow — the agent ${/^Read/i.test(trimmed) ? 'reads' : 'writes'} secret-shaped paths without prompting for anyone using this checked-in config`,
           }),
         );
       }

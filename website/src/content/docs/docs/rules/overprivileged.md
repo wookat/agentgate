@@ -89,9 +89,12 @@ file-write/delete/fetch tools. `always_allow` pattern rules with a
 Cursor CLI project permission configs (`.cursor/cli.json`) are checked
 for risky `permissions.allow` tokens: `Shell(*)` and `Mcp(*:*)` are
 `high`; a catch-all `Write(**)`, `WebFetch(*)`, and whole-server
-`Mcp(server:*)` are `medium`. Scoped tokens (`Shell(git)`,
-`Write(src/**)`, `Read(...)`) are not flagged, and a matching entry in
-`permissions.deny` suppresses the allow (deny takes precedence).
+`Mcp(server:*)` are `medium`. `Read`/`Write` allows on secret-shaped
+paths (`.env`, `.pem`, `.key`, `.p12`/`.pfx`, secrets, credentials,
+`id_rsa`) are also `medium` — pre-approved credential access. Scoped
+tokens (`Shell(git)`, `Write(src/**)`, other `Read(...)`) are not
+flagged, and a matching entry in `permissions.deny` suppresses the
+allow (deny takes precedence).
 
 Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`) are
 checked for `allowedTools` pre-approvals: a catch-all (`"*"`) is `high`,
