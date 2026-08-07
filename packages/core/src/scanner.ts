@@ -11,7 +11,7 @@ const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.ope
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
-const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json'])], ['.zed', new Set(['settings.json'])]]);
+const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json', 'tasks.json'])], ['.zed', new Set(['settings.json'])]]);
 const MAX_FILE_BYTES = 1024 * 1024;
 
 /** Run config-level rules over normalized MCP server entries. */

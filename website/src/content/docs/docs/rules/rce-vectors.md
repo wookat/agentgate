@@ -45,6 +45,11 @@ Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
 userPromptSubmit, preToolUse, postToolUse) with the same classification.
 
+VS Code workspace tasks (`.vscode/tasks.json`) with `"runOn": "folderOpen"`
+run automatically when the folder opens in a trusted workspace, so their
+commands get the same classification too; ordinary run-on-demand tasks and
+benign watch/build tasks stay clean.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.

@@ -391,6 +391,18 @@ export const skillOverprivilegeRule: Rule = {
           break;
         }
       }
+      if ((data as Record<string, unknown>)['task.allowAutomaticTasks'] === 'on') {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes('"task.allowAutomaticTasks"')) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'VS Code workspace settings set task.allowAutomaticTasks to "on" — "runOn": "folderOpen" tasks run without prompting for anyone opening this trusted project',
+          }),
+        );
+      }
       const terminal = (data as Record<string, unknown>)['chat.tools.terminal.autoApprove'];
       if (typeof terminal === 'object' && terminal !== null) {
         for (const [key, value] of Object.entries(terminal)) {
@@ -808,6 +820,22 @@ export function extractHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/** VS Code workspace task definitions; `runOn: "folderOpen"` tasks auto-run when the folder opens. */
+const VSCODE_TASKS_FILE = /(^|\/)\.vscode\/tasks\.json$/i;
+
+/** Collect the command strings of VS Code tasks that run automatically on folder open. */
+export function extractFolderOpenTaskCommands(tasks: unknown): string[] {
+  if (!Array.isArray(tasks)) return [];
+  const out: string[] = [];
+  for (const task of tasks) {
+    const t = task as { command?: unknown; args?: unknown; runOptions?: { runOn?: unknown } };
+    if (t?.runOptions?.runOn !== 'folderOpen' || typeof t.command !== 'string') continue;
+    const args = Array.isArray(t.args) ? t.args.filter((a): a is string => typeof a === 'string') : [];
+    out.push([t.command, ...args].join(' '));
+  }
+  return out;
+}
+
 /** Amazon Q CLI agent files, whose `hooks` field runs commands at lifecycle trigger points. */
 const AMAZONQ_AGENT_HOOKS_FILE = /(^|\/)\.amazonq\/cli-agents\/[^/]+\.json$/i;
 
@@ -865,7 +893,8 @@ export const skillDynamicContextRule: Rule = {
   checkSource(file, content) {
     const isKiroHook = KIRO_HOOK_FILE.test(file);
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent) return [];
+    const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -883,6 +912,23 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Kiro hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isVscodeTasks) {
+      for (const command of extractFolderOpenTaskCommands((data as { tasks?: unknown }).tasks)) {
+        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40).split(' ')[0] ?? '')) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `VS Code folderOpen task ${hit.risk.replace('at skill load time', 'automatically when the folder is opened')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
