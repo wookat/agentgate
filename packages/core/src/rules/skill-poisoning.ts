@@ -67,6 +67,55 @@ const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] 
 /** Claude Code settings files whose `permissions.allow` pre-approves tools for everyone using the project. */
 const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 
+/** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
+export function parseJsonc(content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch {
+    // Strip comments (outside strings) and trailing commas, then retry.
+    let out = '';
+    let inString = false;
+    let i = 0;
+    while (i < content.length) {
+      const ch = content[i]!;
+      if (inString) {
+        out += ch;
+        if (ch === '\\') {
+          out += content[i + 1] ?? '';
+          i += 2;
+          continue;
+        }
+        if (ch === '"') inString = false;
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        out += ch;
+        i++;
+        continue;
+      }
+      if (ch === '/' && content[i + 1] === '/') {
+        while (i < content.length && content[i] !== '\n') i++;
+        continue;
+      }
+      if (ch === '/' && content[i + 1] === '*') {
+        i += 2;
+        while (i < content.length && !(content[i] === '*' && content[i + 1] === '/')) i++;
+        i += 2;
+        continue;
+      }
+      out += ch;
+      i++;
+    }
+    try {
+      return JSON.parse(out.replace(/,(\s*[\]}])/g, '$1'));
+    } catch {
+      return undefined;
+    }
+  }
+}
+
 export const skillOverprivilegeRule: Rule = {
   id: 'AG-SK-002',
   category: 'overprivileged',
@@ -92,12 +141,7 @@ export const skillOverprivilegeRule: Rule = {
   },
   checkSource(file, content) {
     if (!CLAUDE_SETTINGS_FILE.test(file)) return [];
-    let data: unknown;
-    try {
-      data = JSON.parse(content);
-    } catch {
-      return [];
-    }
+    const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
     const settings = data as { permissions?: { allow?: unknown; defaultMode?: unknown } };
