@@ -132,9 +132,23 @@ export const supplyChainRule: Rule = {
     for (const spec of Array.isArray(plugins) ? plugins : []) {
       if (typeof spec !== 'string') continue;
       // Local plugin files/paths are loaded from the repo, not fetched from npm.
-      if (spec.startsWith('.') || spec.startsWith('/') || spec.includes('://') || /\.[cm]?[jt]s$/.test(spec)) continue;
-      if (isPinned(spec)) continue;
+      if (spec.startsWith('.') || spec.startsWith('/') || /\.[cm]?[jt]s$/.test(spec)) continue;
       const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${spec}"`)) + 1;
+      if (spec.includes('://')) {
+        // Git-URL specs fetch mutable upstream code unless pinned to a commit.
+        if (/#[0-9a-f]{7,40}$/i.test(spec)) continue;
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `OpenCode plugin "${spec.slice(0, 100)}" is fetched from a git URL and executed at startup without a commit pin — every launch fetches whatever the branch points at (rug-pull / compromised-release exposure). Pin a commit (e.g. …#<sha>)`,
+          }),
+        );
+        continue;
+      }
+      if (isPinned(spec)) continue;
       findings.push(
         finding(this, {
           severity: 'medium',

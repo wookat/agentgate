@@ -1004,6 +1004,27 @@ describe('scanRepo', () => {
     expect(hits[1]?.message).toContain('@my-org/custom-plugin');
   });
 
+  it('flags unpinned git-URL OpenCode plugins (AG-SC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'opencode.json'),
+      JSON.stringify(
+        {
+          plugin: [
+            'superpowers@git+https://github.com/obra/superpowers.git',
+            'pinned@git+https://github.com/obra/pinned.git#0123456789abcdef0123456789abcdef01234567',
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]?.severity).toBe('medium');
+    expect(hits[0]?.message).toContain('git URL');
+    expect(hits[0]?.message).toContain('superpowers');
+  });
+
   it('flags dangerous Cursor hook commands (AG-SK-003)', () => {
     fs.mkdirSync(path.join(dir, '.cursor'), { recursive: true });
     fs.writeFileSync(
