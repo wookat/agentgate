@@ -7,7 +7,7 @@ All claims below come from real runs we performed and re-check every few
 iterations; each cell is dated so you can judge freshness. Competitors move —
 when a claim is stale or we can't verify something, we say so.
 
-*Last verified: 2026-08-06 against snyk-agent-scan 0.5.16 (formerly
+*Last verified: 2026-08-07 against snyk-agent-scan 0.5.16 (formerly
 mcp-scan), thynkQ mcp-scan 2.0.2 (npm), socket CLI 1.1.154, osv-scanner
 v2.4.0.*
 
@@ -17,6 +17,7 @@ v2.4.0.*
 |---|---|---|---|
 | MCP config scanning (static, no server started) | yes | yes | no (package-focused) |
 | Live tool-surface scanning (MCP handshake) | yes, opt-in `--live` | yes | no |
+| Remote (`url`) server live scanning + lockfile pinning | yes since 0.21.0 — Streamable HTTP with SSE fallback, `lock`/`ci` gate remote drift | unknown — unverifiable without a token | no |
 | Agent skill / slash-command scanning | yes, offline, no account | gated behind `SNYK_TOKEN` — refuses to run without an account (verified 2026-08-06) | no |
 | `allowed-tools` overprivilege analysis | yes (AG-SK-002) | unknown — unverifiable without a token | no |
 | Load-time dynamic-context command analysis | yes (AG-SK-003) | unknown — unverifiable without a token | no |
@@ -51,6 +52,10 @@ files at all (a poisoned `SKILL.md` produced zero findings), has no MCP
 advisory database (`ludus-mcp@1.0.24` with three public CVEs reported only a
 generic "unverified source"), and its `diff` compares scan reports rather
 than pinning the tool surface — no lockfile, so description rug-pulls pass.
+Re-tested 2026-08-07 against a remote `url` server (`mcp.deepwiki.com`): it
+never connects — a 3 ms static pass flagged only "contacts unknown external
+endpoint", so poisoned descriptions or rug-pulls on hosted servers are
+invisible to it; AgentGate's `--live` fetches and locks the remote surface.
 
 ## Our position
 
