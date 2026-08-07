@@ -40,6 +40,8 @@ Any of these markdown layouts are treated as skill files:
   [agents.md](https://agents.md/) standard (`AGENTS.md` / `AGENT.md`,
   nested files apply to subtrees), `CLAUDE.md`, `GEMINI.md`, Zed's
   `.rules`, and GitHub Copilot's `.github/copilot-instructions.md`.
+- Copilot path-specific instructions (`.github/instructions/**.instructions.md`)
+  and prompt files (`.github/prompts/*.prompt.md`).
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
