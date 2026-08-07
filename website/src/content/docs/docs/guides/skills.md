@@ -42,6 +42,8 @@ Any of these markdown layouts are treated as skill files:
   `.rules`, and GitHub Copilot's `.github/copilot-instructions.md`.
 - Copilot path-specific instructions (`.github/instructions/**.instructions.md`)
   and prompt files (`.github/prompts/*.prompt.md`).
+- Amazon Q Developer project rules (`.amazonq/rules/**.md`, subdirectories
+  included — auto-loaded as chat context in the IDE and CLI).
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
