@@ -41,6 +41,10 @@ PreToolUse, …) for everyone who opens the project, so remote-script pipes and
 data-exfiltration commands report while local lint/setup commands and agent
 prompt actions stay clean.
 
+Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
+their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
+userPromptSubmit, preToolUse, postToolUse) with the same classification.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.
