@@ -593,6 +593,43 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags unscoped pre-approved tools in Amazon Q agent files (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.amazonq', 'cli-agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.amazonq', 'cli-agents', 'dev.json'),
+      JSON.stringify(
+        {
+          name: 'dev',
+          allowedTools: ['fs_read', 'fs_write', 'execute_bash', 'use_aws', '@localdb/*'],
+        },
+        null,
+        2,
+      ),
+    );
+    let hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'high', 'medium', 'medium']);
+    fs.writeFileSync(
+      path.join(dir, '.amazonq', 'cli-agents', 'dev.json'),
+      JSON.stringify(
+        {
+          name: 'dev',
+          allowedTools: ['fs_read', 'execute_bash', '@git/git_status'],
+          toolsSettings: { execute_bash: { allowedCommands: ['git status', 'git fetch'] } },
+        },
+        null,
+        2,
+      ),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+    fs.writeFileSync(
+      path.join(dir, '.amazonq', 'cli-agents', 'dev.json'),
+      JSON.stringify({ name: 'dev', allowedTools: ['*'] }, null, 2),
+    );
+    hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('high');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
