@@ -431,6 +431,32 @@ describe('scanRepo', () => {
     expect(hits[1]!.message).toContain('agent.reviewer.permission.webfetch');
   });
 
+  it('flags dangerous unscoped grants in Gemini CLI settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.gemini'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.gemini', 'settings.json'),
+      JSON.stringify(
+        {
+          general: { defaultApprovalMode: 'auto_edit' },
+          tools: { allowed: ['run_shell_command', 'run_shell_command(git)', 'web_fetch', 'read_file'] },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.severity, f.message.includes('auto_edit')])).toEqual([
+      ['high', false],
+      ['medium', false],
+      ['medium', true],
+    ]);
+    fs.writeFileSync(
+      path.join(dir, '.gemini', 'settings.json'),
+      JSON.stringify({ general: { defaultApprovalMode: 'plan' }, tools: { allowed: ['run_shell_command(npm test)'] } }, null, 2),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
