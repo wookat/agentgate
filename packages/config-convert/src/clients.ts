@@ -147,6 +147,9 @@ export const claudeCode = mcpServersAdapter("claude-code", ".mcp.json", { withTy
 /** Cursor — `~/.cursor/mcp.json` or project `.cursor/mcp.json`. */
 export const cursor = mcpServersAdapter("cursor", ".cursor/mcp.json", { withType: false });
 
+/** LM Studio — `~/.lmstudio/mcp.json`, follows Cursor's `mcpServers` notation. */
+export const lmstudio = mcpServersAdapter("lmstudio", "~/.lmstudio/mcp.json", { withType: false });
+
 /** VS Code — `.vscode/mcp.json` with a `servers` map and optional `inputs`. */
 export const vscode: ClientAdapter = {
   id: "vscode",
@@ -700,4 +703,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   continue: continueDev,
   amp,
   warp,
+  lmstudio,
 };
