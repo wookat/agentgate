@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.37.0
+
+### Minor Changes
+
+- ac4598f: AG-SK-002 checks the `chat.tools.terminal.autoApprove` map in VS Code workspace settings: a catch-all regex rule (`"/.*/": true`) is high, and auto-approving a command from VS Code's own default-deny list (`rm`, `curl`, `chmod`, shells, `sudo`, ...) is medium. Scoped safe commands stay clean.
+- 2b0f2e7: AG-SK-002 checks Zed project settings (`.zed/settings.json`): the legacy `agent.always_allow_tool_actions: true` is high, and in `agent.tool_permissions` a global `default: "allow"` is high, per-tool `default: "allow"` is high for `terminal` and medium for file-write/delete/fetch tools. `.zed` is walked for settings only.
+
+### Patch Changes
+
+- Updated dependencies [ac4598f]
+- Updated dependencies [2b0f2e7]
+  - mcp-agentgate-core@0.37.0
+
 ## 0.36.0
 
 ### Minor Changes
