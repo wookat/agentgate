@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.44.0
+
+### Minor Changes
+
+- e65057f: AG-SC-001 flags Claude Code plugins auto-enabled from mutable marketplaces: `.claude/settings.json` entries in `enabledPlugins` whose marketplace (`extraKnownMarketplaces`) has a git-based source without a `sha` or release-style `ref` report medium — anyone who trusts the folder is prompted to install plugin hooks, MCP servers, and skills fetched from whatever the branch points at. Local directory/file sources, release-pinned sources, and non-enabled plugins stay clean.
+
+### Patch Changes
+
+- 5d90f0a: AG-SS-001 downgrades cloud-metadata-endpoint references on blocking/defensive lines (block/reject/deny/SSRF vocabulary on the matching line) from high to low — security-guidance prompts and SSRF-guard code reference the endpoint to forbid it, not to fetch it. Plain references in non-test paths still report high.
+- Updated dependencies [e65057f]
+- Updated dependencies [5d90f0a]
+  - mcp-agentgate-core@0.44.0
+
 ## 0.43.0
 
 ### Minor Changes
