@@ -24,7 +24,7 @@ These warnings don't fail the scan; they're listed in the report's `warnings` ar
 
 Remote servers are contacted via Streamable HTTP, then SSE for legacy servers.
 
-- **HTTP 401/403** — the endpoint requires a token. Add it under `headers` in the server config: `"headers": { "Authorization": "Bearer …" }`. Interactive OAuth flows are not supported.
+- **HTTP 401/403** — the endpoint requires credentials. For OAuth servers, run `agentgate auth login <server-name>` once (opens a browser; tokens are cached outside the project tree and picked up by live scans automatically). Alternatively add a static token under `headers` in the server config: `"headers": { "Authorization": "Bearer …" }` — configured headers take precedence over cached OAuth tokens. CI stays non-interactive: use static headers or pre-provisioned tokens there.
 - **Network errors** — the machine running the scan needs egress to the endpoint; corporate proxies and CI egress rules are the usual culprits.
 - The error always includes the server's own response text — read it first.
 

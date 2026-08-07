@@ -2,12 +2,20 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport, StreamableHTTPError } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { McpServerConfig, ToolSurface } from './types.js';
 
 export interface LiveScanOptions {
   /** Milliseconds before giving up on the server. Default 15000. */
   timeoutMs?: number;
+  /**
+   * OAuth provider supplying cached tokens for remote servers. Only consulted
+   * when the server config has no static `headers`. Must never start an
+   * interactive flow — a 401 with an unusable/expired token surfaces as an
+   * auth error.
+   */
+  authProvider?: OAuthClientProvider;
 }
 
 /**
@@ -30,28 +38,36 @@ export async function fetchToolSurface(server: McpServerConfig, opts: LiveScanOp
   }
   // remote: Streamable HTTP first (current spec), SSE transport as fallback (legacy servers)
   const headers = server.headers ?? {};
+  // Static headers take precedence; cached OAuth tokens are only used when none are configured.
+  const authProvider = Object.keys(headers).length === 0 ? opts.authProvider : undefined;
   try {
-    return await listAllTools(server, new StreamableHTTPClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
+    return await listAllTools(server, new StreamableHTTPClientTransport(new URL(server.url!), { requestInit: { headers }, authProvider }), timeoutMs);
   } catch (httpErr) {
-    if (isAuthError(httpErr)) throw authHint(server, httpErr);
+    if (isAuthError(httpErr)) throw authHint(server, httpErr, authProvider !== undefined);
     try {
-      return await listAllTools(server, new SSEClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
+      return await listAllTools(server, new SSEClientTransport(new URL(server.url!), { requestInit: { headers }, authProvider }), timeoutMs);
     } catch {
       throw httpErr instanceof Error ? httpErr : new Error(String(httpErr));
     }
   }
 }
 
-function isAuthError(err: unknown): err is StreamableHTTPError {
-  return err instanceof StreamableHTTPError && (err.code === 401 || err.code === 403);
+function isAuthError(err: unknown): err is Error {
+  if (err instanceof StreamableHTTPError && (err.code === 401 || err.code === 403)) return true;
+  if (!(err instanceof Error)) return false;
+  // The SDK transport surfaces a rejected/expired token either as an
+  // UnauthorizedError or by demanding a new interactive authorization.
+  return err.name === 'UnauthorizedError' || /authorizationCode is required/.test(err.message);
 }
 
-function authHint(server: McpServerConfig, err: Error): Error {
+function authHint(server: McpServerConfig, err: Error, usedOAuthTokens: boolean): Error {
   const configured = Object.keys(server.headers ?? {});
   const detail = configured.length > 0
     ? `the configured header(s) (${configured.join(', ')}) were rejected — check the token value and scope`
-    : `no auth headers are configured — add the required token under "headers" in the server config (e.g. "headers": { "Authorization": "Bearer …" })`;
-  return new Error(`${err.message.trim()} — ${detail}. Interactive OAuth flows are not supported.`);
+    : usedOAuthTokens
+      ? `the cached OAuth tokens were rejected — run \`agentgate auth login ${server.name}\` to log in again`
+      : `no credentials are configured — run \`agentgate auth login ${server.name}\` for OAuth servers, or add a token under "headers" in the server config (e.g. "headers": { "Authorization": "Bearer …" })`;
+  return new Error(`${err.message.trim()} — ${detail}.`);
 }
 
 async function listAllTools(server: McpServerConfig, transport: Transport, timeoutMs: number): Promise<ToolSurface[]> {

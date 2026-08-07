@@ -10,6 +10,7 @@ import {
 } from 'mcp-agentgate-core';
 import pc from 'picocolors';
 import { debugLog } from './debug.js';
+import { storedProviderFor } from './oauth/provider.js';
 
 export interface GatherOptions {
   /** Explicit config file path (skips discovery). */
@@ -74,7 +75,9 @@ export async function gatherSurfaces(servers: McpServerConfig[], timeoutMs: numb
       }
       try {
         debugLog(`connecting to "${server.name}" (${server.command ?? server.url}) with timeout ${timeoutMs}ms`);
-        const tools = await fetchToolSurface(server, { timeoutMs });
+        const authProvider = server.url ? storedProviderFor(server.url) : undefined;
+        if (authProvider) debugLog(`"${server.name}": using cached OAuth tokens`);
+        const tools = await fetchToolSurface(server, { timeoutMs, authProvider });
         debugLog(`"${server.name}" exposed ${tools.length} tool(s)`);
         results[index] = { server: server.name, tools };
       } catch (err) {

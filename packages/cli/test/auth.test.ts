@@ -172,3 +172,76 @@ describe('agentgate auth', () => {
     await expect(runAuthLogin('local', { timeout: '1000', config: cfg })).rejects.toThrow(/stdio server/);
   });
 });
+
+describe('live scans pick up stored OAuth tokens', () => {
+  const CLI = path.resolve(__dirname, '..', 'dist', 'index.js');
+  const AUTH_FIXTURE = path.resolve(__dirname, '..', '..', 'core', 'test', 'fixtures', 'toy-auth-http-server.mjs');
+  let dir: string;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-auth-live-'));
+  });
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  async function withAuthServer(fn: (url: string) => Promise<void>): Promise<void> {
+    const { spawn } = await import('node:child_process');
+    const child = spawn(process.execPath, [AUTH_FIXTURE], { stdio: ['ignore', 'pipe', 'ignore'] });
+    try {
+      const port = await new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('auth fixture did not start')), 15000);
+        child.stdout.on('data', (chunk: Buffer) => {
+          const m = /PORT (\d+)/.exec(chunk.toString());
+          if (m) {
+            clearTimeout(timer);
+            resolve(m[1]!);
+          }
+        });
+      });
+      await fn(`http://127.0.0.1:${port}/mcp`);
+    } finally {
+      child.kill();
+    }
+  }
+
+  async function runCli(args: string[], cwd: string): Promise<{ code: number; out: string }> {
+    const { execFile } = await import('node:child_process');
+    return new Promise((resolve) => {
+      execFile(
+        process.execPath,
+        [CLI, ...args],
+        { cwd, env: { ...process.env, AGENTGATE_CONFIG_DIR: dir, GITHUB_ACTIONS: 'false' } },
+        (err, stdout, stderr) => {
+          resolve({ code: (err as { code?: number } | null)?.code ?? 0, out: `${stdout}\n${stderr}` });
+        },
+      );
+    });
+  }
+
+  it('scan --live authenticates with the saved token and reports the rejected-token hint otherwise', async () => {
+    await withAuthServer(async (url) => {
+      const cfg = path.join(dir, 'mcp.json');
+      fs.writeFileSync(cfg, JSON.stringify({ mcpServers: { hosted: { url } } }));
+
+      // No stored tokens: actionable hint pointing at auth login.
+      const before = await runCli(['scan', '--live', '--config', cfg, '--fail-on', 'never'], dir);
+      expect(before.out).toContain('agentgate auth login');
+
+      // Store the token the fixture accepts, as `auth login` would.
+      const { updateServerAuth } = await import('../src/oauth/store.js');
+      process.env.AGENTGATE_CONFIG_DIR = dir;
+      try {
+        updateServerAuth(url, { tokens: { access_token: 'good-token', token_type: 'Bearer' } });
+      } finally {
+        delete process.env.AGENTGATE_CONFIG_DIR;
+      }
+
+      const after = await runCli(['lock', '--config', cfg], dir);
+      expect(after.out).not.toContain('agentgate auth login');
+      expect(after.code).toBe(0);
+      const lockfile = fs.readFileSync(path.join(dir, 'agentgate.lock'), 'utf8');
+      expect(lockfile).toContain('whoami');
+    });
+  }, 60000);
+});
