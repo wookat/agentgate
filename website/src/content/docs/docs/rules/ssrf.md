@@ -16,6 +16,11 @@ Detects server-side request forgery vectors: references to cloud metadata endpoi
 - Descriptions referencing private IP ranges (`low`).
 
 **Source scan**: metadata-endpoint references in repo files (`high`).
+Two contexts report `low` instead: network-policy manifests (which
+reference the metadata IP to *block* egress to it) and test/fixture
+paths (`tests/`, `__tests__/`, `*.test.*`, `*.spec.*`, `examples/`,
+`fixtures/`, `mocks/`), where the reference is usually a fixture for
+the SSRF protection under test.
 
 ## Why it matters
 

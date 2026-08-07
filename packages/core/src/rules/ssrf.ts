@@ -84,13 +84,16 @@ export const ssrfRule: Rule = {
         }),
       ];
     }
+    // Test/fixture trees reference the metadata IP as a fixture for the very
+    // SSRF protections under test; still reported, but quietly.
+    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
     return [
       finding(this, {
-        severity: 'high',
+        severity: testPath ? 'low' : 'high',
         target: file,
         file,
         line,
-        message: 'Source references a cloud metadata endpoint (potential SSRF/credential-theft vector)',
+        message: `Source references a cloud metadata endpoint (potential SSRF/credential-theft vector)${testPath ? ' — in a test/fixture path, likely an SSRF-protection test fixture; confirm' : ''}`,
       }),
     ];
   },
