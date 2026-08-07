@@ -1,5 +1,21 @@
 # mcp-agentgate
 
+## 0.21.0
+
+### Minor Changes
+
+- a3c6fe8: `scan --live`, `lock`, `diff`, and `ci` now connect to remote MCP servers (`url` configs) via Streamable HTTP with an SSE fallback for legacy servers, passing configured `headers`. Remote tool surfaces are scanned for poisoning and pinned in the lockfile just like stdio servers; previously every remote server was skipped as "analyzed statically only".
+
+### Patch Changes
+
+- dc74040: `scan` and `ci` accept `--fail-on never` (like `deps`): `scan --fail-on never` reports without gating, `ci --fail-on never` gates on lockfile drift only.
+- e0fbced: `deps` no longer flags imports resolved through a `deno.json`/`deno.jsonc` import map as hallucinated npm packages: map keys (e.g. JSR `@std/*` specifiers) are treated as declared. Fixes 3 critical false positives on honojs/hono.
+- d00c2ce: `deps` Python import scanning: well-known import names map to their PyPI distributions (yaml→pyyaml, git→gitpython, PIL→pillow, …), Python 3.14 stdlib modules (annotationlib, compression) are recognized, and any directory containing .py files counts as a local namespace package. Fixes 3 critical false positives on tiangolo/fastapi.
+- Updated dependencies [e0fbced]
+- Updated dependencies [d00c2ce]
+- Updated dependencies [a3c6fe8]
+  - mcp-agentgate-core@0.21.0
+
 ## 0.20.0
 
 ### Minor Changes
