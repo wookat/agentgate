@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.27.0
+
+### Minor Changes
+
+- 2a359b9: Skill/instruction scanning (and `lock --skills`) now covers Roo Code rules — `.roo/rules/` and mode-specific `.roo/rules-<mode>/` directories, plus the single-file `.roorules` / `.roorules-<mode>` fallbacks.
+- 5baca9c: Skill/instruction scanning (and `lock --skills`) now covers root instruction files read verbatim by many agents: the agents.md standard (`AGENTS.md`/`AGENT.md`, nested files included), `CLAUDE.md`, `GEMINI.md`, Zed's `.rules`, and GitHub Copilot's `.github/copilot-instructions.md`.
+
+### Patch Changes
+
+- Updated dependencies [2a359b9]
+- Updated dependencies [5baca9c]
+  - mcp-agentgate-core@0.27.0
+
 ## 0.26.0
 
 ### Minor Changes
