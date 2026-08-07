@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.48.0
+
+### Minor Changes
+
+- bc2ba21: Marketplace catalog entries (`.claude-plugin/marketplace.json`) can define plugins entirely inline (`strict: false`). AgentGate now covers both inline surfaces: entry-level `mcpServers` are discovered and get the full config rule set + advisory checks, and entry-level `hooks` commands run through the shared dangerous-command classifier (AG-SK-003).
+- 25f1582: AG-SC-001 marketplace source mutability now covers `npm` and `archive` plugin sources: an npm source with no version or a range (`^2.0.0`) and a zip archive with no `sha256` digest both report medium — every install fetches whatever upstream serves next. Exact npm versions and sha256-pinned archives stay clean, and each finding carries source-type-specific pin advice.
+
+### Patch Changes
+
+- Updated dependencies [bc2ba21]
+- Updated dependencies [25f1582]
+  - mcp-agentgate-core@0.48.0
+
 ## 0.47.0
 
 ### Minor Changes

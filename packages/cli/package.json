@@ -1,6 +1,6 @@
 {
   "name": "mcp-agentgate",
-  "version": "0.47.0",
+  "version": "0.48.0",
   "description": "Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era",
   "license": "Apache-2.0",
   "repository": {
