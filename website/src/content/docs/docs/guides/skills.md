@@ -44,7 +44,8 @@ Any of these markdown layouts are treated as skill files:
   and prompt files (`.github/prompts/*.prompt.md`).
 - VS Code custom agents (`.github/agents/*.md` — `*.agent.md` and the
   legacy `*.chatmode.md`; VS Code loads any Markdown file in that folder
-  as an agent definition).
+  as an agent definition), plus the legacy chat-mode folder
+  (`.github/chatmodes/*.chatmode.md`).
 - Amazon Q Developer project rules (`.amazonq/rules/**.md`, subdirectories
   included — auto-loaded as chat context in the IDE and CLI).
 
