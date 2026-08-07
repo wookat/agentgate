@@ -13,11 +13,11 @@ Three concrete failure modes, all with real-world precedent (see the [threat mod
 
 ## Is `agentgate scan` safe to run? Does it execute server code?
 
-The default static scan never executes server code — it only reads configs (and source files for a repo target). `--live` explicitly opts in to launching stdio servers to read their real tool surface; only use it with servers you'd run anyway.
+The default static scan never executes server code — it only reads configs (and source files for a repo target). `--live` explicitly opts in to launching stdio servers (after a confirmation prompt) and to contacting remote `url` servers over Streamable HTTP/SSE to read their real tool surface; only use it with servers you'd run or call anyway.
 
 ## Which MCP clients are supported?
 
-Auto-discovery covers Claude Desktop, Claude Code, Cursor, VS Code, Codex (`config.toml`), and OpenCode (`opencode.json`). Any other client works via `--config path/to/config`.
+Auto-discovery covers Claude Desktop, Claude Code, Cursor, VS Code, Codex (`config.toml`), OpenCode (`opencode.json`), Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, and the generic `.agents/.mcp.json` convention. Any other client works via `--config path/to/config`.
 
 ## How is this different from `npm audit`?
 

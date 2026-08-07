@@ -5,7 +5,7 @@ description: Common AgentGate errors and how to fix them.
 
 ## `scan` finds no servers
 
-Auto-discovery reads the standard config paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex, and OpenCode in your home directory.
+Auto-discovery reads the standard config paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, and `.agents/.mcp.json` in your home directory.
 
 - Running in CI, a container, or as another user? The home directory is different — pass `--config path/to/config` explicitly.
 - Project-scoped configs (e.g. `.mcp.json`, `.cursor/mcp.json`) are picked up when you pass the project directory: `agentgate scan .`.
@@ -19,6 +19,14 @@ The stdio server didn't complete the MCP handshake within the timeout (default 1
 - Missing runtime (`uvx`, `docker`, `node`) on the machine running the scan is the most common cause in CI.
 
 These warnings don't fail the scan; they're listed in the report's `warnings` array.
+
+## `live scan skipped for "…"` on a remote (`url`) server
+
+Remote servers are contacted via Streamable HTTP, then SSE for legacy servers.
+
+- **HTTP 401/403** — the endpoint requires a token. Add it under `headers` in the server config: `"headers": { "Authorization": "Bearer …" }`. Interactive OAuth flows are not supported.
+- **Network errors** — the machine running the scan needs egress to the endpoint; corporate proxies and CI egress rules are the usual culprits.
+- The error always includes the server's own response text — read it first.
 
 ## `diff`/`ci` exits 2 with a lockfile error
 
