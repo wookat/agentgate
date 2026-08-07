@@ -720,6 +720,55 @@ describe('scanRepo', () => {
     expect(hits[0]!.message).toContain('mcp:localdb:execute_sql');
   });
 
+  it('flags catch-all permission allows in Kiro agent files (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.kiro', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.kiro', 'agents', 'builder.json'),
+      JSON.stringify(
+        {
+          name: 'builder',
+          permissions: {
+            rules: [
+              { capability: 'shell', effect: 'allow' },
+              { capability: 'filesystem', effect: 'allow', match: ['*'] },
+              { capability: 'fs_read', effect: 'allow' },
+              { capability: 'mcp', effect: 'allow', match: ['my-server/*'] },
+            ],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    fs.writeFileSync(
+      path.join(dir, '.kiro', 'agents', 'committer.md'),
+      [
+        '---',
+        'description: commit helper',
+        'permissions:',
+        '  rules:',
+        '    - capability: shell',
+        '      match:',
+        '        - "git add *"',
+        '        - "git commit *"',
+        '      effect: allow',
+        '    - capability: web_fetch',
+        '      effect: allow',
+        '    - capability: shell',
+        '      effect: deny',
+        '---',
+        '',
+        '# Commit helper',
+      ].join('\n'),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    const json = hits.filter((f) => f.file.endsWith('builder.json'));
+    expect(json.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
+    const md = hits.filter((f) => f.file.endsWith('committer.md'));
+    expect(md.map((f) => f.severity)).toEqual(['medium']);
+    expect(md[0]!.message).toContain('"web_fetch"');
+  });
+
   it('flags unscoped pre-approved tools in Amazon Q agent files (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.amazonq', 'cli-agents'), { recursive: true });
     fs.writeFileSync(

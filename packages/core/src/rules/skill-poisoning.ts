@@ -1,3 +1,4 @@
+import { parse as parseYaml } from 'yaml';
 import { Rule, finding } from './rule.js';
 import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
 
@@ -27,7 +28,7 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (`.amazonq/rules/**.md`, auto-loaded as chat context, subdirs allowed).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/steering\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.amazonq\/rules\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.amazonq\/rules\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -141,6 +142,41 @@ const ZED_HIGH_RISK_TOOLS = new Set(['terminal']);
 
 /** Zed tools whose auto-approval means unrestricted writes/deletes or network egress. */
 const ZED_MEDIUM_RISK_TOOLS = new Set(['edit_file', 'write_file', 'delete_path', 'move_path', 'fetch']);
+
+/** Kiro project custom-agent files (JSON form) with embedded permission rules. */
+const KIRO_AGENT_JSON = /(^|\/)\.kiro\/agents\/.+\.json$/i;
+
+/** Kiro project custom-agent files (Markdown form, permissions in YAML frontmatter). */
+const KIRO_AGENT_MD = /(^|\/)\.kiro\/agents\/.+\.md$/i;
+
+/** Kiro capabilities whose catch-all pre-approval means shell execution (incl. meta-capabilities). */
+const KIRO_HIGH_CAPS = new Set(['shell', 'all', 'builtin']);
+
+/** Kiro capabilities whose catch-all pre-approval means unrestricted writes or network egress. */
+const KIRO_MEDIUM_CAPS = new Set(['filesystem', 'fs_write', 'mcp', 'web_fetch']);
+
+/** Evaluate Kiro agent permission rules; returns risky catch-all allows. */
+function kiroRiskyAllows(rules: unknown): { capability: string; severity: 'high' | 'medium' }[] {
+  if (!Array.isArray(rules)) return [];
+  const isCatchAll = (match: unknown) =>
+    match === undefined || (Array.isArray(match) && (match.length === 0 || match.some((m) => typeof m === 'string' && CATCH_ALL_GLOB.has(m.trim()))));
+  const deniedAll = new Set(
+    rules
+      .filter((r) => typeof r === 'object' && r !== null && (r as { effect?: unknown }).effect === 'deny' && isCatchAll((r as { match?: unknown }).match))
+      .map((r) => String((r as { capability?: unknown }).capability ?? '')),
+  );
+  const out: { capability: string; severity: 'high' | 'medium' }[] = [];
+  for (const r of rules) {
+    if (typeof r !== 'object' || r === null) continue;
+    const { capability, effect, match } = r as { capability?: unknown; effect?: unknown; match?: unknown };
+    if (effect !== 'allow' || typeof capability !== 'string' || !isCatchAll(match)) continue;
+    // Deny always wins regardless of scope (official priority: deny > ask > allow).
+    if (deniedAll.has(capability) || deniedAll.has('all')) continue;
+    const severity = KIRO_HIGH_CAPS.has(capability) ? 'high' : KIRO_MEDIUM_CAPS.has(capability) ? 'medium' : undefined;
+    if (severity) out.push({ capability, severity });
+  }
+  return out;
+}
 
 /** Cursor CLI project permission config. */
 const CURSOR_CLI_FILE = /(^|\/)\.cursor\/cli\.json$/i;
@@ -258,6 +294,28 @@ export const skillOverprivilegeRule: Rule = {
         );
       }
     }
+    if (KIRO_AGENT_MD.test(file)) {
+      const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      let data: unknown;
+      try {
+        data = fm?.[1] ? parseYaml(fm[1]) : undefined;
+      } catch {
+        data = undefined;
+      }
+      const rules = (data as { permissions?: { rules?: unknown } } | undefined)?.permissions?.rules;
+      for (const risky of kiroRiskyAllows(rules)) {
+        const capLine = content.split(/\r?\n/).findIndex((l) => l.includes(`capability: ${risky.capability}`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: risky.severity,
+            target: file,
+            file,
+            ...(capLine > 0 ? { line: capLine } : {}),
+            message: `Kiro agent pre-approves the "${risky.capability}" capability with a catch-all allow rule — it runs without prompting for anyone using this checked-in agent`,
+          }),
+        );
+      }
+    }
     return findings;
   },
   checkSource(file, content) {
@@ -269,7 +327,8 @@ export const skillOverprivilegeRule: Rule = {
     const isZed = ZED_SETTINGS_FILE.test(file);
     const isAmazonqAgent = AMAZONQ_AGENT_FILE.test(file);
     const isCursorCli = CURSOR_CLI_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli) return [];
+    const isKiroAgent = KIRO_AGENT_JSON.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -404,6 +463,23 @@ export const skillOverprivilegeRule: Rule = {
             message: hit
               ? `Cursor CLI project config pre-approves "${token}" in permissions.allow — ${hit.risk} without prompting for anyone using this checked-in config`
               : `Cursor CLI project config pre-approves "${token}" in permissions.allow — the agent ${/^Read/i.test(trimmed) ? 'reads' : 'writes'} secret-shaped paths without prompting for anyone using this checked-in config`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isKiroAgent) {
+      const findings = [];
+      const rules = (data as { permissions?: { rules?: unknown } }).permissions?.rules;
+      for (const risky of kiroRiskyAllows(rules)) {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${risky.capability}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: risky.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Kiro agent pre-approves the "${risky.capability}" capability with a catch-all allow rule — it runs without prompting for anyone using this checked-in agent`,
           }),
         );
       }
