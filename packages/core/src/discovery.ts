@@ -22,8 +22,8 @@ export interface ClientConfigLocation {
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, and
- * Warp (plus the generic `.agents/.mcp.json` convention).
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp,
+ * Warp, and LM Studio (plus the generic `.agents/.mcp.json` convention).
  */
 export function knownConfigLocations(homeDir = os.homedir(), platform = process.platform): ClientConfigLocation[] {
   const locations: ClientConfigLocation[] = [];
@@ -89,6 +89,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('amp', path.join(homeDir, '.config', 'amp', 'settings.json'), 'amp-settings-json');
   // Warp — file-based MCP servers, standard `mcpServers` map
   push('warp', path.join(homeDir, '.warp', '.mcp.json'));
+  // LM Studio — Cursor-style mcp.json (same path on every platform)
+  push('lmstudio', path.join(homeDir, '.lmstudio', 'mcp.json'));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));

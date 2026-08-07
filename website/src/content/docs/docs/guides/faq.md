@@ -21,7 +21,7 @@ For OAuth-protected hosted servers, run `agentgate auth login <server-name>` onc
 
 ## Which MCP clients are supported?
 
-Auto-discovery covers Claude Desktop, Claude Code, Cursor, VS Code, Codex (`config.toml`), OpenCode (`opencode.json`), Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, and the generic `.agents/.mcp.json` convention. Any other client works via `--config path/to/config`.
+Auto-discovery covers Claude Desktop, Claude Code, Cursor, VS Code, Codex (`config.toml`), OpenCode (`opencode.json`), Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, and the generic `.agents/.mcp.json` convention. Any other client works via `--config path/to/config`.
 
 ## How is this different from `npm audit`?
 
