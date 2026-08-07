@@ -142,6 +142,18 @@ const ZED_HIGH_RISK_TOOLS = new Set(['terminal']);
 /** Zed tools whose auto-approval means unrestricted writes/deletes or network egress. */
 const ZED_MEDIUM_RISK_TOOLS = new Set(['edit_file', 'write_file', 'delete_path', 'move_path', 'fetch']);
 
+/** Cursor CLI project permission config. */
+const CURSOR_CLI_FILE = /(^|\/)\.cursor\/cli\.json$/i;
+
+/** Risky Cursor CLI permission tokens in permissions.allow. */
+const CURSOR_RISKY_TOKENS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] = [
+  { re: /^Shell\(\s*\*(\s*:\s*\*)?\s*\)$/i, severity: 'high', risk: 'arbitrary shell commands run' },
+  { re: /^Mcp\(\s*\*\s*:\s*\*\s*\)$/i, severity: 'high', risk: 'every tool of every MCP server runs' },
+  { re: /^Write\(\s*(\*\*?(\/\*+)?)\s*\)$/i, severity: 'medium', risk: 'unrestricted file writes run' },
+  { re: /^WebFetch\(\s*\*\s*\)$/i, severity: 'medium', risk: 'fetches to any domain (exfiltration channel) run' },
+  { re: /^Mcp\(\s*[^:*)]+\s*:\s*\*\s*\)$/i, severity: 'medium', risk: 'every tool of that MCP server runs' },
+];
+
 /** Glob patterns that match every file (catch-all edit auto-approval). */
 const CATCH_ALL_GLOB = new Set(['**', '**/*', '*']);
 
@@ -253,7 +265,8 @@ export const skillOverprivilegeRule: Rule = {
     const isVscode = VSCODE_SETTINGS_FILE.test(file);
     const isZed = ZED_SETTINGS_FILE.test(file);
     const isAmazonqAgent = AMAZONQ_AGENT_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent) return [];
+    const isCursorCli = CURSOR_CLI_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -360,6 +373,32 @@ export const skillOverprivilegeRule: Rule = {
             }),
           );
         }
+      }
+      return findings;
+    }
+    if (isCursorCli) {
+      const findings = [];
+      const perms = (data as { permissions?: { allow?: unknown; deny?: unknown } }).permissions;
+      const allow = Array.isArray(perms?.allow) ? perms.allow : [];
+      const deny = new Set(
+        (Array.isArray(perms?.deny) ? perms.deny : []).filter((t): t is string => typeof t === 'string').map((t) => t.replace(/\s+/g, '')),
+      );
+      for (const token of allow) {
+        if (typeof token !== 'string') continue;
+        // Deny rules take precedence over allow rules.
+        if (deny.has(token.replace(/\s+/g, ''))) continue;
+        const hit = CURSOR_RISKY_TOKENS.find((r) => r.re.test(token.trim()));
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${token}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Cursor CLI project config pre-approves "${token}" in permissions.allow — ${hit.risk} without prompting for anyone using this checked-in config`,
+          }),
+        );
       }
       return findings;
     }

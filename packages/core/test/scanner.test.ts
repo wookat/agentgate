@@ -558,6 +558,40 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags risky pre-approvals in Cursor CLI project config (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.cursor'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.cursor', 'cli.json'),
+      JSON.stringify(
+        {
+          permissions: {
+            allow: ['Shell(*)', 'Write(**)', 'WebFetch(*)', 'Mcp(datadog:*)', 'Shell(git)', 'Read(**)'],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    let hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium', 'medium', 'medium']);
+    // Deny rules take precedence over allow rules.
+    fs.writeFileSync(
+      path.join(dir, '.cursor', 'cli.json'),
+      JSON.stringify(
+        {
+          permissions: {
+            allow: ['Write(**)', 'Shell(git *)', 'Mcp(*:*)'],
+            deny: ['Write(**)', 'Mcp(*:*)'],
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(0);
+  });
+
   it('flags dangerous edit auto-approvals in VS Code workspace settings (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
     fs.writeFileSync(
