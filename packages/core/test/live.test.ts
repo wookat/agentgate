@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import http from 'node:http';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -34,6 +35,31 @@ describe('fetchToolSurface', () => {
       fetchToolSurface(server({ args: ['-e', 'setInterval(() => {}, 1000)'] }), { timeoutMs: 1500 }),
     ).rejects.toThrow(/Timed out/);
   }, 20000);
+
+  it('falls back to SSE for legacy remote servers that reject Streamable HTTP', async () => {
+    const fixture = path.resolve(__dirname, 'fixtures', 'toy-sse-server.mjs');
+    const child = spawn(process.execPath, [fixture], { stdio: ['ignore', 'pipe', 'ignore'] });
+    try {
+      const port = await new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('SSE fixture did not start')), 15000);
+        child.stdout.on('data', (chunk: Buffer) => {
+          const m = /PORT (\d+)/.exec(chunk.toString());
+          if (m) {
+            clearTimeout(timer);
+            resolve(m[1]!);
+          }
+        });
+      });
+      const tools = await fetchToolSurface(
+        server({ command: undefined, args: undefined, url: `http://127.0.0.1:${port}/mcp` }),
+        { timeoutMs: 15000 },
+      );
+      expect(tools.map((t) => t.name)).toEqual(['echo']);
+      expect(tools[0]!.description).toBe('Echo a message');
+    } finally {
+      child.kill();
+    }
+  }, 30000);
 
   describe('remote auth errors', () => {
     async function with401Server(fn: (url: string) => Promise<void>): Promise<void> {
