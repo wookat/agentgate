@@ -1,5 +1,20 @@
 # mcp-agentgate
 
+## 0.38.0
+
+### Minor Changes
+
+- 6052760: AG-SK-002 checks `allowedTools` in Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`): a catch-all `"*"` is high, unscoped `execute_bash`/`use_aws` are high, unscoped `fs_write` is medium, and whole-MCP-server allows (`"@server"`, `"@server/*"`) are medium. Tools scoped by a matching `toolsSettings` allowlist stay clean.
+- 04fe726: AG-SK-002 checks the `chat.tools.edits.autoApprove` glob map in VS Code workspace settings: a catch-all (`"**/*": true`) with no re-denied sensitive paths, or `true` on a sensitive path (`.env`, `.vscode`, `.github`, keys/secrets), is medium. The documented safe pattern (catch-all plus `false` re-denies) stays clean.
+
+### Patch Changes
+
+- 9a5f31a: AG-SK-002 expands Amazon Q `allowedTools` glob entries (`fs_*`, `*_bash`, `fs_?ead`) against the built-in tool names, so wildcards matching `execute_bash`, `use_aws`, or `fs_write` are flagged like the exact names instead of escaping the check.
+- Updated dependencies [6052760]
+- Updated dependencies [9a5f31a]
+- Updated dependencies [04fe726]
+  - mcp-agentgate-core@0.38.0
+
 ## 0.37.0
 
 ### Minor Changes
