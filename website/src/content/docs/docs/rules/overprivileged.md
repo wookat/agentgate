@@ -86,6 +86,13 @@ per-tool `default: "allow"` is `high` for `terminal` and `medium` for
 file-write/delete/fetch tools. `always_allow` pattern rules with a
 `confirm` default are fine.
 
+Cursor CLI project permission configs (`.cursor/cli.json`) are checked
+for risky `permissions.allow` tokens: `Shell(*)` and `Mcp(*:*)` are
+`high`; a catch-all `Write(**)`, `WebFetch(*)`, and whole-server
+`Mcp(server:*)` are `medium`. Scoped tokens (`Shell(git)`,
+`Write(src/**)`, `Read(...)`) are not flagged, and a matching entry in
+`permissions.deny` suppresses the allow (deny takes precedence).
+
 Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`) are
 checked for `allowedTools` pre-approvals: a catch-all (`"*"`) is `high`,
 unscoped `execute_bash`/`use_aws` are `high`, unscoped `fs_write` is
