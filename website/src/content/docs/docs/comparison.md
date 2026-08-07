@@ -18,7 +18,7 @@ v2.4.0.*
 | MCP config scanning (static, no server started) | yes | yes | no (package-focused) |
 | Live tool-surface scanning (MCP handshake) | yes, opt-in `--live` | yes | no |
 | Remote (`url`) server live scanning + lockfile pinning | yes since 0.21.0 — Streamable HTTP with SSE fallback, `lock`/`ci` gate remote drift | unknown — unverifiable without a token | no |
-| OAuth login for hosted servers ([`auth login`](/docs/guides/remote-oauth/)) | yes since 0.22.0 — OAuth 2.1 + PKCE, tokens cached outside the repo, picked up by live scans | unknown — unverifiable without a token | no (thynkQ mcp-scan 2.0.2 never connects to remote servers — re-verified 2026-08-07) |
+| OAuth login for hosted servers ([`auth login`](/docs/guides/remote-oauth/)) | yes since 0.23.0 — OAuth 2.1 + PKCE, tokens cached outside the repo, picked up by live scans | unknown — unverifiable without a token | no (thynkQ mcp-scan 2.0.2 never connects to remote servers — re-verified 2026-08-07) |
 | Agent skill / slash-command scanning | yes, offline, no account | gated behind `SNYK_TOKEN` — refuses to run without an account (verified 2026-08-06) | no |
 | `allowed-tools` overprivilege analysis | yes (AG-SK-002) | unknown — unverifiable without a token | no |
 | Load-time dynamic-context command analysis | yes (AG-SK-003) | unknown — unverifiable without a token | no |
