@@ -30,6 +30,15 @@ function isExecutableFile(file: string): boolean {
   return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file);
 }
 
+/**
+ * Mask quoted-heredoc bodies (`<<'EOF' … EOF`) in shell scripts — the shell
+ * treats them as literal text (usage banners, embedded docs), never executes
+ * them.
+ */
+function maskQuotedHeredocs(content: string): string {
+  return content.replace(/<<-?\s*(['"])(\w+)\1[^\n]*\n([\s\S]*?)\n\s*\2(\n|$)/g, (whole, _q: string, _tag: string, body: string) => whole.replace(body, body.replace(/[^\n]/g, ' ')));
+}
+
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
   category: 'rce-vectors',
@@ -73,11 +82,17 @@ export const rceVectorsRule: Rule = {
       }),
     ];
   },
-  checkSource(file, content) {
+  checkSource(file, rawContent) {
     const findings = [];
+    const content = /\.(sh|bash|zsh)$/i.test(file) ? maskQuotedHeredocs(rawContent) : rawContent;
     if (REMOTE_EXEC_RE.test(content)) {
-      const m = content.match(REMOTE_EXEC_RE)!;
-      const executable = isExecutableFile(file);
+      // A `#`-comment line in a shell/config script never executes — installer
+      // scripts routinely quote their own curl|sh one-liner in a usage comment.
+      // Prefer a live match over a commented one so a comment can't mask it.
+      const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
+      const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
+      const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
+      const executable = isExecutableFile(file) && !isCommented(m.index ?? 0);
       findings.push(
         finding(this, {
           severity: executable ? 'critical' : 'medium',
