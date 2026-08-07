@@ -1,5 +1,20 @@
 # mcp-agentgate
 
+## 0.19.0
+
+### Minor Changes
+
+- cad6f07: Discover Warp MCP configs (`~/.warp/.mcp.json`, project `.warp/.mcp.json`) and the generic other-agents convention (`~/.agents/.mcp.json`, project `.agents/.mcp.json`); `config convert` supports `warp` (standard `mcpServers`, `working_directory` ↔ cwd).
+- 3402ce9: Parse the `includeTools` allowlist on skill-declared MCP servers (Amp convention) and report a low AG-OP-001 finding when a skill-declared server omits it, since the skill then exposes the server's full tool surface.
+
+### Patch Changes
+
+- f02e947: Table footer doc links show per-rule finding counts (`AG-SK-002 ×131 → …`), ordered by frequency, so dominant rules are visible without scrolling the table.
+- Updated dependencies [cad6f07]
+- Updated dependencies [3402ce9]
+  - mcp-agentgate-core@0.19.0
+  - mcp-agentgate-config-convert@0.6.0
+
 ## 0.18.1
 
 ### Patch Changes
