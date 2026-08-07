@@ -1,5 +1,20 @@
 # mcp-agentgate
 
+## 0.39.0
+
+### Minor Changes
+
+- 29f7e47: AG-SK-002 checks Cursor CLI project permission configs (`.cursor/cli.json`): `Shell(*)` and `Mcp(*:*)` in `permissions.allow` are high; catch-all `Write(**)`, `WebFetch(*)`, and whole-server `Mcp(server:*)` are medium. Scoped tokens stay clean and a matching `permissions.deny` entry suppresses the allow.
+- f08158e: AG-SK-002 flags Cursor CLI `permissions.allow` tokens that pre-approve `Read`/`Write` on secret-shaped paths (`.env`, `.pem`, `.key`, `.p12`/`.pfx`, secrets, credentials, `id_rsa`) as medium — pre-approved credential access. Scoped code-path tokens stay clean and `permissions.deny` still takes precedence.
+
+### Patch Changes
+
+- ad64a92: AG-SS-001 reports metadata-endpoint references in test/fixture paths (`tests/`, `__tests__/`, `*.test.*`, `*.spec.*`, `examples/`, `fixtures/`, `mocks/`) as low instead of high — they are usually fixtures for the SSRF protection under test, mirroring how AG-CL-001 treats secret-shaped strings in test trees.
+- Updated dependencies [ad64a92]
+- Updated dependencies [29f7e47]
+- Updated dependencies [f08158e]
+  - mcp-agentgate-core@0.39.0
+
 ## 0.38.0
 
 ### Minor Changes
