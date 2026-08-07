@@ -20,7 +20,7 @@ function isPlaceholder(value: string): boolean {
     /^\$\{?[A-Z0-9_]+\}?$/.test(value) || // ${ENV_VAR} / $ENV_VAR
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
-    /\b(your|xxx+|placeholder|changeme|example|redacted|dummy)\b/i.test(value)
+    /\b(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake)\b/i.test(value)
   );
 }
 
@@ -62,7 +62,7 @@ export const credentialLeakRule: Rule = {
       }
     }
     for (const arg of server.args ?? []) {
-      if (SECRET_VALUE_PATTERNS.some((re) => re.test(arg))) {
+      if (SECRET_VALUE_PATTERNS.some((re) => re.test(arg)) && !isPlaceholder(arg)) {
         findings.push(
           finding(this, {
             severity: 'high',
@@ -97,6 +97,7 @@ export const credentialLeakRule: Rule = {
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
+        if (isPlaceholder(m[0])) continue;
         const line = content.slice(0, m.index ?? 0).split('\n').length;
         findings.push(
           finding(this, {
