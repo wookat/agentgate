@@ -511,7 +511,12 @@ export const skillOverprivilegeRule: Rule = {
             for (const [name, cfg] of Object.entries(tools)) {
               if (typeof cfg !== 'object' || cfg === null) continue;
               if ((cfg as Record<string, unknown>)['default'] !== 'allow') continue;
-              const severity = ZED_HIGH_RISK_TOOLS.has(name) ? 'high' : ZED_MEDIUM_RISK_TOOLS.has(name) ? 'medium' : undefined;
+              const mcpTool = name.startsWith('mcp:') ? name.split(':')[2] : undefined;
+              const severity = ZED_HIGH_RISK_TOOLS.has(name)
+                ? 'high'
+                : ZED_MEDIUM_RISK_TOOLS.has(name) || (mcpTool && DANGEROUS_TOOL_NAME.test(mcpTool))
+                  ? 'medium'
+                  : undefined;
               if (!severity) continue;
               const line = lineOf(`"${name}"`);
               findings.push(
