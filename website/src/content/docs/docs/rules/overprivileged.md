@@ -68,7 +68,11 @@ VS Code workspace settings (`.vscode/settings.json`) are checked for
 `chat.tools.global.autoApprove: true` (or the legacy
 `chat.tools.autoApprove`) — `high`, since it bypasses every chat tool
 approval, including terminal commands and file edits, for anyone opening
-the project.
+the project. The `chat.tools.terminal.autoApprove` map is checked too: a
+catch-all regex rule (`"/.*/": true`) is `high`, and approving a command
+from VS Code's own default-deny list (`rm`, `curl`, `chmod`, shells,
+`sudo`, ...) is `medium`. Approving scoped safe commands (`git status`,
+`npm test`) is fine.
 
 ## Why it matters
 

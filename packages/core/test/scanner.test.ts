@@ -516,6 +516,34 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags dangerous terminal auto-approvals in VS Code workspace settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      JSON.stringify(
+        {
+          'chat.tools.terminal.autoApprove': {
+            '/.*/': true,
+            'curl -fsSL': true,
+            rm: { approve: true, matchCommandLine: true },
+            'npm test': true,
+            wget: false,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium', 'medium']);
+    expect(hits.find((f) => f.severity === 'high')!.message).toContain('every terminal command');
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      JSON.stringify({ 'chat.tools.terminal.autoApprove': { 'git status': true, 'npm test': true, rm: false } }, null, 2),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
