@@ -30,6 +30,8 @@ Any of these markdown layouts are treated as skill files:
   command executes.
 - Continue.dev workspace rules and prompts (`.continue/rules/*.md`,
   `.continue/prompts/*.md`) — injected verbatim into the model context.
+- Trae project rules (`.trae/rules/*.md`, plus the older
+  `.trae/project_rules.md` / `.trae/user_rules.md`).
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
