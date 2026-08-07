@@ -14,10 +14,14 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * plus the older `.trae/project_rules.md` / `.trae/user_rules.md`); Kiro
  * steering files (`.kiro/steering/*.md`, auto-loaded into every session);
  * Roo Code rules (`.roo/rules/` and mode-specific `.roo/rules-<mode>/`
- * directories, plus the single-file `.roorules` / `.roorules-<mode>`).
+ * directories, plus the single-file `.roorules` / `.roorules-<mode>`);
+ * root instruction files read verbatim by many agents — the agents.md
+ * standard (`AGENTS.md`/`AGENT.md`, nested files apply to subtrees),
+ * `CLAUDE.md`, `GEMINI.md`, Zed's `.rules`, and GitHub Copilot's
+ * `.github/copilot-instructions.md`.
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/steering\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/steering\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {

@@ -36,6 +36,10 @@ Any of these markdown layouts are treated as skill files:
   chat session in the workspace.
 - Roo Code rules (`.roo/rules/` and mode-specific `.roo/rules-<mode>/`
   directories, plus single-file `.roorules` / `.roorules-<mode>`).
+- Root instruction files read verbatim by many agents: the
+  [agents.md](https://agents.md/) standard (`AGENTS.md` / `AGENT.md`,
+  nested files apply to subtrees), `CLAUDE.md`, `GEMINI.md`, Zed's
+  `.rules`, and GitHub Copilot's `.github/copilot-instructions.md`.
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
