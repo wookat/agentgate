@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   discoverConfigFiles,
+  parseConfigFile,
   knownConfigLocations,
   parseCodexToml,
   parseMcpServersJson,
@@ -270,6 +271,28 @@ describe('discoverConfigFiles', () => {
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client)).toEqual(['amazonq', 'amazonq']);
     expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['default.json', 'mcp.json']);
+  });
+
+  it('finds Amazon Q named custom agents (global + workspace)', () => {
+    const home = path.join(dir, 'home7');
+    const project = path.join(dir, 'proj7');
+    fs.mkdirSync(path.join(home, '.aws', 'amazonq', 'cli-agents'), { recursive: true });
+    fs.mkdirSync(path.join(project, '.amazonq', 'cli-agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(home, '.aws', 'amazonq', 'cli-agents', 'reviewer.json'),
+      '{"description":"reviewer","mcpServers":{"fs":{"command":"npx","args":["-y","server-fs"]}}}',
+    );
+    fs.writeFileSync(
+      path.join(project, '.amazonq', 'cli-agents', 'dev-agent.json'),
+      '{"mcpServers":{"remote":{"url":"https://mcp.example.com/mcp"}}}',
+    );
+    fs.writeFileSync(path.join(project, '.amazonq', 'cli-agents', 'notes.txt'), 'not an agent');
+
+    const found = discoverConfigFiles({ homeDir: home, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['amazonq', 'amazonq']);
+    expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['dev-agent.json', 'reviewer.json']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['fs', 'remote']);
   });
 
   it('finds qoder project-level configs', () => {

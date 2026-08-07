@@ -103,6 +103,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   // (both carry a top-level `mcpServers` map)
   push('amazonq', path.join(homeDir, '.aws', 'amazonq', 'mcp.json'));
   push('amazonq', path.join(homeDir, '.aws', 'amazonq', 'default.json'));
+  // Amazon Q CLI named custom agents (global) — per-agent JSON with `mcpServers`
+  locations.push(...amazonqAgentLocations(path.join(homeDir, '.aws', 'amazonq', 'cli-agents')));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -134,6 +136,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.local.json'), format: 'mcpServers-json' },
     { client: 'amazonq', path: path.join(projectDir, '.amazonq', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amazonq', path: path.join(projectDir, '.amazonq', 'default.json'), format: 'mcpServers-json' },
+    ...amazonqAgentLocations(path.join(projectDir, '.amazonq', 'cli-agents')),
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
@@ -183,6 +186,20 @@ function extractFrontmatter(raw: string): Record<string, unknown> | undefined {
   if (!m) return undefined;
   const doc = YAML.parse(m[1]!) as unknown;
   return typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>) : undefined;
+}
+
+/** Amazon Q CLI named custom agents: every `cli-agents/*.json` agent file (top-level `mcpServers` map). */
+function amazonqAgentLocations(agentsDir: string): ClientConfigLocation[] {
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(agentsDir);
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((f) => f.endsWith('.json'))
+    .sort()
+    .map((f) => ({ client: 'amazonq', path: path.join(agentsDir, f), format: 'mcpServers-json' as const }));
 }
 
 /** Continue.dev workspace MCP blocks: every `.continue/mcpServers/*.yaml` file. */
