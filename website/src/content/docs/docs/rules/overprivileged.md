@@ -123,6 +123,16 @@ built-in tool names, so a wildcard that matches `execute_bash`,
 by a matching `toolsSettings` allowlist (`allowedCommands`,
 `allowedServices`, `allowedPaths`) are not flagged.
 
+Codex project-scoped config overrides (`.codex/config.toml`, loaded for
+anyone who trusts the project) are checked for sandbox/approval
+opt-outs: `sandbox_mode = "danger-full-access"` (no filesystem or
+network sandbox) and `default_permissions = ":danger-full-access"`
+(full-access permission profile) are `high`; `approval_policy = "never"` (no approval
+prompts) and `sandbox_workspace_write.network_access = true` (egress
+inside the workspace-write sandbox) are `medium`. `read-only` /
+`workspace-write` modes and interactive approval policies are not
+flagged.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
