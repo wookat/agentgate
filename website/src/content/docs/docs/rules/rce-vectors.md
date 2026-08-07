@@ -82,6 +82,13 @@ the plugin. `type: "command"` entries get the same classification;
 manifests whose `hooks` field is just a config path and bundled formatter
 scripts stay clean.
 
+Plugin LSP servers get the same treatment: `.lsp.json` (or inline
+`lspServers` in the manifest) declares commands that run automatically
+after workspace trust whenever matching files are edited. The command plus
+its args go through the shared classification, so an LSP entry wrapping a
+remote-script pipe or credential read is flagged while real language
+servers (`gopls serve`, `typescript-language-server --stdio`) stay clean.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.
