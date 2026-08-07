@@ -34,6 +34,8 @@ Any of these markdown layouts are treated as skill files:
   `.trae/project_rules.md` / `.trae/user_rules.md`).
 - Kiro steering files (`.kiro/steering/*.md`) — auto-loaded into every
   chat session in the workspace.
+- Roo Code rules (`.roo/rules/` and mode-specific `.roo/rules-<mode>/`
+  directories, plus single-file `.roorules` / `.roorules-<mode>`).
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
