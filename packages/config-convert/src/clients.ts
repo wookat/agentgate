@@ -1,4 +1,5 @@
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
+import YAML from "yaml";
 import {
   asStringRecord,
   CanonicalMcpServer,
@@ -548,6 +549,66 @@ export const zed: ClientAdapter = {
   },
 };
 
+/** Continue.dev — `~/.continue/config.yaml` or a `.continue/mcpServers/*.yaml` block; `mcpServers` is a YAML list. */
+export const continueDev: ClientAdapter = {
+  id: "continue",
+  defaultPath: "~/.continue/config.yaml",
+
+  parse(content): ParseResult {
+    let data: unknown;
+    try {
+      data = YAML.parse(content);
+    } catch (e) {
+      throw new ConfigParseError("continue", `invalid YAML: ${(e as Error).message}`);
+    }
+    if (data === null || data === undefined) return { config: { servers: [] }, warnings: [] };
+    if (!isRecord(data)) throw new ConfigParseError("continue", "top level must be a mapping");
+
+    const warnings: string[] = [];
+    const list = data.mcpServers;
+    if (list !== undefined && !Array.isArray(list)) {
+      throw new ConfigParseError("continue", "mcpServers must be a list");
+    }
+
+    const servers: CanonicalMcpServer[] = [];
+    for (const entryRaw of list ?? []) {
+      if (!isRecord(entryRaw) || typeof entryRaw.name !== "string") {
+        warnings.push("continue: mcpServers entry without a name; dropped");
+        continue;
+      }
+      const { name, ...rest } = entryRaw;
+      const s = parseCommonEntry("continue", name, rest, warnings);
+      if (s) servers.push(s);
+    }
+
+    return { config: { servers }, warnings };
+  },
+
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const list: Record<string, unknown>[] = [];
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: continue has no disabled flag; server emitted as enabled`);
+      }
+      const entry = renderCommonEntry(s, false);
+      if (s.transport !== "stdio") entry.type = s.transport === "sse" ? "sse" : "streamable-http";
+      if (s.cwd) entry.cwd = s.cwd;
+      list.push({ name: s.name, ...entry });
+    }
+    const doc = {
+      name: "Converted MCP servers",
+      version: "0.0.1",
+      schema: "v1",
+      mcpServers: list,
+    };
+    warnings.push(
+      "continue: emitted a standalone config block — save it as .continue/mcpServers/<name>.yaml or merge the mcpServers list into your ~/.continue/config.yaml",
+    );
+    return { content: YAML.stringify(doc), warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -561,4 +622,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   kiro,
   "roo-code": rooCode,
   zed,
+  continue: continueDev,
 };

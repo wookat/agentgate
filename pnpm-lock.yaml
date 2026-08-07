@@ -75,6 +75,9 @@ importers:
       smol-toml:
         specifier: ^1.4.2
         version: 1.7.1
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       '@types/node':
         specifier: ^22.20.1

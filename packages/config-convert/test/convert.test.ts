@@ -178,6 +178,39 @@ describe("convert", () => {
     }
   });
 
+  it("continue parses the YAML mcpServers list and renders a standalone block", () => {
+    const raw = `name: My Config
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: browser
+    command: npx
+    args:
+      - "@playwright/mcp@latest"
+    env:
+      K: v
+  - name: remote
+    type: streamable-http
+    url: https://mcp.example.com/mcp
+`;
+    const { config, warnings } = ADAPTERS.continue.parse(raw);
+    expect(warnings).toEqual([]);
+    expect(config.servers).toHaveLength(2);
+    expect(config.servers[0]).toMatchObject({ name: "browser", command: "npx", transport: "stdio" });
+    expect(config.servers[1]).toMatchObject({ name: "remote", url: "https://mcp.example.com/mcp", transport: "http" });
+    const rendered = ADAPTERS.continue.render(config);
+    expect(rendered.content).toContain("mcpServers:");
+    expect(rendered.content).toContain("name: browser");
+    expect(rendered.warnings.some((w) => w.includes(".continue/mcpServers"))).toBe(true);
+  });
+
+  it("cursor -> continue emits a YAML list round-trippable back to canonical", () => {
+    const { content } = convert("cursor", "continue", CURSOR_CONFIG);
+    const back = ADAPTERS.continue.parse(content).config;
+    expect(back.servers.map((s) => s.name).sort()).toEqual(["filesystem", "linear"]);
+    expect(back.servers.find((s) => s.name === "linear")!.url).toBe("https://mcp.linear.app/mcp");
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });
