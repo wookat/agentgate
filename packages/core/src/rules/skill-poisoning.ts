@@ -142,6 +142,12 @@ const ZED_HIGH_RISK_TOOLS = new Set(['terminal']);
 /** Zed tools whose auto-approval means unrestricted writes/deletes or network egress. */
 const ZED_MEDIUM_RISK_TOOLS = new Set(['edit_file', 'write_file', 'delete_path', 'move_path', 'fetch']);
 
+/** Glob patterns that match every file (catch-all edit auto-approval). */
+const CATCH_ALL_GLOB = new Set(['**', '**/*', '*']);
+
+/** Sensitive-path fragments whose edit auto-approval lets the agent rewrite its own guardrails or secrets. */
+const SENSITIVE_EDIT_GLOB = /\.env|\.vscode|\.github|settings\.json|\.pem|secret|credential/i;
+
 /** Amazon Q CLI project custom-agent files whose allowedTools list pre-approves tool use. */
 const AMAZONQ_AGENT_FILE = /(^|\/)\.amazonq\/cli-agents\/[^/]+\.json$/i;
 
@@ -328,6 +334,29 @@ export const skillOverprivilegeRule: Rule = {
               message: isCatchAll
                 ? `VS Code workspace settings auto-approve every terminal command ("${key}" in chat.tools.terminal.autoApprove) — arbitrary shell execution without approval for anyone opening this project`
                 : `VS Code workspace settings auto-approve terminal command "${key}" — ${commandWord} is in VS Code's own default-deny list; it runs without approval for anyone opening this project`,
+            }),
+          );
+        }
+      }
+      const edits = (data as Record<string, unknown>)['chat.tools.edits.autoApprove'];
+      if (typeof edits === 'object' && edits !== null) {
+        const entries = Object.entries(edits);
+        const hasReDeny = entries.some(([, v]) => v === false);
+        for (const [key, value] of entries) {
+          if (value !== true) continue;
+          const isCatchAll = CATCH_ALL_GLOB.has(key.trim());
+          if (isCatchAll && hasReDeny) continue;
+          if (!isCatchAll && !SENSITIVE_EDIT_GLOB.test(key)) continue;
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
+          findings.push(
+            finding(this, {
+              severity: 'medium',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: isCatchAll
+                ? `VS Code workspace settings auto-approve edits to every file ("${key}" in chat.tools.edits.autoApprove) with no re-denied sensitive paths — the agent can rewrite .env, workspace settings, and workflows without approval`
+                : `VS Code workspace settings auto-approve edits to sensitive path "${key}" — the agent can rewrite it (settings, secrets, or CI) without approval for anyone opening this project`,
             }),
           );
         }

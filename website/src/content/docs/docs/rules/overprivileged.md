@@ -72,7 +72,12 @@ the project. The `chat.tools.terminal.autoApprove` map is checked too: a
 catch-all regex rule (`"/.*/": true`) is `high`, and approving a command
 from VS Code's own default-deny list (`rm`, `curl`, `chmod`, shells,
 `sudo`, ...) is `medium`. Approving scoped safe commands (`git status`,
-`npm test`) is fine.
+`npm test`) is fine. The `chat.tools.edits.autoApprove` glob map is
+checked as well: a catch-all (`"**/*": true`) with no re-denied
+sensitive paths, or `true` on a sensitive path (`.env`, `.vscode`,
+`.github`, keys/secrets), is `medium` — the agent can rewrite its own
+guardrails or secrets without approval. The documented safe pattern
+(catch-all plus `false` re-denies for sensitive files) is fine.
 
 Zed project settings (`.zed/settings.json`) are checked for the legacy
 `agent.always_allow_tool_actions: true` (`high`) and the newer
