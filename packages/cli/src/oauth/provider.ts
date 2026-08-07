@@ -4,6 +4,15 @@ import { CLI_VERSION } from '../version.js';
 import { getServerAuth, updateServerAuth } from './store.js';
 
 /**
+ * Non-interactive provider for stored logins: returns a provider only when a
+ * prior `agentgate auth login` saved tokens for the server's origin. Never
+ * starts a browser flow — an expired/rejected token surfaces as an auth error.
+ */
+export function storedProviderFor(serverUrl: string): FileOAuthProvider | undefined {
+  return getServerAuth(serverUrl)?.tokens ? new FileOAuthProvider(serverUrl) : undefined;
+}
+
+/**
  * File-backed OAuthClientProvider for the interactive `agentgate auth login`
  * flow. Client registration and tokens persist in the agentgate config dir;
  * the PKCE verifier lives only for the duration of one login.

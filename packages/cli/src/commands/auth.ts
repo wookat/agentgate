@@ -98,7 +98,7 @@ export async function runAuthLogin(target: string, opts: AuthLoginOptions): Prom
     const second = await auth(provider, { serverUrl, authorizationCode: code });
     if (second !== 'AUTHORIZED') throw new Error(`Token exchange did not complete (state: ${second})`);
     console.log(pc.green(`✔ Logged in to ${originKey(serverUrl)} — tokens saved to ${storePath()}`));
-    console.log(pc.dim('Live scans of this server will use these tokens automatically once token pickup ships.'));
+    console.log(pc.dim('Live scans of this server will use these tokens automatically.'));
     return 0;
   } catch (err) {
     let message = err instanceof Error ? err.message : String(err);

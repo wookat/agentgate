@@ -75,11 +75,11 @@ describe('fetchToolSurface', () => {
       }
     }
 
-    it('suggests configuring headers when a remote server returns 401 and none are set', async () => {
+    it('suggests auth login or headers when a remote server returns 401 and no credentials are set', async () => {
       await with401Server(async (url) => {
         await expect(
           fetchToolSurface(server({ command: undefined, args: undefined, url }), { timeoutMs: 5000 }),
-        ).rejects.toThrow(/no auth headers are configured.*"headers"/s);
+        ).rejects.toThrow(/no credentials are configured.*agentgate auth login.*"headers"/s);
       });
     }, 20000);
 
@@ -93,5 +93,76 @@ describe('fetchToolSurface', () => {
         ).rejects.toThrow(/header\(s\) \(Authorization\) were rejected/);
       });
     }, 20000);
+  });
+
+  describe('OAuth token pickup', () => {
+    function stubProvider(accessToken: string) {
+      return {
+        redirectUrl: undefined,
+        clientMetadata: { redirect_uris: [] },
+        clientInformation: () => ({ client_id: 'stub' }),
+        tokens: () => ({ access_token: accessToken, token_type: 'Bearer' }),
+        saveTokens: () => {},
+        redirectToAuthorization: () => {},
+        saveCodeVerifier: () => {},
+        codeVerifier: () => 'stub-verifier',
+      };
+    }
+
+    async function withAuthServer(fn: (url: string) => Promise<void>): Promise<void> {
+      const fixture = path.resolve(__dirname, 'fixtures', 'toy-auth-http-server.mjs');
+      const child = spawn(process.execPath, [fixture], { stdio: ['ignore', 'pipe', 'ignore'] });
+      try {
+        const port = await new Promise<string>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('auth fixture did not start')), 15000);
+          child.stdout.on('data', (chunk: Buffer) => {
+            const m = /PORT (\d+)/.exec(chunk.toString());
+            if (m) {
+              clearTimeout(timer);
+              resolve(m[1]!);
+            }
+          });
+        });
+        await fn(`http://127.0.0.1:${port}/mcp`);
+      } finally {
+        child.kill();
+      }
+    }
+
+    it('authenticates with cached OAuth tokens when no headers are configured', async () => {
+      await withAuthServer(async (url) => {
+        const tools = await fetchToolSurface(
+          server({ command: undefined, args: undefined, url }),
+          { timeoutMs: 15000, authProvider: stubProvider('good-token') },
+        );
+        expect(tools.map((t) => t.name)).toEqual(['whoami']);
+      });
+    }, 30000);
+
+    it('suggests logging in again when cached OAuth tokens are rejected', async () => {
+      await withAuthServer(async (url) => {
+        await expect(
+          fetchToolSurface(
+            server({ command: undefined, args: undefined, url }),
+            { timeoutMs: 15000, authProvider: stubProvider('expired-token') },
+          ),
+        ).rejects.toThrow(/cached OAuth tokens were rejected.*agentgate auth login/s);
+      });
+    }, 30000);
+
+    it('prefers configured headers over the OAuth provider', async () => {
+      await withAuthServer(async (url) => {
+        const tools = await fetchToolSurface(
+          server({
+            command: undefined,
+            args: undefined,
+            url,
+            headers: { Authorization: 'Bearer good-token' },
+          }),
+          { timeoutMs: 15000, authProvider: stubProvider('expired-token') },
+        );
+        expect(tools.map((t) => t.name)).toEqual(['whoami']);
+      });
+    }, 30000);
   });
 });
