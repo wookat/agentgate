@@ -32,6 +32,8 @@ Any of these markdown layouts are treated as skill files:
   `.continue/prompts/*.md`) — injected verbatim into the model context.
 - Trae project rules (`.trae/rules/*.md`, plus the older
   `.trae/project_rules.md` / `.trae/user_rules.md`).
+- Kiro steering files (`.kiro/steering/*.md`) — auto-loaded into every
+  chat session in the workspace.
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
