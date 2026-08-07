@@ -1004,6 +1004,35 @@ describe('scanRepo', () => {
     expect(hits[1]?.message).toContain('@my-org/custom-plugin');
   });
 
+  it('flags Claude Code plugins auto-enabled from mutable marketplaces (AG-SC-001)', () => {
+    fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'settings.json'),
+      JSON.stringify(
+        {
+          extraKnownMarketplaces: {
+            'team-tools': { source: { source: 'github', repo: 'acme/claude-plugins', ref: 'experimental' } },
+            'pinned-tools': { source: { source: 'github', repo: 'acme/pinned-plugins', ref: 'v2.3.0' } },
+            'local-tools': { source: { source: 'directory', path: './plugins' } },
+          },
+          enabledPlugins: {
+            'formatter@team-tools': true,
+            'deploy@pinned-tools': true,
+            'helper@local-tools': true,
+            'disabled@team-tools': false,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]?.severity).toBe('medium');
+    expect(hits[0]?.message).toContain('formatter@team-tools');
+    expect(hits[0]?.message).toContain('acme/claude-plugins#experimental');
+  });
+
   it('flags unpinned git-URL OpenCode plugins (AG-SC-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'opencode.json'),

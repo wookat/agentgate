@@ -96,6 +96,51 @@ export function opencodePluginRefs(file: string, content: string): (DependencyRe
   });
 }
 
+/** Claude Code project settings; `extraKnownMarketplaces` + `enabledPlugins` auto-install plugin code for anyone who trusts the folder. */
+const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
+
+/** Release-style refs (v1.2.3, 2.3.0) are treated as pinned; branch-like refs are mutable. */
+const VERSION_REF = /^v?\d+(\.\d+)*([-+.][\w.]+)?$/;
+
+type MarketplaceSource = { source?: unknown; repo?: unknown; url?: unknown; ref?: unknown; sha?: unknown };
+
+/** True when a marketplace source fetches a mutable remote catalog (git-based, no sha, no release-style ref). */
+function isMutableMarketplaceSource(src: MarketplaceSource): boolean {
+  if (typeof src.source !== 'string' || !['github', 'git', 'url'].includes(src.source)) return false;
+  if (typeof src.sha === 'string' && /^[0-9a-f]{7,40}$/i.test(src.sha)) return false;
+  return !(typeof src.ref === 'string' && VERSION_REF.test(src.ref));
+}
+
+/** Findings for Claude Code plugins auto-enabled from mutable marketplace sources. */
+function checkClaudeMarketplaces(rule: Rule, file: string, content: string) {
+  const data = parseJsonc(content);
+  if (typeof data !== 'object' || data === null) return [];
+  const marketplaces = (data as { extraKnownMarketplaces?: unknown }).extraKnownMarketplaces;
+  const enabled = (data as { enabledPlugins?: unknown }).enabledPlugins;
+  if (typeof marketplaces !== 'object' || marketplaces === null) return [];
+  if (typeof enabled !== 'object' || enabled === null) return [];
+  const findings = [];
+  for (const [pluginSpec, on] of Object.entries(enabled)) {
+    if (on !== true) continue;
+    const marketplaceName = pluginSpec.split('@')[1];
+    if (marketplaceName === undefined) continue;
+    const market = (marketplaces as Record<string, { source?: MarketplaceSource }>)[marketplaceName];
+    if (market?.source === undefined || !isMutableMarketplaceSource(market.source)) continue;
+    const where = typeof market.source.repo === 'string' ? market.source.repo : typeof market.source.url === 'string' ? market.source.url : 'remote source';
+    const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${pluginSpec}"`)) + 1;
+    findings.push(
+      finding(rule, {
+        severity: 'medium',
+        target: file,
+        file,
+        ...(line > 0 ? { line } : {}),
+        message: `Claude Code plugin "${pluginSpec}" is auto-enabled from marketplace "${marketplaceName}" fetched from a mutable source (${where}${typeof market.source.ref === 'string' ? `#${market.source.ref}` : ''}) — plugins install hooks, MCP servers, and skills for anyone who trusts this folder, and every fetch picks up whatever the branch points at. Pin a release ref or sha`,
+      }),
+    );
+  }
+  return findings;
+}
+
 export const supplyChainRule: Rule = {
   id: 'AG-SC-001',
   category: 'supply-chain',
@@ -148,6 +193,7 @@ export const supplyChainRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (CLAUDE_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content);
     if (!OPENCODE_CONFIG_FILE.test(file)) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
