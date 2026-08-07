@@ -127,6 +127,23 @@ function refsFromPackageJson(file: string, content: string, localNames: Set<stri
   return refs;
 }
 
+/** Import-map keys in deno.json(c) resolve elsewhere (jsr:, https:, local paths) — never against npm. */
+function declareDenoImportMap(content: string, localNames: Set<string>): void {
+  let data: unknown;
+  try {
+    data = JSON.parse(stripJsComments(content).replace(/,(\s*[}\]])/g, '$1'));
+  } catch {
+    return;
+  }
+  if (typeof data !== 'object' || data === null) return;
+  const imports = (data as { imports?: unknown }).imports;
+  if (typeof imports !== 'object' || imports === null) return;
+  for (const key of Object.keys(imports)) {
+    const name = npmPackageFromSpecifier(key.replace(/\/$/, ''));
+    if (name) localNames.add(name);
+  }
+}
+
 function refsFromRequirementsTxt(file: string, content: string): DependencyRef[] {
   const refs: DependencyRef[] = [];
   for (const line of content.split('\n')) {
@@ -191,6 +208,13 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     const base = path.basename(file);
     const ext = path.extname(file);
     const isManifest = base === 'package.json' || base === 'pyproject.toml' || /^requirements[\w.-]*\.txt$/.test(base);
+    if (base === 'deno.json' || base === 'deno.jsonc') {
+      try {
+        declareDenoImportMap(fs.readFileSync(file, 'utf8'), localNames);
+      } catch {
+        /* unreadable: ignore */
+      }
+    }
     const isSource = opts.includeImports !== false && (JS_EXTENSIONS.has(ext) || ext === '.py');
     if (ext === '.py') {
       localPyModules.add(base.slice(0, -3));
