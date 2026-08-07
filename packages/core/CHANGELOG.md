@@ -1,5 +1,14 @@
 # mcp-agentgate-core
 
+## 0.35.0
+
+### Minor Changes
+
+- 95d5dcf: AG-SK-002 also checks OpenCode project configs (`opencode.json` / `opencode.jsonc`): a catch-all `"permission": "allow"` (high) and per-tool `bash`/`edit`/`write`/`webfetch` rules whose effective action is `"allow"` (high/medium) are flagged. `.jsonc` files are now walked as source.
+- 86446ba: AG-SK-002's OpenCode check also covers `websearch: "allow"` and per-agent `agent.<name>.permission` blocks — both found in real public configs (alumnium, cloudflare/telescope).
+- 60468c9: AG-SK-002 checks Gemini CLI project settings (`.gemini/settings.json`): bare `run_shell_command` (high), `write_file`/`replace`/`web_fetch`/`google_web_search` (medium) in `tools.allowed`, and `general.defaultApprovalMode: "auto_edit"` (medium).
+- f301689: AG-SK-002 flags `trust: true` on MCP servers in Gemini CLI project settings (medium) — trusted servers bypass all tool call confirmations for everyone opening the project.
+
 ## 0.34.0
 
 ### Minor Changes
