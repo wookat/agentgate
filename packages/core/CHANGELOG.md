@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.28.0
+
+### Minor Changes
+
+- 44973bb: Skill/instruction scanning (and `lock --skills`) now covers GitHub Copilot path-specific instructions (`.github/instructions/**.instructions.md`) and prompt files (`.github/prompts/*.prompt.md`).
+
 ## 0.27.1
 
 ### Patch Changes
