@@ -29,6 +29,8 @@ Any of these markdown layouts are treated as skill files:
   `commands/**.toml` shipped by Gemini CLI extensions) — the prompt text
   is checked, including `!{...}` shell-injection blocks that run when the
   command executes.
+- Qwen Code context files (`QWEN.md`, `QWEN.local.md`, `.qwen/rules/*.md`) —
+  auto-loaded into the model context every session.
 - Qwen Code project skills, sub-agents, and custom commands
   (`.qwen/skills/**/SKILL.md`, `.qwen/agents/*.md`, `.qwen/commands/**.md`
   plus deprecated `.qwen/commands/**.toml`) — prompt text is checked,
