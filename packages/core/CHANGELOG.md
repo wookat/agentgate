@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.20.0
+
+### Minor Changes
+
+- 24011e5: `scan --live` correlates a server's `includeTools` allowlist against its actual tool surface: entries matching no live tool report a low AG-OP-001 finding (stale or typoed allowlist entries scope nothing).
+
 ## 0.19.0
 
 ### Minor Changes
