@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { authMissingRule } from '../src/rules/auth-missing.js';
 import { credentialLeakRule } from '../src/rules/credential-leak.js';
-import { overprivilegedRule } from '../src/rules/overprivileged.js';
+import { checkIncludeToolsCoverage, overprivilegedRule } from '../src/rules/overprivileged.js';
 import { rceVectorsRule } from '../src/rules/rce-vectors.js';
 import { ssrfRule } from '../src/rules/ssrf.js';
 import { serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
@@ -111,6 +111,24 @@ describe('overprivileged', () => {
     expect(scoped.some((f) => f.message.includes('includeTools'))).toBe(false);
     const cursor = overprivilegedRule.checkServer!(server({ command: 'npx', args: ['chrome-devtools-mcp'], client: 'cursor' }));
     expect(cursor.some((f) => f.message.includes('includeTools'))).toBe(false);
+  });
+
+  it('flags includeTools entries that match no live tool', () => {
+    const s = server({ command: 'npx', client: 'amp-skill', includeTools: ['navigate_*', 'clik', 'screenshot'] });
+    const tools = [tool({ name: 'navigate_page' }), tool({ name: 'click' }), tool({ name: 'screenshot' })];
+    const findings = checkIncludeToolsCoverage(s, tools);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('low');
+    expect(findings[0]!.message).toContain('"clik"');
+    expect(findings[0]!.message).not.toContain('"navigate_*"');
+  });
+
+  it('reports nothing when every includeTools entry matches, or without an allowlist/surface', () => {
+    const s = server({ command: 'npx', client: 'amp-skill', includeTools: ['navigate_*', 'click'] });
+    const tools = [tool({ name: 'navigate_page' }), tool({ name: 'click' })];
+    expect(checkIncludeToolsCoverage(s, tools)).toHaveLength(0);
+    expect(checkIncludeToolsCoverage(server({ command: 'npx' }), tools)).toHaveLength(0);
+    expect(checkIncludeToolsCoverage(s, [])).toHaveLength(0);
   });
 });
 

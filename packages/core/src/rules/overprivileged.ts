@@ -1,5 +1,5 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
-import { ToolSurface } from '../types.js';
+import { Finding, McpServerConfig, ToolSurface } from '../types.js';
 
 type Capability = 'read-files' | 'write-files' | 'exec' | 'network' | 'send-messages';
 
@@ -34,6 +34,30 @@ const DANGEROUS_COMBOS: { caps: Capability[]; why: string }[] = [
   { caps: ['read-files', 'send-messages'], why: 'can read local files and exfiltrate them via messages' },
   { caps: ['exec', 'network'], why: 'can execute commands and reach the network (download-and-run)' },
 ];
+
+function globToRegExp(glob: string): RegExp {
+  return new RegExp(`^${glob.split('*').map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`);
+}
+
+/**
+ * Correlate a server's `includeTools` allowlist against its live tool surface:
+ * entries matching no actual tool are stale or typoed, so the scoping the
+ * author intended silently doesn't apply (and the skill breaks).
+ */
+export function checkIncludeToolsCoverage(server: McpServerConfig, tools: ToolSurface[]): Finding[] {
+  if (!server.includeTools?.length || tools.length === 0) return [];
+  const names = tools.map((t) => t.name);
+  const dead = server.includeTools.filter((pattern) => !names.some((n) => globToRegExp(pattern).test(n)));
+  if (dead.length === 0) return [];
+  return [
+    finding(overprivilegedRule, {
+      severity: 'low',
+      target: server.name,
+      file: server.source,
+      message: `includeTools entr${dead.length === 1 ? 'y' : 'ies'} ${dead.map((d) => `"${d}"`).join(', ')} on server "${server.name}" match${dead.length === 1 ? 'es' : ''} none of its ${names.length} live tool(s) — stale or typoed allowlist entries scope nothing`,
+    }),
+  ];
+}
 
 export function detectCapabilities(tool: ToolSurface): Capability[] {
   const text = toolText(tool);

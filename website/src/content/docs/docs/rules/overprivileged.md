@@ -12,6 +12,7 @@ Detects servers whose combined tool surface enables exfiltration-class behavior,
 - Filesystem servers rooted at `/`, `/home`, `/Users`, `~`, or `C:\` (`high`) — the agent can read everything you own.
 - Permission-bypass launch flags such as `--dangerously-skip-permissions` / `--yolo` (`high`).
 - Skill-declared servers ([Amp convention](/docs/guides/skills/)) without an `includeTools` allowlist (`low`) — the skill exposes the server's full tool surface instead of the tools it needs.
+- Under `--live`, `includeTools` entries that match none of the server's actual tools (`low`) — stale or typoed allowlist entries scope nothing.
 
 **Toolset** (`--live`): tool names/descriptions/schemas are classified into capabilities (`read-files`, `write-files`, `exec`, `network`, `send-messages`). Dangerous combinations on one server are flagged at `medium`:
 

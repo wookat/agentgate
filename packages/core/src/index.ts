@@ -8,6 +8,7 @@ export * from './sarif.js';
 export * from './docs.js';
 export { ALL_RULES } from './rules/index.js';
 export { serverPackageRef } from './rules/supply-chain.js';
+export { checkIncludeToolsCoverage } from './rules/overprivileged.js';
 export * from './deps/types.js';
 export * from './deps/collect.js';
 export * from './deps/registry.js';
