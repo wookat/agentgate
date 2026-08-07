@@ -64,7 +64,9 @@ Gemini CLI hooks (`.gemini/settings.json`, same nested
 `{ Event: [{ hooks: [{ type: "command", command }] }] }` shape) are covered
 too: command hooks run automatically on agent-loop events (SessionStart,
 BeforeTool, BeforeModel, …) for anyone opening the project, so the same
-classification applies.
+classification applies. Qwen Code hooks (project `.qwen/settings.json`,
+same nested shape) get the same treatment — they fire on lifecycle events
+(PreToolUse, SessionStart, …) for anyone opening the project.
 
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,

@@ -29,6 +29,10 @@ Any of these markdown layouts are treated as skill files:
   `commands/**.toml` shipped by Gemini CLI extensions) — the prompt text
   is checked, including `!{...}` shell-injection blocks that run when the
   command executes.
+- Qwen Code project skills, sub-agents, and custom commands
+  (`.qwen/skills/**/SKILL.md`, `.qwen/agents/*.md`, `.qwen/commands/**.md`
+  plus deprecated `.qwen/commands/**.toml`) — prompt text is checked,
+  including `!{...}` shell-injection blocks in custom commands.
 - Continue.dev workspace rules and prompts (`.continue/rules/*.md`,
   `.continue/prompts/*.md`) — injected verbatim into the model context.
 - Trae project rules (`.trae/rules/*.md`, plus the older

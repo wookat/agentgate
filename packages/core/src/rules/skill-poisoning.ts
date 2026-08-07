@@ -30,7 +30,7 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (`.amazonq/rules/**.md`, auto-loaded as chat context, subdirs allowed).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.amazonq\/rules\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.amazonq\/rules\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -1180,7 +1180,8 @@ export const skillDynamicContextRule: Rule = {
     const isPluginMonitors = PLUGIN_MONITORS_FILE.test(file);
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
     const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings;
+    const isQwenSettings = QWEN_SETTINGS_FILE.test(file);
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1360,8 +1361,9 @@ export const skillDynamicContextRule: Rule = {
       }
       return findings;
     }
-    if (isGeminiSettings) {
+    if (isGeminiSettings || isQwenSettings) {
       // Same nested { Event: [{ matcher, hooks: [{ type: "command", command }] }] } shape as Claude Code settings hooks.
+      const client = isQwenSettings ? 'Qwen Code' : 'Gemini CLI';
       for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
         const hit = classifyRiskyCommand(command);
         if (!hit) continue;
@@ -1372,7 +1374,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Gemini CLI hook command ${hit.risk.replace('at skill load time', 'automatically on agent-loop events for anyone opening this project')}: "${command.slice(0, 80)}"`,
+            message: `${client} hook command ${hit.risk.replace('at skill load time', 'automatically on agent-loop events for anyone opening this project')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
