@@ -164,6 +164,15 @@ describe('auth-missing', () => {
   it('ignores stdio servers', () => {
     expect(authMissingRule.checkServer!(server({ command: 'npx' }))).toHaveLength(0);
   });
+
+  it('resolves ${VAR:-default} URL fallbacks to the effective endpoint', () => {
+    const findings = authMissingRule.checkServer!(server({ url: '${BASE_URL:-https://mcp.example.com}/api/v1/mcp' }));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('medium');
+    expect(findings[0]!.message).toContain('mcp.example.com');
+    const noDefault = authMissingRule.checkServer!(server({ url: '${BASE_URL}/api/v1/mcp' }));
+    expect(noDefault.some((f) => f.severity === 'low' && /unparseable/.test(f.message))).toBe(true);
+  });
 });
 
 describe('ssrf', () => {

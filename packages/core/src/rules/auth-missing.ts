@@ -4,6 +4,14 @@ function isLocal(url: URL): boolean {
   return url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '::1';
 }
 
+/**
+ * Substitute shell parameter-expansion defaults (`${VAR:-default}`, `${VAR-default}`)
+ * — when the variable is unset, the default is the effective endpoint the client uses.
+ */
+export function substituteEnvDefaults(url: string): string {
+  return url.replace(/\$\{[A-Za-z_]\w*:?-([^}]*)\}/g, '$1');
+}
+
 export const authMissingRule: Rule = {
   id: 'AG-AM-001',
   category: 'auth-missing',
@@ -13,7 +21,7 @@ export const authMissingRule: Rule = {
     const findings = [];
     let url: URL;
     try {
-      url = new URL(server.url);
+      url = new URL(substituteEnvDefaults(server.url));
     } catch {
       return [
         finding(this, {
