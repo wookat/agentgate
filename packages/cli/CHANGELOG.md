@@ -1,5 +1,12 @@
 # mcp-agentgate
 
+## 0.18.1
+
+### Patch Changes
+
+- ba9bac9: Report a config visited by both the repo walk and client discovery (e.g. a skill's `mcp.json`) once in `scannedFiles` instead of twice.
+  - mcp-agentgate-core@0.18.1
+
 ## 0.18.0
 
 ### Minor Changes
