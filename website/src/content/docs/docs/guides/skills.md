@@ -25,7 +25,8 @@ Any of these markdown layouts are treated as skill files:
 - Cline rules (`.clinerules/` directory or single `.clinerules` file, and the
   auto-detected `.cursorrules`).
 - Cursor rule files (`.cursor/rules/*.mdc`).
-- Gemini CLI custom commands (`.gemini/commands/**.toml`) — the prompt text
+- Gemini CLI custom commands (`.gemini/commands/**.toml`, plus extension-root
+  `commands/**.toml` shipped by Gemini CLI extensions) — the prompt text
   is checked, including `!{...}` shell-injection blocks that run when the
   command executes.
 - Continue.dev workspace rules and prompts (`.continue/rules/*.md`,
