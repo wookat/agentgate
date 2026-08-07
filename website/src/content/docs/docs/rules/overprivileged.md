@@ -58,6 +58,12 @@ confirmation dialog, and `general.defaultApprovalMode: "auto_edit"`
 `mcpServers` entry (`medium` — all that server's tool calls bypass
 confirmation). Scoped grants such as `run_shell_command(git)` are fine.
 
+Roo Code project MCP configs (`.roo/mcp.json`) are checked as well: a
+wildcard `"*"` in a server's `alwaysAllow`/`autoApprove` list is `high`,
+and auto-approved tools with destructive-looking names (`execute_sql`,
+`apply_migration`, shell/write/delete-style tools) are `medium`.
+Auto-approving clearly read-only tools is not flagged.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
