@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.16.0
+
+### Minor Changes
+
+- 1f0f015: Client config discovery now also covers Continue.dev: the global `~/.continue/config.yaml` and every workspace `.continue/mcpServers/*.yaml` block file (`mcpServers` YAML lists with `name`/`command`/`args`/`env`/`url`/`type`) — 13 clients total.
+
 ## 0.15.0
 
 ### Minor Changes
