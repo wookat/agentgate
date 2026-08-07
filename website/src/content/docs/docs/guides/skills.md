@@ -31,6 +31,13 @@ Any of these markdown layouts are treated as skill files:
 - Continue.dev workspace rules and prompts (`.continue/rules/*.md`,
   `.continue/prompts/*.md`) — injected verbatim into the model context.
 
+Skills can also *declare MCP servers of their own* (Amp convention): a
+sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
+`.agents/skills/`, `.claude/skills/`, or `~/.config/amp/skills/`. AgentGate
+extracts these and runs the full MCP config rule set over them (unpinned
+packages, advisory matches, and so on), with frontmatter shadowing the
+sibling `mcp.json` exactly as Amp resolves it.
+
 ## What the rules catch
 
 | Rule | Severity | Detects |

@@ -12,9 +12,11 @@ import {
   parseContinueYaml,
   parseZedSettingsJson,
   parseAmpSettingsJson,
+  parseSkillMcpJson,
+  parseSkillFrontmatter,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -275,5 +277,39 @@ describe('parseAmpSettingsJson', () => {
 
   it('returns no servers when amp.mcpServers is absent', () => {
     expect(parseAmpSettingsJson('{}', loc('amp', 'amp-settings-json'))).toEqual([]);
+  });
+});
+
+describe('skill-defined MCP servers', () => {
+  it('parses a bare skill mcp.json map and SKILL.md frontmatter mcpServers', () => {
+    const json = JSON.stringify({ 'chrome-devtools': { command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] } });
+    expect(parseSkillMcpJson(json, loc('skill', 'skill-mcp-json'))).toMatchObject([
+      { name: 'chrome-devtools', command: 'npx', args: ['-y', 'chrome-devtools-mcp@latest'] },
+    ]);
+    const md = '---\nname: my-skill\nmcpServers:\n  linear:\n    url: https://mcp.linear.app/sse\n---\n\nBody.\n';
+    expect(parseSkillFrontmatter(md, loc('skill', 'skill-frontmatter-yaml'))).toMatchObject([
+      { name: 'linear', url: 'https://mcp.linear.app/sse' },
+    ]);
+    expect(parseSkillFrontmatter('---\nname: plain\n---\n\nBody.\n', loc('skill', 'skill-frontmatter-yaml'))).toEqual([]);
+  });
+
+  it('discovers skill servers under .agents/skills, frontmatter shadowing sibling mcp.json', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-skillsrv-'));
+    const mk = (name: string, files: Record<string, string>) => {
+      const d = path.join(dir, '.agents', 'skills', name);
+      fs.mkdirSync(d, { recursive: true });
+      for (const [f, content] of Object.entries(files)) fs.writeFileSync(path.join(d, f), content);
+    };
+    mk('json-only', { 'mcp.json': '{"a":{"command":"npx"}}', 'SKILL.md': '---\nname: json-only\n---\nBody.\n' });
+    mk('frontmatter-wins', {
+      'mcp.json': '{"ignored":{"command":"npx"}}',
+      'SKILL.md': '---\nname: fm\nmcpServers:\n  b:\n    command: uvx\n---\nBody.\n',
+    });
+    const found = discoverConfigFiles({ homeDir: path.join(dir, 'nohome'), projectDir: dir, platform: 'linux' });
+    expect(found.map((f) => [path.basename(path.dirname(f.path)), f.format]).sort()).toEqual([
+      ['frontmatter-wins', 'skill-frontmatter-yaml'],
+      ['json-only', 'skill-mcp-json'],
+    ]);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });

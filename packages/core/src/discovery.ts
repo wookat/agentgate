@@ -14,7 +14,9 @@ export interface ClientConfigLocation {
     | 'opencode-json'
     | 'zed-settings-json'
     | 'continue-yaml'
-    | 'amp-settings-json';
+    | 'amp-settings-json'
+    | 'skill-mcp-json'
+    | 'skill-frontmatter-yaml';
 }
 
 /**
@@ -84,6 +86,7 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('continue', path.join(homeDir, '.continue', 'config.yaml'), 'continue-yaml');
   // Amp (Sourcegraph) — `amp.mcpServers` key inside user settings
   push('amp', path.join(homeDir, '.config', 'amp', 'settings.json'), 'amp-settings-json');
+  locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
   // Zed — context_servers key inside settings.json (JSONC)
   if (platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
@@ -108,7 +111,52 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
+    ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
+    ...skillServerLocations(path.join(projectDir, '.claude', 'skills'), 'skill'),
   ];
+}
+
+/**
+ * MCP servers defined by agent skills: each skill directory may carry a
+ * sibling `mcp.json` (bare name → entry map) or an `mcpServers` field in its
+ * `SKILL.md` frontmatter. When both exist the frontmatter wins (Amp ignores
+ * the sibling `mcp.json` in that case).
+ */
+function skillServerLocations(skillsRoot: string, client: string): ClientConfigLocation[] {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(skillsRoot, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const out: ClientConfigLocation[] = [];
+  for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
+    const dir = path.join(skillsRoot, entry.name);
+    const skillMd = path.join(dir, 'SKILL.md');
+    const mcpJson = path.join(dir, 'mcp.json');
+    if (fs.existsSync(skillMd) && frontmatterHasMcpServers(skillMd)) {
+      out.push({ client, path: skillMd, format: 'skill-frontmatter-yaml' });
+    } else if (fs.existsSync(mcpJson)) {
+      out.push({ client, path: mcpJson, format: 'skill-mcp-json' });
+    }
+  }
+  return out;
+}
+
+function frontmatterHasMcpServers(skillMdPath: string): boolean {
+  try {
+    const fm = extractFrontmatter(fs.readFileSync(skillMdPath, 'utf8'));
+    return typeof fm?.mcpServers === 'object' && fm.mcpServers !== null;
+  } catch {
+    return false;
+  }
+}
+
+function extractFrontmatter(raw: string): Record<string, unknown> | undefined {
+  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/);
+  if (!m) return undefined;
+  const doc = YAML.parse(m[1]!) as unknown;
+  return typeof doc === 'object' && doc !== null ? (doc as Record<string, unknown>) : undefined;
 }
 
 /** Continue.dev workspace MCP blocks: every `.continue/mcpServers/*.yaml` file. */
@@ -151,6 +199,10 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseContinueYaml(raw, location);
     case 'amp-settings-json':
       return parseAmpSettingsJson(raw, location);
+    case 'skill-mcp-json':
+      return parseSkillMcpJson(raw, location);
+    case 'skill-frontmatter-yaml':
+      return parseSkillFrontmatter(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -253,6 +305,16 @@ export function parseContinueYaml(raw: string, location: ClientConfigLocation): 
 export function parseAmpSettingsJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
   const json = JSON.parse(raw) as Record<string, unknown>;
   return collectServers(json['amp.mcpServers'], location);
+}
+
+/** Skill sibling `mcp.json`: a bare `{ "<name>": { command|url, ... } }` map. */
+export function parseSkillMcpJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  return collectServers(JSON.parse(raw), location);
+}
+
+/** `SKILL.md` frontmatter `mcpServers` map — same entry shape as `mcp.json`. */
+export function parseSkillFrontmatter(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  return collectServers(extractFrontmatter(raw)?.mcpServers, location);
 }
 
 /** Zed `settings.json`: `{ "context_servers": { ... } }` — same entry shape as mcpServers, JSONC allowed. */
