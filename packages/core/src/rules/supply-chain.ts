@@ -70,7 +70,31 @@ function isPinned(spec: string): boolean {
 }
 
 /** OpenCode config files; npm packages in their `plugin` array are auto-installed by Bun and executed at startup. */
-const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+export const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+
+/** The npm plugin specs in an OpenCode config's `plugin` array (local file paths and git-URL specs excluded). */
+function opencodeNpmPluginSpecs(content: string): string[] {
+  const data = parseJsonc(content);
+  if (typeof data !== 'object' || data === null) return [];
+  const plugins = (data as { plugin?: unknown }).plugin;
+  if (!Array.isArray(plugins)) return [];
+  return plugins.filter(
+    (spec): spec is string =>
+      typeof spec === 'string' && !spec.startsWith('.') && !spec.startsWith('/') && !spec.includes('://') && !/\.[cm]?[jt]s$/.test(spec),
+  );
+}
+
+/**
+ * Registry package refs for the npm plugins an OpenCode config auto-installs
+ * at startup — so they can be checked against known-malware advisories.
+ */
+export function opencodePluginRefs(file: string, content: string): (DependencyRef & { version?: string })[] {
+  if (!OPENCODE_CONFIG_FILE.test(file)) return [];
+  return opencodeNpmPluginSpecs(content).map((spec) => {
+    const { name, version } = splitSpec(spec);
+    return { name, version, ecosystem: 'npm', origin: 'manifest', file, context: `OpenCode plugin "${spec}"` };
+  });
+}
 
 export const supplyChainRule: Rule = {
   id: 'AG-SC-001',
