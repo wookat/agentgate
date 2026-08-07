@@ -37,8 +37,8 @@ afterAll(() => {
 });
 
 describe('agentgate deps (offline)', () => {
-  it('flags typosquats offline and gates with --fail-on', async () => {
-    const res = await run(['deps', '.', '--offline', '--fail-on', 'high']);
+  it('flags typosquats offline and gates at high severity by default', async () => {
+    const res = await run(['deps', '.', '--offline']);
     expect(res.code).toBe(1);
     expect(res.stdout).toContain('AG-DP-002');
     expect(res.stdout).toContain('lodahs');
@@ -52,8 +52,8 @@ describe('agentgate deps (offline)', () => {
     expect(plain.stdout).not.toContain('::error');
   });
 
-  it('passes without --fail-on and emits JSON report contract', async () => {
-    const res = await run(['deps', '.', '--offline', '--format', 'json']);
+  it('reports without gating under --fail-on never and emits JSON report contract', async () => {
+    const res = await run(['deps', '.', '--offline', '--format', 'json', '--fail-on', 'never']);
     expect(res.code).toBe(0);
     const report = JSON.parse(res.stdout) as {
       version: number;

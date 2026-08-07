@@ -51,7 +51,7 @@ this before installation.
 |---|---|---|
 | `-f, --format <format>` | `table` | `table`, `json`, or `sarif`. |
 | `-o, --output <file>` | stdout | Write the report to a file. |
-| `--fail-on <severity>` | off | Exit `1` when findings reach this severity — the CI gate. |
+| `--fail-on <severity>` | `high` | Exit `1` when findings reach this severity — the CI gate. Use `never` to report without gating. |
 | `--ignore <globs...>` | — | Exclude paths (e.g. `vendor/**`). |
 | `--offline` | off | Skip registry lookups; name-shape (typosquat) checks only. |
 | `--no-imports` | off | Check manifests only; skip source import extraction. |
@@ -64,7 +64,6 @@ this before installation.
 - uses: wookat/agentgate/packages/action@v0.19.0
   with:
     command: deps
-    args: --fail-on high
 ```
 
 Or as a pre-commit hook (`id: agentgate-deps`), which runs whenever a
