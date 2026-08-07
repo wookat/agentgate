@@ -185,6 +185,20 @@ describe('agentgate scan', () => {
     expect(report.findings.some((f: { category: string }) => f.category === 'rce-vectors')).toBe(true);
   });
 
+  it('lists a config visited by both the repo walk and discovery once in scannedFiles', async () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-skillsrv-'));
+    const skill = path.join(repo, '.agents', 'skills', 'browser');
+    fs.mkdirSync(skill, { recursive: true });
+    fs.writeFileSync(path.join(skill, 'SKILL.md'), '---\nname: browser\n---\nBody.\n');
+    fs.writeFileSync(path.join(skill, 'mcp.json'), '{"chrome":{"command":"npx","args":["chrome-devtools-mcp"]}}\n');
+    const res = await run(['scan', repo, '--format', 'json']);
+    fs.rmSync(repo, { recursive: true, force: true });
+    const report = JSON.parse(res.stdout);
+    const mcpJsons = report.scannedFiles.filter((f: string) => f.includes('.agents') && f.endsWith('mcp.json'));
+    expect(mcpJsons).toHaveLength(1);
+    expect(report.findings.some((f: { ruleId: string; target?: string }) => f.ruleId === 'AG-SC-001' && f.target === 'chrome')).toBe(true);
+  });
+
   it('detects poisoned tools with --live', async () => {
     const poisonedConfig = path.join(dir, 'poisoned.json');
     fs.writeFileSync(
