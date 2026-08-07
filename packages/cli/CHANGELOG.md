@@ -1,5 +1,22 @@
 # mcp-agentgate
 
+## 0.49.0
+
+### Minor Changes
+
+- 13e58c0: npm-distributed marketplace plugins (`source: "npm"` entries in `.claude-plugin/marketplace.json`) are now cross-checked against OSV.dev known-malware advisories and the AgentGate MCP advisory database, the same pipeline as runner-launched server packages and OpenCode plugins. Exact pinned versions are compared against version-scoped advisories.
+- 305f081: Gemini CLI surfaces: extension manifests (`gemini-extension.json` at the project root or under `~/.gemini/extensions/<name>/`) are discovered and their `mcpServers` get the full config rule set + advisory checks; `hooks` in `.gemini/settings.json` (same nested shape as Claude Code settings hooks) run through the shared dangerous-command classifier (AG-SK-003).
+- 3c70deb: Gemini CLI extension custom commands: `commands/**.toml` at an extension root (shipped with the extension and exposed as slash commands for everyone who installs it) now get the same skill scanning as `.gemini/commands/**.toml` — prompt-injection/hidden-Unicode checks (AG-SK-001) and dangerous `!{...}` shell-block classification (AG-SK-003).
+- c17a517: Qwen Code support: MCP configs in `~/.qwen/settings.json` and project `.qwen/settings.json` are discovered (full config rule set + advisory checks), and AG-SK-002 checks project settings for `tools.approvalMode: "yolo"`/`"auto-edit"`, unscoped `permissions.allow` grants (`Bash`, `Write`/`Edit`, `WebFetch`), and `trust: true` MCP servers.
+
+### Patch Changes
+
+- Updated dependencies [13e58c0]
+- Updated dependencies [305f081]
+- Updated dependencies [3c70deb]
+- Updated dependencies [c17a517]
+  - mcp-agentgate-core@0.49.0
+
 ## 0.48.0
 
 ### Minor Changes
