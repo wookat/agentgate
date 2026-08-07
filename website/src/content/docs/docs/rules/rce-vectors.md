@@ -47,6 +47,15 @@ actions are checked for hidden Unicode and prompt-injection patterns
 instead (AG-SK-001) — a poisoned prompt is injected automatically on the
 same events.
 
+Codex project hook files (`.codex/hooks.json`) are checked the same way:
+command hooks run on lifecycle events (SessionStart, PreToolUse,
+UserPromptSubmit, …) for anyone who trusts the project's `.codex/` layer,
+so remote-script pipes and data-exfiltration commands report while local
+policy/lint scripts stay clean. (Codex asks you to review and trust each
+non-managed hook by hash before it runs — the finding still matters
+because trust prompts are routinely accepted and can be bypassed with
+`--dangerously-bypass-hook-trust`.)
+
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
 userPromptSubmit, preToolUse, postToolUse) with the same classification.
