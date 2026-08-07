@@ -39,7 +39,11 @@ Kiro project hooks (`.kiro/hooks/*.json`) get the same treatment: command
 actions run automatically on session events (SessionStart, PostFileSave,
 PreToolUse, …) for everyone who opens the project, so remote-script pipes and
 data-exfiltration commands report while local lint/setup commands and agent
-prompt actions stay clean.
+prompt actions stay clean. Kiro agent hook files (`.kiro/hooks/*.kiro.hook`,
+when/then schema) are covered too: `then.type: "runCommand"` actions execute
+automatically on IDE events (file save, prompt submit, tool use) and get the
+same classification; disabled hooks and `askAgent` prompt actions are not
+flagged.
 
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,

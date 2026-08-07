@@ -859,6 +859,9 @@ export function extractAmazonqHookCommands(hooks: unknown): string[] {
 /** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
 const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
 
+/** Kiro agent hook files (`*.kiro.hook`, when/then schema); `then.type: "runCommand"` executes on IDE events. */
+export const KIRO_AGENT_HOOK_FILE = /(^|\/)\.kiro\/hooks\/[^/]+\.kiro\.hook$/i;
+
 /** Collect `action.type: "command"` commands from a Kiro hook file's `hooks` array. */
 export function extractKiroHookCommands(hooks: unknown): string[] {
   if (!Array.isArray(hooks)) return [];
@@ -894,6 +897,27 @@ export const skillDynamicContextRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (KIRO_AGENT_HOOK_FILE.test(file)) {
+      const data = parseJsonc(content);
+      if (typeof data !== 'object' || data === null) return [];
+      const then = (data as { then?: { type?: unknown; command?: unknown } }).then;
+      if (then?.type !== 'runCommand' || typeof then.command !== 'string') return [];
+      const enabled = (data as { enabled?: unknown }).enabled;
+      if (enabled === false) return [];
+      const hit = RISKY_COMMANDS.find((r) => r.re.test(then.command as string));
+      if (!hit) return [];
+      const command = then.command;
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+      return [
+        finding(this, {
+          severity: hit.severity,
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: `Kiro agent hook command ${hit.risk.replace('at skill load time', 'automatically on IDE events (file save, prompt submit, tool use)')}: "${command.slice(0, 80)}"`,
+        }),
+      ];
+    }
     const isKiroHook = KIRO_HOOK_FILE.test(file);
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
