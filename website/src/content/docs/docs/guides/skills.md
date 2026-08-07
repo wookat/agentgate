@@ -28,8 +28,8 @@ Any of these markdown layouts are treated as skill files:
 - Gemini CLI custom commands (`.gemini/commands/**.toml`) — the prompt text
   is checked, including `!{...}` shell-injection blocks that run when the
   command executes.
-- Continue.dev workspace rules (`.continue/rules/*.md`) — joined verbatim
-  into the model's system message.
+- Continue.dev workspace rules and prompts (`.continue/rules/*.md`,
+  `.continue/prompts/*.md`) — injected verbatim into the model context.
 
 ## What the rules catch
 
