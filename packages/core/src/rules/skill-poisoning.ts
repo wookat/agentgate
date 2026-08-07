@@ -64,6 +64,9 @@ const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] 
   { re: /^(webfetch|websearch)(\(\s*\*?\s*\))?$/i, severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
 ];
 
+/** Claude Code settings files whose `permissions.allow` pre-approves tools for everyone using the project. */
+const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
+
 export const skillOverprivilegeRule: Rule = {
   id: 'AG-SK-002',
   category: 'overprivileged',
@@ -84,6 +87,48 @@ export const skillOverprivilegeRule: Rule = {
           }),
         );
       }
+    }
+    return findings;
+  },
+  checkSource(file, content) {
+    if (!CLAUDE_SETTINGS_FILE.test(file)) return [];
+    let data: unknown;
+    try {
+      data = JSON.parse(content);
+    } catch {
+      return [];
+    }
+    if (typeof data !== 'object' || data === null) return [];
+    const findings = [];
+    const settings = data as { permissions?: { allow?: unknown; defaultMode?: unknown } };
+    const allow = Array.isArray(settings.permissions?.allow) ? settings.permissions.allow : [];
+    for (const entry of allow) {
+      if (typeof entry !== 'string') continue;
+      const hit = RISKY_GRANTS.find((r) => r.re.test(entry));
+      if (hit) {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Claude Code settings pre-approve "${entry}" via permissions.allow — ${hit.risk} without a permission prompt; scope the grant (e.g. Bash(npm run test *)) or remove it`,
+          }),
+        );
+      }
+    }
+    if (settings.permissions?.defaultMode === 'bypassPermissions') {
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes('bypassPermissions')) + 1;
+      findings.push(
+        finding(this, {
+          severity: 'high',
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: 'Claude Code settings set permissions.defaultMode to "bypassPermissions" — every tool runs without prompts for anyone opening this project',
+        }),
+      );
     }
     return findings;
   },
