@@ -7,7 +7,7 @@ Date: 2026-08-07 · Round type: real-corpus verification (docs only)
 GitHub code search shows checked-in Claude Code settings are widespread:
 ~1,090 files match `bypassPermissions`, ~1,584 match
 `enableAllProjectMcpServers` under `.claude/`. Cloned four popular real
-repositories and scanned with the merged rounds 134–138 build.
+repositories and scanned with the rounds 134–138 build (local build incl. #231, CI-green and pending merge at scan time).
 
 ## Results (true positives, zero noise)
 
@@ -36,5 +36,5 @@ repositories and scanned with the merged rounds 134–138 build.
 
 ## Evidence
 
-- Scans run locally on merged main (rounds 134–138); docs only, no
+- Scans run locally on the rounds 134–138 build; docs only, no
   changeset.
