@@ -544,6 +544,38 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags dangerous edit auto-approvals in VS Code workspace settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.vscode'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      JSON.stringify(
+        { 'chat.tools.edits.autoApprove': { '**/*': true, '**/.env': true, 'src/**': true } },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['medium', 'medium']);
+    expect(hits.some((f) => f.message.includes('every file'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('"**/.env"'))).toBe(true);
+    // The official docs example: catch-all with re-denied sensitive paths is fine.
+    fs.writeFileSync(
+      path.join(dir, '.vscode', 'settings.json'),
+      JSON.stringify(
+        {
+          'chat.tools.edits.autoApprove': {
+            '**/*': true,
+            '**/.vscode/*.json': false,
+            '**/.env': false,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('flags auto-approved agent tool actions in Zed project settings (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.zed'), { recursive: true });
     fs.writeFileSync(
