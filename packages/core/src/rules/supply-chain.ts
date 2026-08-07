@@ -160,7 +160,36 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string) {
 }
 
 /** In-repo plugin marketplace catalog; each entry's `source` tells installers where plugin code comes from. */
-const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
+export const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
+
+/**
+ * Registry package refs for the npm-distributed plugins in a marketplace
+ * catalog — installers run `npm install` on these, so they get the same
+ * known-malware advisory checks as server packages.
+ */
+export function marketplacePluginRefs(file: string, content: string): (DependencyRef & { version?: string })[] {
+  if (!MARKETPLACE_CATALOG_FILE.test(file)) return [];
+  const data = parseJsonc(content);
+  if (typeof data !== 'object' || data === null) return [];
+  const plugins = (data as { plugins?: unknown }).plugins;
+  if (!Array.isArray(plugins)) return [];
+  const refs: (DependencyRef & { version?: string })[] = [];
+  for (const entry of plugins) {
+    const name = (entry as { name?: unknown })?.name;
+    const src = (entry as { source?: unknown })?.source as MarketplaceSource | undefined;
+    if (typeof src !== 'object' || src === null || src.source !== 'npm' || typeof src.package !== 'string') continue;
+    const version = typeof src.version === 'string' && EXACT_NPM_VERSION.test(src.version) ? src.version : undefined;
+    refs.push({
+      name: src.package,
+      version,
+      ecosystem: 'npm',
+      origin: 'manifest',
+      file,
+      context: `marketplace plugin "${typeof name === 'string' ? name : src.package}"`,
+    });
+  }
+  return refs;
+}
 
 /** Findings for marketplace catalog plugin entries served from mutable git sources. */
 function checkMarketplaceCatalog(rule: Rule, file: string, content: string) {
