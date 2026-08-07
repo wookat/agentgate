@@ -7,7 +7,7 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro']);
 const MAX_FILE_BYTES = 1024 * 1024;
 
 /** Run config-level rules over normalized MCP server entries. */
