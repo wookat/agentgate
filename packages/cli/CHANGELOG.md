@@ -1,5 +1,22 @@
 # mcp-agentgate
 
+## 0.46.0
+
+### Minor Changes
+
+- f864350: The shared auto-executing hook/skill command classifier now models PowerShell download-and-execute idioms: `irm`/`iwr`/`Invoke-RestMethod`/`Invoke-WebRequest` piped to `iex`/`Invoke-Expression`, and the `iex (irm …)` call form, report critical — the same as `curl | sh`. Plain downloads (`iwr … -OutFile`) stay clean. The skill-side curl|sh pattern also no longer spans plain newlines.
+- e50efbc: AG-SK-002 now checks named `[permissions.<name>]` profile tables in Codex project config (`.codex/config.toml`): a filesystem `"write"` grant on `/`, `/**`, `~`, or `$HOME` reports high (the whole filesystem or home directory becomes writable for anyone who trusts the project), and `network.enabled = true` inside a profile reports medium (sandboxed egress). Scoped path grants, deny rules, and disabled networking stay clean.
+
+### Patch Changes
+
+- 3d175bc: Two false-positive fixes from a flagship-repo sweep: the AG-RC-001 curl|sh pattern no longer spans plain newlines (only backslash continuations), so a pipe in a later unrelated statement is not attributed to an earlier download command; the AG-SK-001 concealment pattern no longer matches "do not tell the user to <verb> ..." phrasing guidance. Real single-line and continuation-line curl|sh launches and genuine concealment instructions still report.
+- f26240d: Codex hook scanning also classifies Windows-only command overrides (`commandWindows`/`command_windows`) — a dangerous command can no longer hide behind a benign cross-platform `command`.
+- Updated dependencies [3d175bc]
+- Updated dependencies [f26240d]
+- Updated dependencies [f864350]
+- Updated dependencies [e50efbc]
+  - mcp-agentgate-core@0.46.0
+
 ## 0.45.0
 
 ### Minor Changes
