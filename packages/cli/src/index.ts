@@ -87,7 +87,11 @@ program
   .argument('[target]', 'project directory to scan; default: current directory')
   .addOption(new Option('-f, --format <format>', 'output format').choices(['table', 'json', 'sarif']).default('table'))
   .option('-o, --output <file>', 'write the report to a file instead of stdout')
-  .addOption(new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity').choices([...SEVERITIES]))
+  .addOption(
+    new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity')
+      .choices([...SEVERITIES, 'never'])
+      .default('high'),
+  )
   .option('--ignore <globs...>', 'glob patterns (relative to the scan root) to exclude')
   .option('--offline', 'skip registry lookups; only run name-shape (typosquat) checks')
   .option('--no-imports', 'skip source import extraction; check manifests only')

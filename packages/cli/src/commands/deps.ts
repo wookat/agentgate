@@ -21,7 +21,7 @@ import { CLI_VERSION } from '../version.js';
 export interface DepsOptions {
   format: 'table' | 'json' | 'sarif';
   output?: string;
-  failOn?: Severity;
+  failOn?: Severity | 'never';
   ignore?: string[];
   offline?: boolean;
   /** commander `--no-imports` flag; defaults to true. */
@@ -107,7 +107,7 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
     console.log(renderGitHubAnnotations(sorted));
   }
 
-  if (opts.failOn && maxSeverityAtLeast(sorted, opts.failOn)) {
+  if (opts.failOn && opts.failOn !== 'never' && maxSeverityAtLeast(sorted, opts.failOn)) {
     return 1;
   }
   return 0;

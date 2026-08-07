@@ -92,7 +92,7 @@ npx mcp-agentgate lock
 npx mcp-agentgate ci
 
 # Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
-npx mcp-agentgate deps --fail-on high
+npx mcp-agentgate deps
 
 # Ask the MCP advisory database about a package before you install it
 npx mcp-agentgate advisory check mcp-remote@0.1.10
