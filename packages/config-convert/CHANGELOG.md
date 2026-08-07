@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.4.0
+
+### Minor Changes
+
+- f943c78: `config convert` supports `continue` (Continue.dev): parses the YAML `mcpServers` list from `~/.continue/config.yaml` or `.continue/mcpServers/*.yaml` blocks, and renders a standalone YAML block document (save under `.continue/mcpServers/` or merge into your config.yaml).
+
 ## 0.3.0
 
 ### Minor Changes
