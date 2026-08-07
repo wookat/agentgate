@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.27.1
+
+### Patch Changes
+
+- 3b52d30: Repo scanning no longer runs source-level rules over CI files under `.github/` (only `copilot-instructions.md` is read there) — fixes false-positive AG-RC-001 criticals on legitimate `curl | bash` install steps in GitHub workflows.
+- Updated dependencies [3b52d30]
+  - mcp-agentgate-core@0.27.1
+
 ## 0.27.0
 
 ### Minor Changes
