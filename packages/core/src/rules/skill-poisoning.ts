@@ -8,10 +8,12 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (`plugins/<name>/...`); Windsurf rules/workflows (`.windsurf/rules|workflows`,
  * `.windsurfrules`); Cline rules (`.clinerules/` dir or file, `.cursorrules`);
  * Cursor rule files (`.cursor/rules/*.mdc`); Gemini CLI custom commands
- * (`.gemini/commands/**.toml`, prompt text with `!{...}` shell blocks).
+ * (`.gemini/commands/**.toml`, prompt text with `!{...}` shell blocks);
+ * Continue.dev workspace rules (`.continue/rules/*.md`, joined into the
+ * system message).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.gemini\/commands\/.+\.toml$|(^|\/)\.continue\/rules\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
