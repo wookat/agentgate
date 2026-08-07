@@ -31,7 +31,8 @@ export function findHiddenInSource(content: string): { char: string; line: numbe
 export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
-  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b/i, label: 'concealment instruction' },
+  // "do not tell the user to <verb> ..." is phrasing guidance, not concealment.
+  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)/i, label: 'concealment instruction' },
   { re: /\bbefore\s+using\s+this\s+tool[^.]*\b(read|send|pass|include)\b/i, label: 'cross-tool coercion' },
   { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*\b(file|ssh|key|token|secret|credential|\.env|id_rsa)/i, label: 'exfiltration instruction' },
   { re: /\bsidenote\b|\bconversation_history\b/i, label: 'known poisoning marker' },

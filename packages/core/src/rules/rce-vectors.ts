@@ -1,7 +1,9 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
 
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
-const REMOTE_EXEC_RE = /\b(curl|wget)\b[^|;&]*\|\s*(sh|bash|node|python)\b/;
+// The span may only cross a newline via a backslash continuation, so a pipe in a
+// later, unrelated statement is not attributed to the download command.
+const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
  * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
