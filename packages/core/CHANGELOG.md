@@ -1,5 +1,16 @@
 # mcp-agentgate-core
 
+## 0.43.0
+
+### Minor Changes
+
+- 454045e: AG-SC-001 flags unpinned OpenCode npm plugins: packages in the `plugin` array of `opencode.json`/`opencode.jsonc` are auto-installed by Bun and executed at startup, so specs without an exact version report medium (rug-pull / compromised-release exposure). Local plugin file paths and pinned specs stay clean.
+- 04d7276: OpenCode npm plugins get known-malware advisory checks: packages in the `plugin` array of `opencode.json` are now cross-checked against OSV.dev known-malware advisories (AG-SC-002) and the AgentGate MCP advisory database (AG-SC-003), the same as MCP server packages launched via npx-style runners — because they are auto-installed and executed at startup.
+
+### Patch Changes
+
+- e6aa49b: AG-SC-001 also flags OpenCode git-URL plugin specs without a commit pin (`pkg@git+https://…` with no `#<sha>`): they fetch and execute whatever the branch points at on every startup. Commit-pinned git specs stay clean.
+
 ## 0.42.0
 
 ### Minor Changes
