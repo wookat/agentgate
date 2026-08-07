@@ -56,6 +56,51 @@ export function filterOsvDetail(ctx, candidate, detail, since) {
   return { ...candidate, published: detail.published?.slice(0, 10) };
 }
 
+const GHSA_TYPE_HINTS = [
+  [/command injection|code execution|rce\b/i, "rce-vectors"],
+  [/path traversal|directory traversal/i, "path-traversal"],
+  [/ssrf|server-side request forgery/i, "ssrf"],
+  [/credential|token leak|secret/i, "credential-leak"],
+  [/malicious|malware|typosquat/i, "malicious-package"],
+];
+
+/** Build an MCPA advisory skeleton from a GHSA API detail payload. */
+export function draftFromGhsa(detail, nextId) {
+  const text = `${detail.summary ?? ""} ${detail.description ?? ""}`;
+  const type = GHSA_TYPE_HINTS.find(([re]) => re.test(text))?.[1] ?? "FIXME-type";
+  const packages = (detail.vulnerabilities ?? []).map((v) => ({
+    ecosystem: (v.package?.ecosystem ?? "FIXME").toLowerCase().replace("pip", "pypi"),
+    name: v.package?.name ?? "FIXME",
+    ranges: [
+      {
+        introduced: "0",
+        ...(v.last_patched_version
+          ? { fixed: v.last_patched_version }
+          : { last_affected: v.vulnerable_version_range?.match(/<=\s*([\w.-]+)/)?.[1] ?? "FIXME" }),
+      },
+    ],
+  }));
+  return {
+    id: nextId,
+    title: detail.summary ?? "FIXME",
+    summary: detail.description?.trim() || "FIXME — write an accurate summary before committing.",
+    type,
+    severity: detail.severity === "moderate" ? "medium" : (detail.severity ?? "FIXME"),
+    aliases: [detail.cve_id, detail.ghsa_id].filter(Boolean),
+    ...(detail.cvss?.vector_string
+      ? { cvss: { vector: detail.cvss.vector_string, score: detail.cvss.score } }
+      : {}),
+    cwe: (detail.cwes ?? []).map((c) => c.cwe_id),
+    packages: packages.length > 0 ? packages : [{ ecosystem: "FIXME", name: "FIXME", ranges: [{ introduced: "0", last_affected: "FIXME" }] }],
+    references: [
+      { type: "advisory", url: detail.html_url ?? `https://github.com/advisories/${detail.ghsa_id}` },
+      ...(detail.cve_id ? [{ type: "web", url: `https://nvd.nist.gov/vuln/detail/${detail.cve_id}` }] : []),
+      ...(detail.source_code_location ? [{ type: "report", url: detail.source_code_location }] : []),
+    ],
+    timeline: { published: (detail.published ?? "").slice(0, 10) || "FIXME" },
+  };
+}
+
 export function renderReport({ days, ghsa, osv }) {
   const lines = [];
   if (ghsa.hits.length > 0) {
