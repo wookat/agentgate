@@ -1271,6 +1271,32 @@ describe('scanRepo', () => {
     ]);
   });
 
+  it('flags unpinned npm and archive marketplace plugin sources (AG-SC-001)', () => {
+    fs.mkdirSync(path.join(dir, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude-plugin', 'marketplace.json'),
+      JSON.stringify({
+        name: 'acme-tools',
+        plugins: [
+          { name: 'npm-range', source: { source: 'npm', package: '@acme/plugin', version: '^2.0.0' } },
+          { name: 'npm-floating', source: { source: 'npm', package: '@acme/other' } },
+          { name: 'npm-pinned', source: { source: 'npm', package: '@acme/pinned', version: '2.1.0' } },
+          { name: 'zip-unpinned', source: { source: 'archive', url: 'https://artifacts.example.com/p.zip' } },
+          { name: 'zip-pinned', source: { source: 'archive', url: 'https://artifacts.example.com/p2.zip', sha256: '6bfa50e3d2e00c052b46abe51fff89346ac803e45771f76dcf6df1ab74cca5e1' } },
+        ],
+      }),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits).toHaveLength(3);
+    expect(hits.map((f) => f.message)).toEqual([
+      expect.stringContaining('"npm-range"'),
+      expect.stringContaining('"npm-floating"'),
+      expect.stringContaining('"zip-unpinned"'),
+    ]);
+    expect(hits[0]!.message).toContain('Pin an exact version');
+    expect(hits[2]!.message).toContain('sha256');
+  });
+
   it('flags root write grants and network access in named Codex permission profiles (AG-SK-002)', () => {
     fs.mkdirSync(path.join(dir, '.codex'), { recursive: true });
     fs.writeFileSync(
