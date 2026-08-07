@@ -144,6 +144,40 @@ describe("convert", () => {
     expect(JSON.parse(rendered.content).mcpServers.s.disabled).toBe(true);
   });
 
+  it("zed parses JSONC context_servers and renders a mergeable document", () => {
+    const raw = `{
+  // ui settings elsewhere
+  "theme": "One Dark", /* block */
+  "context_servers": {
+    "local": { "command": "npx", "args": ["-y", "pkg"], "env": { "K": "v" }, },
+    "remote": { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer x" } },
+  },
+}`;
+    const { config, warnings } = ADAPTERS.zed.parse(raw);
+    expect(warnings).toEqual([]);
+    expect(config.servers).toHaveLength(2);
+    const rendered = ADAPTERS.zed.render(config);
+    const out = JSON.parse(rendered.content).context_servers;
+    expect(out.local).toEqual({ command: "npx", args: ["-y", "pkg"], env: { K: "v" } });
+    expect(out.remote).toEqual({ url: "https://mcp.example.com/mcp", headers: { Authorization: "Bearer x" } });
+    expect(rendered.warnings.some((w) => w.includes("merge"))).toBe(true);
+  });
+
+  it("cursor -> zed wraps servers under context_servers", () => {
+    const { content } = convert("cursor", "zed", CURSOR_CONFIG);
+    const out = JSON.parse(content).context_servers;
+    expect(out.filesystem.command).toBe("npx");
+    expect(out.linear.url).toBe("https://mcp.linear.app/mcp");
+  });
+
+  it("kiro and roo-code use standard mcpServers", () => {
+    for (const id of ["kiro", "roo-code"] as const) {
+      const { content } = convert("cursor", id, CURSOR_CONFIG);
+      const out = JSON.parse(content).mcpServers;
+      expect(out.filesystem.command, id).toBe("npx");
+    }
+  });
+
   it("rejects invalid JSON with ConfigParseError", () => {
     expect(() => convert("cursor", "vscode", "{oops")).toThrow(ConfigParseError);
   });

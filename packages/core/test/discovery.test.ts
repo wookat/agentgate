@@ -9,9 +9,10 @@ import {
   parseMcpServersJson,
   parseOpenCodeJson,
   parseVsCodeJson,
+  parseZedSettingsJson,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -21,7 +22,20 @@ describe('knownConfigLocations', () => {
   it('covers all known clients', () => {
     const clients = new Set(knownConfigLocations('/home/u', 'linux').map((l) => l.client));
     expect(clients).toEqual(
-      new Set(['claude-desktop', 'claude-code', 'cursor', 'vscode', 'codex', 'opencode', 'windsurf', 'cline', 'gemini-cli']),
+      new Set([
+        'claude-desktop',
+        'claude-code',
+        'cursor',
+        'vscode',
+        'codex',
+        'opencode',
+        'windsurf',
+        'cline',
+        'gemini-cli',
+        'kiro',
+        'roo-code',
+        'zed',
+      ]),
     );
   });
 
@@ -34,6 +48,18 @@ describe('knownConfigLocations', () => {
     expect(p('windsurf')).toEqual(['/home/u/.codeium/windsurf/mcp_config.json', '/home/u/.codeium/mcp_config.json']);
     expect(p('cline')).toEqual(['/home/u/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json']);
     expect(p('gemini-cli')).toEqual(['/home/u/.gemini/settings.json']);
+  });
+
+  it('locates kiro, roo-code, and zed configs', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const p = (client: string) =>
+      linux
+        .filter((l) => l.client === client)
+        .map((l) => l.path.split(path.sep).join('/'));
+    expect(p('kiro')).toEqual(['/home/u/.kiro/settings/mcp.json']);
+    expect(p('roo-code')).toEqual(['/home/u/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json']);
+    expect(p('zed')).toEqual(['/home/u/.config/zed/settings.json']);
+    expect(linux.find((l) => l.client === 'zed')!.format).toBe('zed-settings-json');
   });
 
   it('uses platform-specific paths', () => {
@@ -90,6 +116,31 @@ describe('parseOpenCodeJson', () => {
   });
 });
 
+describe('parseZedSettingsJson', () => {
+  it('parses context_servers with JSONC comments and trailing commas', () => {
+    const raw = `{
+  // UI settings elsewhere
+  "theme": "One Dark", /* block comment */
+  "context_servers": {
+    "local": { "command": "npx", "args": ["-y", "server-fs"], "env": { "K": "v" }, },
+    "remote": { "url": "https://mcp.example.com/mcp", "headers": { "Authorization": "Bearer x" } },
+  },
+}`;
+    const servers = parseZedSettingsJson(raw, loc('zed', 'zed-settings-json'));
+    expect(servers).toHaveLength(2);
+    expect(servers[0]).toMatchObject({ name: 'local', command: 'npx', args: ['-y', 'server-fs'], env: { K: 'v' }, client: 'zed' });
+    expect(servers[1]).toMatchObject({ name: 'remote', url: 'https://mcp.example.com/mcp' });
+  });
+
+  it('does not treat // inside strings as a comment', () => {
+    const servers = parseZedSettingsJson(
+      JSON.stringify({ context_servers: { r: { url: 'https://x.example/mcp' } } }),
+      loc('zed', 'zed-settings-json'),
+    );
+    expect(servers[0]!.url).toBe('https://x.example/mcp');
+  });
+});
+
 describe('parseCodexToml', () => {
   it('parses mcp_servers tables with args and env', () => {
     const toml = `
@@ -134,5 +185,16 @@ describe('discoverConfigFiles', () => {
 
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client).sort()).toEqual(['cursor', 'vscode']);
+  });
+
+  it('finds kiro and roo-code project-level configs', () => {
+    const project = path.join(dir, 'proj2');
+    fs.mkdirSync(path.join(project, '.kiro', 'settings'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.kiro', 'settings', 'mcp.json'), '{"mcpServers":{}}');
+    fs.mkdirSync(path.join(project, '.roo'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.roo', 'mcp.json'), '{"mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client).sort()).toEqual(['kiro', 'roo-code']);
   });
 });

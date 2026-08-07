@@ -467,6 +467,87 @@ export const geminiCli: ClientAdapter = {
   },
 };
 
+/** Kiro — `~/.kiro/settings/mcp.json` (or project `.kiro/settings/mcp.json`); standard `mcpServers`. */
+export const kiro = mcpServersAdapter("kiro", "~/.kiro/settings/mcp.json", { withType: false });
+
+/** Roo Code — `mcp_settings.json` under VS Code globalStorage (or project `.roo/mcp.json`); standard `mcpServers`. */
+export const rooCode = mcpServersAdapter(
+  "roo-code",
+  "<vscode user dir>/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json",
+  { withType: false },
+);
+
+/** Remove `//` and `/* *\/` comments plus trailing commas (outside strings) so JSONC settings parse. */
+function stripJsonComments(raw: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i]!;
+    if (inString) {
+      out += ch;
+      if (ch === "\\") {
+        out += raw[++i] ?? "";
+      } else if (ch === '"') {
+        inString = false;
+      }
+    } else if (ch === '"') {
+      inString = true;
+      out += ch;
+    } else if (ch === "/" && raw[i + 1] === "/") {
+      while (i < raw.length && raw[i] !== "\n") i++;
+      out += "\n";
+    } else if (ch === "/" && raw[i + 1] === "*") {
+      i += 2;
+      while (i < raw.length && !(raw[i] === "*" && raw[i + 1] === "/")) i++;
+      i++;
+    } else {
+      out += ch;
+    }
+  }
+  return out.replace(/,(\s*[}\]])/g, "$1");
+}
+
+/** Zed — `context_servers` key inside `settings.json` (JSONC); entries share the mcpServers shape. */
+export const zed: ClientAdapter = {
+  id: "zed",
+  defaultPath: "~/.config/zed/settings.json",
+  parse(content): ParseResult {
+    let data: unknown;
+    try {
+      data = JSON.parse(stripJsonComments(content));
+    } catch (e) {
+      throw new ConfigParseError("zed", `invalid JSON: ${(e as Error).message}`);
+    }
+    if (!isRecord(data)) throw new ConfigParseError("zed", "top level must be an object");
+    const warnings: string[] = [];
+    const serversObj = data.context_servers;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("zed", "context_servers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      const s = parseCommonEntry("zed", name, entry, warnings);
+      if (s) servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const contextServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: zed has no disabled flag; server emitted as enabled`);
+      }
+      if (s.cwd) warnings.push(`${s.name}: zed does not support cwd; dropped`);
+      contextServers[s.name] = renderCommonEntry(s, false);
+    }
+    warnings.push(
+      "zed: emitted a standalone context_servers document — merge it into your existing ~/.config/zed/settings.json rather than replacing the file",
+    );
+    return { content: JSON.stringify({ context_servers: contextServers }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -477,4 +558,7 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   windsurf,
   cline,
   "gemini-cli": geminiCli,
+  kiro,
+  "roo-code": rooCode,
+  zed,
 };
