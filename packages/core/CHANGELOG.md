@@ -1,5 +1,21 @@
 # mcp-agentgate-core
 
+## 0.47.0
+
+### Minor Changes
+
+- 04137c7: AG-SC-001 now checks in-repo plugin marketplace catalogs (`.claude-plugin/marketplace.json`): a plugin entry whose git-based `source` (`github`, `url`, `git-subdir`) has no `sha` and no release-style `ref` reports medium — everyone who installs the plugin gets whatever the branch points at (rug-pull exposure). Relative-path sources (plugin code inside the marketplace repo) stay clean.
+- cabc1cf: AG-SK-003 now checks Claude Code plugin hooks: `type: "command"` entries in a plugin's `hooks/hooks.json` (or inline in `.claude-plugin/plugin.json`) run automatically on lifecycle events for everyone who installs the plugin, so they get the shared dangerous-command classification (remote-script pipes critical, exfiltration/credential reads high). Install instructions merely printed via `echo '…'` are no longer misclassified as pipelines (precision fix, applies to all hook surfaces).
+- 1ce904f: Project-level discovery now finds MCP servers bundled by Claude Code plugins: an `.mcp.json` next to a `.claude-plugin/plugin.json` (including nested plugin roots in marketplace repos) starts automatically for everyone who enables the plugin, so its servers get the full config-level rule set and advisory checks like any other discovered config.
+- 368a701: Plugin manifest `mcpServers` fields are now resolved during discovery: inline server config in `.claude-plugin/plugin.json` and config paths relative to the plugin root (string or array, `${CLAUDE_PLUGIN_ROOT}` prefix supported) both surface their servers for the full config-level rule set and advisory checks. References escaping the plugin root are ignored.
+- 0d0c588: AG-SK-003 now classifies Claude Code plugin LSP server commands: `.lsp.json` (or inline `lspServers` in `.claude-plugin/plugin.json`) declares commands that run automatically after workspace trust whenever matching files are edited. Command + args go through the shared dangerous-command classification; real language servers stay clean.
+- 3f2817f: AG-SK-003 now classifies Claude Code plugin monitor commands: `monitors/monitors.json` (or `experimental.monitors` / top-level `monitors` inline in the plugin manifest) declares shell commands that run as persistent unsandboxed background processes for the whole session, at the same trust level as hooks. Benign watchers like `tail -F` stay clean.
+- f62ac7a: AG-SK-003 now shape-detects hook- and monitor-config JSON at non-conventional paths: plugin manifests can point `hooks` / `experimental.monitors` at arbitrary relative files, so any JSON whose structure matches the hook schema (nested `type: "command"` entries) or monitor schema (array of `{ name, command, description }`) gets its commands run through the shared dangerous-command classifier. Benign configs carry no risky patterns and stay clean.
+
+### Patch Changes
+
+- efda0fc: AG-AM-001 resolves shell parameter-expansion defaults (`${VAR:-default}`) in remote server URLs before analysis: when the variable is unset the default is the effective endpoint, so those servers now get real HTTPS/auth checks instead of an "unparseable URL" low finding.
+
 ## 0.46.0
 
 ### Minor Changes
