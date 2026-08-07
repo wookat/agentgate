@@ -89,6 +89,12 @@ its args go through the shared classification, so an LSP entry wrapping a
 remote-script pipe or credential read is flagged while real language
 servers (`gopls serve`, `typescript-language-server --stdio`) stay clean.
 
+So do plugin monitors: `monitors/monitors.json` (or inline in the manifest)
+declares shell commands Claude Code starts automatically as persistent
+background processes for the whole session, unsandboxed at the same trust
+level as hooks. Their commands get the same classification; benign watchers
+like `tail -F ./logs/error.log` stay clean.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.
