@@ -11,6 +11,7 @@ const exec = promisify(execFile);
 const FAKE_SK_KEY = ['sk', 'abc123def456ghi789jkl012mno345'].join('-');
 const CLI = path.resolve(__dirname, '..', 'dist', 'index.js');
 const FIXTURE_SERVER = path.resolve(__dirname, 'fixtures', 'toy-server.mjs');
+const FIXTURE_HTTP_SERVER = path.resolve(__dirname, 'fixtures', 'toy-http-server.mjs');
 
 let dir: string;
 let configPath: string;
@@ -227,11 +228,40 @@ describe('agentgate scan', () => {
     expect(report.findings.some((f: { category: string }) => f.category === 'tool-poisoning')).toBe(true);
   }, 30000);
 
+  it('fetches remote (Streamable HTTP) tool surfaces with --live', async () => {
+    const { spawn } = await import('node:child_process');
+    const child = spawn(process.execPath, [FIXTURE_HTTP_SERVER], { stdio: ['ignore', 'pipe', 'ignore'] });
+    try {
+      const port = await new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('fixture server did not start')), 15000);
+        child.stdout.on('data', (chunk: Buffer) => {
+          const m = /PORT (\d+)/.exec(chunk.toString());
+          if (m) {
+            clearTimeout(timer);
+            resolve(m[1]!);
+          }
+        });
+      });
+      const remoteConfig = path.join(dir, 'remote.json');
+      fs.writeFileSync(remoteConfig, JSON.stringify({ mcpServers: { toyhttp: { url: `http://127.0.0.1:${port}/mcp` } } }));
+      const res = await run(['scan', '--config', remoteConfig, '--live', '--format', 'json']);
+      const report = JSON.parse(res.stdout);
+      expect(report.warnings.some((w: string) => w.includes('live scan skipped for "toyhttp"'))).toBe(false);
+      const lockRes = await run(['lock', '--config', remoteConfig]);
+      expect(lockRes.code).toBe(0);
+      const lockfile = JSON.parse(fs.readFileSync(path.join(dir, 'agentgate.lock'), 'utf8'));
+      expect(lockfile.servers.toyhttp.tools.some((t: { name: string }) => t.name === 'add')).toBe(true);
+      fs.rmSync(path.join(dir, 'agentgate.lock'));
+    } finally {
+      child.kill();
+    }
+  }, 30000);
+
   it('warns that stdio servers were not inspected without --live', async () => {
     writeConfig();
     const res = await run(['scan', '--config', configPath, '--format', 'json']);
     const report = JSON.parse(res.stdout);
-    expect(report.warnings.some((w: string) => w.includes('not started') && w.includes('--live'))).toBe(true);
+    expect(report.warnings.some((w: string) => w.includes('not contacted') && w.includes('--live'))).toBe(true);
   });
 
   it('does not start stdio servers under --live without consent in a non-interactive session', async () => {

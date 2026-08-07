@@ -110,5 +110,5 @@ steps:
 
 - **Pin the config**: auto-discovery looks at the *runner's* home directory — in CI, always pass `--config` pointing at a config committed to the repo.
 - **Choose the threshold deliberately**: `--fail-on high` (default) blocks on high/critical findings; use `--fail-on medium` once your baseline is clean.
-- **Stdio servers run in CI**: `ci`/`diff`/`lock` connect to stdio servers to read their live tool surface, so the runner needs any runtimes those servers require (e.g. `uv` for Python servers). Restrict with `--server` if only some servers matter.
+- **Servers are contacted in CI**: `ci`/`diff`/`lock` connect to stdio servers (the runner needs any runtimes they require, e.g. `uv` for Python servers) and to remote `url` servers over Streamable HTTP/SSE (the runner needs network access and any auth `headers`). Restrict with `--server` if only some servers matter.
 - **Exit code 2 means the gate itself broke** (missing lockfile, unreachable server) — treat it as a failure, don't mask it.

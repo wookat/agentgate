@@ -24,10 +24,8 @@ describe('fetchToolSurface', () => {
     expect(tools[0]!.inputSchema).toMatchObject({ type: 'object' });
   }, 60000);
 
-  it('rejects servers without a stdio command', async () => {
-    await expect(fetchToolSurface(server({ command: undefined, url: 'https://x.example.com' }))).rejects.toThrow(
-      /stdio/,
-    );
+  it('rejects servers with neither a stdio command nor a url', async () => {
+    await expect(fetchToolSurface(server({ command: undefined }))).rejects.toThrow(/neither a stdio command nor a url/);
   });
 
   it('times out when the process is not an MCP server', async () => {

@@ -1,5 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { McpServerConfig, ToolSurface } from './types.js';
 
 export interface LiveScanOptions {
@@ -8,21 +11,38 @@ export interface LiveScanOptions {
 }
 
 /**
- * Connect to a stdio MCP server, list its tools, and disconnect.
- * Only stdio transports are supported for live scanning; remote servers are analyzed statically.
+ * Connect to an MCP server (stdio, or remote via Streamable HTTP with SSE
+ * fallback), list its tools, and disconnect.
  */
 export async function fetchToolSurface(server: McpServerConfig, opts: LiveScanOptions = {}): Promise<ToolSurface[]> {
-  if (!server.command) {
-    throw new Error(`Server "${server.name}" has no stdio command; live scan supports stdio servers only`);
-  }
-  const transport = new StdioClientTransport({
-    command: server.command,
-    args: server.args ?? [],
-    env: { ...(process.env as Record<string, string>), ...(server.env ?? {}) },
-    stderr: 'ignore',
-  });
-  const client = new Client({ name: 'agentgate', version: '0.1.0' });
   const timeoutMs = opts.timeoutMs ?? 15000;
+  if (!server.command && !server.url) {
+    throw new Error(`Server "${server.name}" has neither a stdio command nor a url`);
+  }
+  if (server.command) {
+    const transport = new StdioClientTransport({
+      command: server.command,
+      args: server.args ?? [],
+      env: { ...(process.env as Record<string, string>), ...(server.env ?? {}) },
+      stderr: 'ignore',
+    });
+    return listAllTools(server, transport, timeoutMs);
+  }
+  // remote: Streamable HTTP first (current spec), SSE transport as fallback (legacy servers)
+  const headers = server.headers ?? {};
+  try {
+    return await listAllTools(server, new StreamableHTTPClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
+  } catch (httpErr) {
+    try {
+      return await listAllTools(server, new SSEClientTransport(new URL(server.url!), { requestInit: { headers } }), timeoutMs);
+    } catch {
+      throw httpErr instanceof Error ? httpErr : new Error(String(httpErr));
+    }
+  }
+}
+
+async function listAllTools(server: McpServerConfig, transport: Transport, timeoutMs: number): Promise<ToolSurface[]> {
+  const client = new Client({ name: 'agentgate', version: '0.1.0' });
   try {
     await withTimeout(client.connect(transport, { timeout: timeoutMs }), timeoutMs, `connecting to "${server.name}"`);
     const tools: ToolSurface[] = [];

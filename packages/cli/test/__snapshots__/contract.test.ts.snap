@@ -66,7 +66,7 @@ exports[`scan --format json output contract > matches the frozen report shape (s
   ],
   "version": 1,
   "warnings": [
-    "1 stdio server(s) were not started, so their live tool surface (descriptions, schemas) was not inspected — re-run with --live to catch tool poisoning",
+    "2 server(s) were not contacted, so their live tool surface (descriptions, schemas) was not inspected — re-run with --live to catch tool poisoning",
   ],
 }
 `;
