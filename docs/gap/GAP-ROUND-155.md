@@ -58,5 +58,5 @@ not installed.
 
 ## Evidence
 
-- Full suite green: core 229, cli 47, config-convert 24.
+- Full suite green: core 228, cli 47, config-convert 24.
 - Self-scan: 17 findings (13 medium, 4 low — round-154 baseline).
