@@ -957,6 +957,20 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 /** Claude Code plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks. */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 const PLUGIN_MANIFEST_FILE = /(^|\/)\.claude-plugin\/plugin\.json$/i;
+const PLUGIN_LSP_FILE = /(^|\/)\.lsp\.json$/i;
+
+/** Flatten `{ name: { command, args } }` LSP server maps into full command lines. */
+export function extractLspCommands(servers: unknown): string[] {
+  if (typeof servers !== 'object' || servers === null || Array.isArray(servers)) return [];
+  const out: string[] = [];
+  for (const server of Object.values(servers)) {
+    const s = server as { command?: unknown; args?: unknown };
+    if (typeof s?.command !== 'string') continue;
+    const args = Array.isArray(s.args) ? s.args.filter((a): a is string => typeof a === 'string') : [];
+    out.push([s.command, ...args].join(' '));
+  }
+  return out;
+}
 
 /** VS Code workspace task definitions; `runOn: "folderOpen"` tasks auto-run when the folder opens. */
 const VSCODE_TASKS_FILE = /(^|\/)\.vscode\/tasks\.json$/i;
@@ -1083,8 +1097,10 @@ export const skillDynamicContextRule: Rule = {
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
-    const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || PLUGIN_MANIFEST_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks) return [];
+    const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
+    const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
+    const isPluginLsp = PLUGIN_LSP_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks && !isPluginLsp) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -1159,6 +1175,25 @@ export const skillDynamicContextRule: Rule = {
         );
       }
       return findings;
+    }
+    if (isPluginLsp || isPluginManifest) {
+      // LSP server commands run automatically after workspace trust whenever matching files are edited.
+      const servers = isPluginLsp ? data : (data as { lspServers?: unknown }).lspServers;
+      for (const command of extractLspCommands(servers)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40).split(' ')[0] ?? '')) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Claude Code plugin LSP server command ${hit.risk.replace('at skill load time', 'automatically while matching files are edited, for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      if (isPluginLsp) return findings;
     }
     if (isPluginHooks) {
       // Same nested shape as Claude Code settings hooks; a manifest's `hooks` field may also be inline config.
