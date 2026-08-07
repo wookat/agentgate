@@ -100,6 +100,15 @@ tokens (`Shell(git)`, `Write(src/**)`, other `Read(...)`) are not
 flagged, and a matching entry in `permissions.deny` suppresses the
 allow (deny takes precedence).
 
+Kiro project custom agents (`.kiro/agents/*.json` and `*.md` with YAML
+frontmatter) are checked for embedded `permissions.rules`: a catch-all
+`allow` (no `match`, or a `*` pattern) is `high` for the `shell`
+capability and the `all`/`builtin` meta-capabilities, and `medium` for
+`filesystem`/`fs_write`, `mcp`, and `web_fetch`. Scoped matches
+(`git *`, `src/**`) and `fs_read` are not flagged, and a catch-all
+`deny` for the same capability suppresses the allow (deny always
+wins).
+
 Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`) are
 checked for `allowedTools` pre-approvals: a catch-all (`"*"`) is `high`,
 unscoped `execute_bash`/`use_aws` are `high`, unscoped `fs_write` is
