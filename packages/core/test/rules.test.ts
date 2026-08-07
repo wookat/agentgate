@@ -96,6 +96,22 @@ describe('overprivileged', () => {
   it('does not flag single-capability surfaces', () => {
     expect(overprivilegedRule.checkToolset!([tool({ name: 'read_file', description: 'Read a file' })], 's')).toHaveLength(0);
   });
+
+  it('flags skill-declared servers without an includeTools allowlist', () => {
+    const findings = overprivilegedRule.checkServer!(
+      server({ command: 'npx', args: ['chrome-devtools-mcp'], client: 'skill' }),
+    );
+    expect(findings.some((f) => f.severity === 'low' && f.message.includes('includeTools'))).toBe(true);
+  });
+
+  it('does not flag skill servers with includeTools or non-skill servers without it', () => {
+    const scoped = overprivilegedRule.checkServer!(
+      server({ command: 'npx', args: ['chrome-devtools-mcp'], client: 'amp-skill', includeTools: ['navigate_*', 'click'] }),
+    );
+    expect(scoped.some((f) => f.message.includes('includeTools'))).toBe(false);
+    const cursor = overprivilegedRule.checkServer!(server({ command: 'npx', args: ['chrome-devtools-mcp'], client: 'cursor' }));
+    expect(cursor.some((f) => f.message.includes('includeTools'))).toBe(false);
+  });
 });
 
 describe('auth-missing', () => {

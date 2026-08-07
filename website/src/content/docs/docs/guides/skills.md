@@ -36,7 +36,10 @@ sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
 `.agents/skills/`, `.claude/skills/`, or `~/.config/amp/skills/`. AgentGate
 extracts these and runs the full MCP config rule set over them (unpinned
 packages, advisory matches, and so on), with frontmatter shadowing the
-sibling `mcp.json` exactly as Amp resolves it.
+sibling `mcp.json` exactly as Amp resolves it. A skill-declared server
+without an `includeTools` allowlist (which Amp recommends) exposes the
+server's full tool surface and reports a low
+[AG-OP-001](/docs/rules/overprivileged/) finding.
 
 ## What the rules catch
 

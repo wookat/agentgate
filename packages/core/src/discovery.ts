@@ -230,6 +230,7 @@ function normalizeEntry(name: string, entry: Record<string, unknown>, location: 
     env: toStringRecord(entry.env),
     url: typeof entry.url === 'string' ? entry.url : typeof entry.serverUrl === 'string' ? entry.serverUrl : undefined,
     headers: toStringRecord(entry.headers),
+    includeTools: Array.isArray(entry.includeTools) ? entry.includeTools.map(String) : undefined,
     transport: typeof entry.type === 'string' ? entry.type : typeof entry.transport === 'string' ? entry.transport : undefined,
     source: location.path,
     client: location.client,
