@@ -80,6 +80,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('qwen-code', path.join(homeDir, '.qwen', 'settings.json'));
   // Gemini CLI extensions — each installed extension's manifest carries an optional mcpServers map
   locations.push(...geminiExtensionLocations(path.join(homeDir, '.gemini', 'extensions')));
+  // Qwen Code extensions — same layout under ~/.qwen/extensions
+  locations.push(...qwenExtensionLocations(path.join(homeDir, '.qwen', 'extensions')));
   // Kiro — user-level mcp.json, standard mcpServers format
   push('kiro', path.join(homeDir, '.kiro', 'settings', 'mcp.json'));
   // Roo Code (VS Code extension, own settings file under globalStorage)
@@ -134,6 +136,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
     { client: 'gemini-extension', path: path.join(projectDir, 'gemini-extension.json'), format: 'mcpServers-json' },
     { client: 'qwen-code', path: path.join(projectDir, '.qwen', 'settings.json'), format: 'mcpServers-json' },
+    { client: 'qwen-extension', path: path.join(projectDir, 'qwen-extension.json'), format: 'mcpServers-json' },
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
@@ -283,6 +286,19 @@ function amazonqAgentLocations(agentsDir: string): ClientConfigLocation[] {
  * extension installed.
  */
 function geminiExtensionLocations(extensionsDir: string): ClientConfigLocation[] {
+  return installedExtensionLocations(extensionsDir, 'gemini-extension', 'gemini-extension.json');
+}
+
+/**
+ * Qwen Code extensions mirror Gemini CLI extensions: every
+ * `<extensionsDir>/<name>/qwen-extension.json` manifest — its `mcpServers`
+ * map starts automatically for anyone with the extension installed.
+ */
+function qwenExtensionLocations(extensionsDir: string): ClientConfigLocation[] {
+  return installedExtensionLocations(extensionsDir, 'qwen-extension', 'qwen-extension.json');
+}
+
+function installedExtensionLocations(extensionsDir: string, client: string, manifest: string): ClientConfigLocation[] {
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(extensionsDir, { withFileTypes: true });
@@ -292,7 +308,7 @@ function geminiExtensionLocations(extensionsDir: string): ClientConfigLocation[]
   return entries
     .filter((e) => e.isDirectory())
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map((e) => ({ client: 'gemini-extension', path: path.join(extensionsDir, e.name, 'gemini-extension.json'), format: 'mcpServers-json' as const }));
+    .map((e) => ({ client, path: path.join(extensionsDir, e.name, manifest), format: 'mcpServers-json' as const }));
 }
 
 /** Continue.dev workspace MCP blocks: every `.continue/mcpServers/*.yaml` file. */
