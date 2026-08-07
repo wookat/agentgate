@@ -47,7 +47,8 @@ actions are checked for hidden Unicode and prompt-injection patterns
 instead (AG-SK-001) — a poisoned prompt is injected automatically on the
 same events.
 
-Codex project hook files (`.codex/hooks.json`) are checked the same way:
+Codex project hook files (`.codex/hooks.json`, and equivalent inline
+`[hooks]` tables in `.codex/config.toml`) are checked the same way:
 command hooks run on lifecycle events (SessionStart, PreToolUse,
 UserPromptSubmit, …) for anyone who trusts the project's `.codex/` layer,
 so remote-script pipes and data-exfiltration commands report while local
