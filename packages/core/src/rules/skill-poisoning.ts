@@ -959,6 +959,7 @@ const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 const PLUGIN_MANIFEST_FILE = /(^|\/)\.claude-plugin\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)\.lsp\.json$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
+const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
 
 /** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
 export function extractMonitorCommands(monitors: unknown): string[] {
@@ -1108,7 +1109,8 @@ export const skillDynamicContextRule: Rule = {
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
     const isPluginLsp = PLUGIN_LSP_FILE.test(file);
     const isPluginMonitors = PLUGIN_MONITORS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors;
+    const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1133,6 +1135,28 @@ export const skillDynamicContextRule: Rule = {
             message: `Agent ${kind}-config-shaped file declares a command ${hit.risk.replace('at skill load time', 'that runs automatically if this config is referenced by a plugin manifest')}: "${command.slice(0, 80)}"`,
           }),
         );
+      }
+      return findings;
+    }
+    if (isMarketplaceCatalog) {
+      // With `strict: false` a marketplace entry defines the whole plugin, including inline hooks.
+      const plugins = (data as { plugins?: unknown }).plugins;
+      for (const entry of Array.isArray(plugins) ? plugins : []) {
+        const name = (entry as { name?: unknown })?.name;
+        for (const command of extractHookCommands((entry as { hooks?: unknown })?.hooks)) {
+          const hit = classifyRiskyCommand(command);
+          if (!hit) continue;
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+          findings.push(
+            finding(this, {
+              severity: hit.severity,
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Marketplace plugin "${typeof name === 'string' ? name : 'unknown'}" declares an inline hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs it')}: "${command.slice(0, 80)}"`,
+            }),
+          );
+        }
       }
       return findings;
     }

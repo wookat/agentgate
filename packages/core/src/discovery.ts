@@ -16,7 +16,8 @@ export interface ClientConfigLocation {
     | 'continue-yaml'
     | 'amp-settings-json'
     | 'skill-mcp-json'
-    | 'skill-frontmatter-yaml';
+    | 'skill-frontmatter-yaml'
+    | 'marketplace-json';
 }
 
 /**
@@ -168,6 +169,10 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
   for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
     if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && entry.name !== '.claude-plugin')) continue;
     const dir = path.join(projectDir, entry.name);
+    if (entry.name === '.claude-plugin' && fs.existsSync(path.join(dir, 'marketplace.json'))) {
+      // Marketplace entries can define plugins entirely inline (strict: false), including mcpServers.
+      out.push({ client: 'claude-plugin', path: path.join(dir, 'marketplace.json'), format: 'marketplace-json' });
+    }
     if (entry.name === '.claude-plugin' && fs.existsSync(path.join(dir, 'plugin.json'))) {
       if (depth > 0) {
         const mcpJson = path.join(projectDir, '.mcp.json');
@@ -308,6 +313,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseAmpSettingsJson(raw, location);
     case 'skill-mcp-json':
       return parseSkillMcpJson(raw, location);
+    case 'marketplace-json':
+      return parseMarketplaceJson(raw, location);
     case 'skill-frontmatter-yaml':
       return parseSkillFrontmatter(raw, location);
     default:
@@ -418,6 +425,13 @@ export function parseAmpSettingsJson(raw: string, location: ClientConfigLocation
 /** Skill sibling `mcp.json`: a bare `{ "<name>": { command|url, ... } }` map. */
 export function parseSkillMcpJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
   return collectServers(JSON.parse(raw), location);
+}
+
+/** Marketplace catalog (`.claude-plugin/marketplace.json`): inline `mcpServers` on plugin entries. */
+export function parseMarketplaceJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const json = JSON.parse(raw) as { plugins?: unknown };
+  if (!Array.isArray(json.plugins)) return [];
+  return json.plugins.flatMap((entry) => collectServers((entry as { mcpServers?: unknown })?.mcpServers, location));
 }
 
 /** `SKILL.md` frontmatter `mcpServers` map — same entry shape as `mcp.json`. */

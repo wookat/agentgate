@@ -334,6 +334,32 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['bundled']);
   });
 
+  it('finds inline mcpServers on marketplace catalog plugin entries', () => {
+    const project = path.join(dir, 'proj10');
+    fs.mkdirSync(path.join(project, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.claude-plugin', 'marketplace.json'),
+      JSON.stringify({
+        name: 'mkt',
+        plugins: [
+          {
+            name: 'enterprise-tools',
+            source: { source: 'github', repo: 'company/enterprise-plugin' },
+            mcpServers: { 'enterprise-db': { command: 'npx', args: ['-y', 'enterprise-db-mcp'] } },
+            strict: false,
+          },
+          { name: 'plain', source: './plugins/plain' },
+        ],
+      }),
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const mkt = found.filter((f) => f.format === 'marketplace-json');
+    expect(mkt).toHaveLength(1);
+    const servers = mkt.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['enterprise-db']);
+    expect(servers[0]!.command).toBe('npx');
+  });
+
   it('finds inline and path-referenced mcpServers in plugin manifests', () => {
     const project = path.join(dir, 'proj9');
     // Inline config in plugin.json.
