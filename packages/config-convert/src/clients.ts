@@ -609,6 +609,47 @@ export const continueDev: ClientAdapter = {
   },
 };
 
+/** Amp (Sourcegraph) — `amp.mcpServers` key inside `~/.config/amp/settings.json` or workspace `.amp/settings.json`. */
+export const amp: ClientAdapter = {
+  id: "amp",
+  defaultPath: "~/.config/amp/settings.json",
+  parse(content): ParseResult {
+    let data: unknown;
+    try {
+      data = JSON.parse(content);
+    } catch (e) {
+      throw new ConfigParseError("amp", `invalid JSON: ${(e as Error).message}`);
+    }
+    if (!isRecord(data)) throw new ConfigParseError("amp", "top level must be an object");
+    const warnings: string[] = [];
+    const serversObj = data["amp.mcpServers"];
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("amp", "amp.mcpServers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      const s = parseCommonEntry("amp", name, entry, warnings);
+      if (s) servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const serversObj: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: amp has no disabled flag; server emitted as enabled`);
+      }
+      if (s.cwd) warnings.push(`${s.name}: amp does not support cwd; dropped`);
+      serversObj[s.name] = renderCommonEntry(s, false);
+    }
+    warnings.push(
+      "amp: emitted a standalone settings document — merge the amp.mcpServers key into your existing ~/.config/amp/settings.json (or workspace .amp/settings.json) rather than replacing the file",
+    );
+    return { content: JSON.stringify({ "amp.mcpServers": serversObj }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -623,4 +664,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "roo-code": rooCode,
   zed,
   continue: continueDev,
+  amp,
 };
