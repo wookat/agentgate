@@ -44,7 +44,7 @@ describe('extractJsImports', () => {
 describe('extractPyImports', () => {
   it('extracts top-level modules and skips stdlib', () => {
     const src = ['import os', 'import requests', 'from flask.helpers import x', 'import numpy.linalg', 'import json, yaml'].join('\n');
-    expect(extractPyImports(src).sort()).toEqual(['flask', 'numpy', 'requests', 'yaml']);
+    expect(extractPyImports(src).sort()).toEqual(['flask', 'numpy', 'pyyaml', 'requests']);
   });
 });
 
@@ -120,6 +120,22 @@ describe('collectDependencies', () => {
     const { refs } = collectDependencies(dir);
     const names = refs.map((r) => r.name);
     expect(names).toEqual(['undeclared-pkg']);
+  });
+
+  it('maps well-known Python import names to their PyPI distributions', () => {
+    fs.writeFileSync(path.join(dir, 'pyproject.toml'), '[project]\ndependencies = ["pyyaml >=5.3.1", "gitpython >=3.1"]\n');
+    fs.writeFileSync(path.join(dir, 'tool.py'), 'import yaml\nimport git\nimport annotationlib\nimport phantom_module\n');
+    const { refs } = collectDependencies(dir);
+    const imports = refs.filter((r) => r.origin === 'import').map((r) => r.name);
+    expect(imports).toEqual(['phantom_module']);
+  });
+
+  it('treats directories containing Python files as local namespace packages', () => {
+    fs.mkdirSync(path.join(dir, 'docs_src', 'tutorial'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'docs_src', 'tutorial', 'app.py'), 'x = 1\n');
+    fs.writeFileSync(path.join(dir, 'test_it.py'), 'from docs_src.tutorial import app\n');
+    const { refs } = collectDependencies(dir);
+    expect(refs.find((r) => r.name === 'docs_src')).toBeUndefined();
   });
 
   it('respects ignore globs and --no-imports', () => {

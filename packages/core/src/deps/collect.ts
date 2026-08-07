@@ -13,6 +13,29 @@ const JS_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.j
 const NODE_BUILTINS = new Set(builtinModules);
 const PY_STDLIB = new Set(PYTHON_STDLIB);
 
+/** Well-known Python packages whose import name differs from the PyPI distribution name. */
+const PY_IMPORT_TO_DIST: Record<string, string> = {
+  yaml: 'pyyaml',
+  git: 'gitpython',
+  PIL: 'pillow',
+  cv2: 'opencv-python',
+  bs4: 'beautifulsoup4',
+  dateutil: 'python-dateutil',
+  dotenv: 'python-dotenv',
+  sklearn: 'scikit-learn',
+  jwt: 'pyjwt',
+  OpenSSL: 'pyopenssl',
+  Crypto: 'pycryptodome',
+  serial: 'pyserial',
+  magic: 'python-magic',
+  docx: 'python-docx',
+  pptx: 'python-pptx',
+  fitz: 'pymupdf',
+  github: 'pygithub',
+  MySQLdb: 'mysqlclient',
+  attr: 'attrs',
+};
+
 export interface CollectOptions {
   /** Glob patterns (relative to the scan root) to exclude. */
   ignore?: string[];
@@ -85,7 +108,7 @@ export function extractPyImports(content: string): string[] {
     for (const mod of mods) {
       const top = mod.trim().split('.')[0]!;
       if (!top || top.startsWith('_') || PY_STDLIB.has(top)) continue;
-      names.add(top);
+      names.add(PY_IMPORT_TO_DIST[top] ?? top);
     }
   }
   return [...names];
@@ -218,8 +241,8 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     const isSource = opts.includeImports !== false && (JS_EXTENSIONS.has(ext) || ext === '.py');
     if (ext === '.py') {
       localPyModules.add(base.slice(0, -3));
-      const parent = path.basename(path.dirname(file));
-      if (parent && parent !== '.') localPyModules.add(parent);
+      // every directory on the path is importable as a (namespace) package root
+      for (const part of rel.split('/').slice(0, -1)) localPyModules.add(part);
     }
     if (!isManifest && !isSource) continue;
     let content: string;
