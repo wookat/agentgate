@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.30.0
+
+### Minor Changes
+
+- ec0827e: Discover Amazon Q CLI named custom agents — every `~/.aws/amazonq/cli-agents/*.json` (global) and `.amazonq/cli-agents/*.json` (workspace) agent file's `mcpServers` are now scanned.
+
 ## 0.29.0
 
 ### Minor Changes
