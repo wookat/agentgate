@@ -108,6 +108,9 @@ function opencodePermissionBlocks(data: object): { scope: string; permission: un
 /** Gemini CLI project settings whose `tools.allowed` bypasses the confirmation dialog. */
 const GEMINI_SETTINGS_FILE = /(^|\/)\.gemini\/settings\.json$/i;
 
+/** Qwen Code project settings — Gemini CLI fork with Claude-style permission rules. */
+const QWEN_SETTINGS_FILE = /(^|\/)\.qwen\/settings\.json$/i;
+
 /** Dangerous Gemini CLI tool names when granted without a scoping `(...)` suffix. */
 const GEMINI_RISKY_TOOLS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] = [
   { re: /^run_shell_command$/i, severity: 'high', risk: 'unrestricted shell execution' },
@@ -433,7 +436,8 @@ export const skillOverprivilegeRule: Rule = {
     const isAmazonqAgent = AMAZONQ_AGENT_FILE.test(file);
     const isCursorCli = CURSOR_CLI_FILE.test(file);
     const isKiroAgent = KIRO_AGENT_JSON.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent) return [];
+    const isQwen = QWEN_SETTINGS_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent && !isQwen) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -722,6 +726,70 @@ export const skillOverprivilegeRule: Rule = {
                 }),
               );
             }
+          }
+        }
+      }
+      return findings;
+    }
+    if (isQwen) {
+      const findings = [];
+      const lineOf = (needle: string) => content.split(/\r?\n/).findIndex((l) => l.includes(needle)) + 1;
+      const tools = (data as { tools?: { approvalMode?: unknown } }).tools;
+      if (tools?.approvalMode === 'yolo') {
+        const line = lineOf('"yolo"');
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'Qwen Code settings set tools.approvalMode to "yolo" — every tool call (including shell) runs without approval for anyone opening this project',
+          }),
+        );
+      } else if (tools?.approvalMode === 'auto-edit') {
+        const line = lineOf('"auto-edit"');
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'Qwen Code settings set tools.approvalMode to "auto-edit" — edit tools run without approval for anyone opening this project',
+          }),
+        );
+      }
+      const perms = (data as { permissions?: { allow?: unknown } }).permissions;
+      const allow = Array.isArray(perms?.allow) ? perms.allow : [];
+      for (const entry of allow) {
+        if (typeof entry !== 'string') continue;
+        const hit = RISKY_GRANTS.find((r) => r.re.test(entry));
+        if (hit) {
+          const line = lineOf(`"${entry}"`);
+          findings.push(
+            finding(this, {
+              severity: hit.severity,
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Qwen Code settings pre-approve "${entry}" via permissions.allow — ${hit.risk} without a confirmation dialog; scope the grant (e.g. Bash(git *)) or remove it`,
+            }),
+          );
+        }
+      }
+      const servers = (data as { mcpServers?: unknown }).mcpServers;
+      if (typeof servers === 'object' && servers !== null) {
+        for (const [name, server] of Object.entries(servers)) {
+          if (typeof server === 'object' && server !== null && (server as { trust?: unknown }).trust === true) {
+            const line = lineOf(`"${name}"`);
+            findings.push(
+              finding(this, {
+                severity: 'medium',
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: `Qwen Code settings mark MCP server "${name}" as trusted — all its tool calls bypass confirmation for anyone opening this project`,
+              }),
+            );
           }
         }
       }
