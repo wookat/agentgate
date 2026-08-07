@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.6.0
+
+### Minor Changes
+
+- cad6f07: Discover Warp MCP configs (`~/.warp/.mcp.json`, project `.warp/.mcp.json`) and the generic other-agents convention (`~/.agents/.mcp.json`, project `.agents/.mcp.json`); `config convert` supports `warp` (standard `mcpServers`, `working_directory` ↔ cwd).
+
 ## 0.5.0
 
 ### Minor Changes
