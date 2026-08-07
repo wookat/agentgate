@@ -1,6 +1,9 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
 
 const METADATA_ENDPOINTS = /(169\.254\.169\.254|metadata\.google\.internal|metadata\.azure\.com|100\.100\.100\.200)/i;
+/** Kubernetes/Cilium/Calico network-policy manifests (also matches inside Helm templates). */
+const NETWORK_POLICY_KIND = /^\s*kind:\s*["']?(Cilium(Clusterwide)?|Global)?NetworkPolicy["']?\s*$/im;
+
 const PRIVATE_IP = /\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|0\.0\.0\.0)\b/;
 
 /** Tool accepts a caller-controlled URL and fetches it — classic SSRF surface. */
@@ -68,6 +71,19 @@ export const ssrfRule: Rule = {
     if (!METADATA_ENDPOINTS.test(content)) return [];
     const m = content.match(METADATA_ENDPOINTS)!;
     const line = content.slice(0, m.index ?? 0).split('\n').length;
+    // Network-policy manifests reference the metadata IP to *block* egress
+    // to it — a defensive control, not an SSRF vector.
+    if (/\.ya?ml$/i.test(file) && NETWORK_POLICY_KIND.test(content)) {
+      return [
+        finding(this, {
+          severity: 'low',
+          target: file,
+          file,
+          line,
+          message: 'Network-policy manifest references a cloud metadata endpoint — verify the rule blocks (not allows) it',
+        }),
+      ];
+    }
     return [
       finding(this, {
         severity: 'high',

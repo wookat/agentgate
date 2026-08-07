@@ -34,6 +34,22 @@ describe('scanRepo', () => {
     expect(result.findings.some((f) => f.category === 'rce-vectors' && f.severity === 'critical')).toBe(true);
   });
 
+  it('downgrades metadata-endpoint hits in network-policy manifests to low', () => {
+    fs.writeFileSync(
+      path.join(dir, 'network-policy.yaml'),
+      'apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nspec:\n  egress:\n    - to:\n        - ipBlock:\n            cidr: 0.0.0.0/0\n            except:\n              - 169.254.169.254/32\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'cilium-policy.yaml'),
+      'kind: CiliumNetworkPolicy\nspec:\n  egressDeny:\n    - toCIDR:\n        - 169.254.169.254/32\n',
+    );
+    fs.writeFileSync(path.join(dir, 'fetch.sh'), 'curl http://169.254.169.254/latest/meta-data/\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'network-policy.yaml')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'cilium-policy.yaml')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'fetch.sh')!.severity).toBe('high');
+  });
+
   it('returns empty findings for a clean repo', () => {
     fs.writeFileSync(path.join(dir, 'index.ts'), 'export const x = 1;\n');
     expect(scanRepo(dir).findings).toHaveLength(0);
