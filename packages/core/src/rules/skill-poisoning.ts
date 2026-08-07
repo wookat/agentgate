@@ -781,7 +781,12 @@ export function extractDynamicCommands(content: string): { command: string; line
 const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
   { re: /\b(curl|wget)\b[^|;&]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
   { re: /\b(curl|wget)\b[^\n]*\s(-d|--data(-\w+)?|-F|--form|--upload-file|-T)\b/, severity: 'high', risk: 'sends data to a remote host at skill load time' },
-  { re: /(~\/\.ssh\b|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc\b|\.netrc\b)/, severity: 'high', risk: 'reads credential material into the prompt at skill load time' },
+  // A read verb is required so guard hooks that merely pattern-match credential paths stay clean.
+  {
+    re: /(^|[\s;|&])(cat|grep|head|tail|cp|scp|base64|openssl|dd|less|more|curl|wget|type|Get-Content)\b[^\n]*(~\/\.ssh\b|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc\b|\.netrc\b)/i,
+    severity: 'high',
+    risk: 'reads credential material into the prompt at skill load time',
+  },
   { re: /(^|[\s;|&])(cat|grep|head|tail|cp|base64)\b[^\n]*\.env\b/, severity: 'high', risk: 'reads .env secrets into the prompt at skill load time' },
 ];
 
@@ -799,6 +804,21 @@ export function extractHookCommands(hooks: unknown): string[] {
         if (h?.type === 'command' && typeof h.command === 'string') out.push(h.command);
       }
     }
+  }
+  return out;
+}
+
+/** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
+const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
+
+/** Collect `action.type: "command"` commands from a Kiro hook file's `hooks` array. */
+export function extractKiroHookCommands(hooks: unknown): string[] {
+  if (!Array.isArray(hooks)) return [];
+  const out: string[] = [];
+  for (const hook of hooks) {
+    const action = (hook as { action?: { type?: unknown; command?: unknown } })?.action;
+    // Documented action type is "command"; some in-the-wild hooks use "shell".
+    if ((action?.type === 'command' || action?.type === 'shell') && typeof action.command === 'string') out.push(action.command);
   }
   return out;
 }
@@ -826,10 +846,30 @@ export const skillDynamicContextRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    if (!CLAUDE_SETTINGS_FILE.test(file)) return [];
+    const isKiroHook = KIRO_HOOK_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
+    if (isKiroHook) {
+      // v1 schema wraps hooks in a `hooks` array; some in-the-wild files put a single hook at the root.
+      const hookList = (data as { hooks?: unknown }).hooks ?? [data];
+      for (const command of extractKiroHookCommands(hookList)) {
+        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Kiro hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
     for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
       const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
       if (hit) {
