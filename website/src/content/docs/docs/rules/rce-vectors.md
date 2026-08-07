@@ -30,6 +30,11 @@ data to a remote host (`high`), and reading credential material (`~/.ssh`,
 `.aws/credentials`, `.env`) into the prompt (`high`). Benign context commands
 like `` !`git diff HEAD` `` are not flagged.
 
+The same command analysis covers Claude Code hooks in `.claude/settings.json`
+and `.claude/settings.local.json`: `type: "command"` hooks run automatically
+on session events (SessionStart, PreToolUse, PostToolUse, …) for everyone who
+opens the project. Local helper scripts and formatters are not flagged.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.
