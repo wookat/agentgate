@@ -75,6 +75,13 @@ beforeShellExecution, afterFileEdit, …) — including in Cursor cloud agents �
 so the same dangerous-command classification applies while guard scripts
 and local formatters stay clean.
 
+Claude Code plugin hooks are covered too: a plugin ships hook config in
+`hooks/hooks.json` (or inline in `.claude-plugin/plugin.json`), and those
+commands run automatically on lifecycle events for everyone who installs
+the plugin. `type: "command"` entries get the same classification;
+manifests whose `hooks` field is just a config path and bundled formatter
+scripts stay clean.
+
 ## Why it matters
 
 An exec-capable tool gives every upstream influence on your agent (poisoned descriptions, injected page content) a direct path to code execution on your machine. CVE-2025-6514 (mcp-remote) showed the launch path itself can be the RCE.

@@ -917,6 +917,15 @@ const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string 
   { re: /(^|[\s;|&])(cat|grep|head|tail|cp|base64)\b[^\n]*\.env\b/, severity: 'high', risk: 'reads .env secrets into the prompt at skill load time' },
 ];
 
+/**
+ * Classify a hook/task command against RISKY_COMMANDS. Single-quoted literals printed by
+ * echo/printf are masked first — text like `echo 'run: curl … | sh'` is a message, not a pipeline.
+ */
+export function classifyRiskyCommand(command: string): { severity: 'critical' | 'high'; risk: string } | undefined {
+  const effective = command.replace(/\b(echo|printf)\s+(-\w+\s+)*'[^']*'/g, '$1');
+  return RISKY_COMMANDS.find((r) => r.re.test(effective));
+}
+
 /** Collect `type: "command"` hook commands from a Claude Code settings `hooks` object. */
 export function extractHookCommands(hooks: unknown): string[] {
   if (typeof hooks !== 'object' || hooks === null) return [];
@@ -944,6 +953,10 @@ const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 
 /** Codex project hook files; command hooks run on lifecycle events for anyone who trusts the project layer. */
 const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
+
+/** Claude Code plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks. */
+const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
+const PLUGIN_MANIFEST_FILE = /(^|\/)\.claude-plugin\/plugin\.json$/i;
 
 /** VS Code workspace task definitions; `runOn: "folderOpen"` tasks auto-run when the folder opens. */
 const VSCODE_TASKS_FILE = /(^|\/)\.vscode\/tasks\.json$/i;
@@ -1003,7 +1016,7 @@ export const skillDynamicContextRule: Rule = {
   checkSkill(file, content) {
     const findings = [];
     for (const { command, line } of extractDynamicCommands(content)) {
-      const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+      const hit = classifyRiskyCommand(command);
       if (hit) {
         findings.push(
           finding(this, {
@@ -1026,7 +1039,7 @@ export const skillDynamicContextRule: Rule = {
       if (then?.type !== 'runCommand' || typeof then.command !== 'string') return [];
       const enabled = (data as { enabled?: unknown }).enabled;
       if (enabled === false) return [];
-      const hit = RISKY_COMMANDS.find((r) => r.re.test(then.command as string));
+      const hit = classifyRiskyCommand(then.command);
       if (!hit) return [];
       const command = then.command;
       const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
@@ -1050,7 +1063,7 @@ export const skillDynamicContextRule: Rule = {
       }
       const findings = [];
       for (const command of extractHookCommands(toml['hooks'])) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
@@ -1070,7 +1083,8 @@ export const skillDynamicContextRule: Rule = {
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks) return [];
+    const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || PLUGIN_MANIFEST_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -1078,7 +1092,7 @@ export const skillDynamicContextRule: Rule = {
       // v1 schema wraps hooks in a `hooks` array; some in-the-wild files put a single hook at the root.
       const hookList = (data as { hooks?: unknown }).hooks ?? [data];
       for (const command of extractKiroHookCommands(hookList)) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
@@ -1095,7 +1109,7 @@ export const skillDynamicContextRule: Rule = {
     }
     if (isVscodeTasks) {
       for (const command of extractFolderOpenTaskCommands((data as { tasks?: unknown }).tasks)) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40).split(' ')[0] ?? '')) + 1;
         findings.push(
@@ -1113,7 +1127,7 @@ export const skillDynamicContextRule: Rule = {
     if (isCursorHooks) {
       // Same flat `{ event: [{ command }] }` shape as Amazon Q agent hooks.
       for (const command of extractAmazonqHookCommands((data as { hooks?: unknown }).hooks)) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
@@ -1131,7 +1145,7 @@ export const skillDynamicContextRule: Rule = {
     if (isCodexHooks) {
       // Same nested { Event: [{ matcher, hooks: [{ type: "command", command }] }] } shape as Claude Code settings hooks.
       for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
@@ -1146,9 +1160,27 @@ export const skillDynamicContextRule: Rule = {
       }
       return findings;
     }
+    if (isPluginHooks) {
+      // Same nested shape as Claude Code settings hooks; a manifest's `hooks` field may also be inline config.
+      for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Claude Code plugin hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
     if (isAmazonqAgent) {
       for (const command of extractAmazonqHookCommands((data as { hooks?: unknown }).hooks)) {
-        const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+        const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
@@ -1164,7 +1196,7 @@ export const skillDynamicContextRule: Rule = {
       return findings;
     }
     for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
-      const hit = RISKY_COMMANDS.find((r) => r.re.test(command));
+      const hit = classifyRiskyCommand(command);
       if (hit) {
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
         findings.push(
