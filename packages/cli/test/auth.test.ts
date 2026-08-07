@@ -92,7 +92,8 @@ function startAuthServer(): Promise<{ url: string; close: () => void; issued: st
 /** Plays the user agent: fetches the printed authorization URL and follows the 302 to the CLI callback. */
 function autoApprove(logs: string[]): NodeJS.Timeout {
   return setInterval(() => {
-    const line = logs.find((l) => l.includes('/authorize?'));
+    // eslint-disable-next-line no-control-regex
+    const line = logs.map((l) => l.replace(/\x1b\[[0-9;]*m/g, '')).find((l) => l.includes('/authorize?'));
     if (!line) return;
     const authUrl = /https?:\/\/\S+/.exec(line)?.[0];
     if (!authUrl) return;

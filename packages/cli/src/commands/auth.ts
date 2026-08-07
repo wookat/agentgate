@@ -75,6 +75,10 @@ export async function runAuthLogin(target: string, opts: AuthLoginOptions): Prom
   await new Promise<void>((resolve) => callbackServer.listen(0, '127.0.0.1', resolve));
   const { port } = callbackServer.address() as AddressInfo;
   const provider = new FileOAuthProvider(serverUrl, `http://127.0.0.1:${port}/callback`, opts.clientId);
+  // Register the callback listener before the flow starts so a fast redirect
+  // can never race it.
+  const callback = waitForCallback(callbackServer, timeoutMs);
+  callback.catch(() => {});
 
   try {
     debugLog(`starting OAuth flow for ${serverUrl} (callback port ${port})`);
@@ -90,7 +94,7 @@ export async function runAuthLogin(target: string, opts: AuthLoginOptions): Prom
     console.log(pc.dim(`If it does not open, visit:\n  ${authorizationUrl.href}`));
     openBrowser(authorizationUrl.href);
 
-    const code = await waitForCallback(callbackServer, timeoutMs);
+    const code = await callback;
     const second = await auth(provider, { serverUrl, authorizationCode: code });
     if (second !== 'AUTHORIZED') throw new Error(`Token exchange did not complete (state: ${second})`);
     console.log(pc.green(`✔ Logged in to ${originKey(serverUrl)} — tokens saved to ${storePath()}`));
