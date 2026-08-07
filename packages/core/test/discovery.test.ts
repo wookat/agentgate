@@ -90,10 +90,13 @@ describe('knownConfigLocations', () => {
   it('locates the lmstudio mcp.json', () => {
     const linux = knownConfigLocations('/home/u', 'linux');
     const lm = linux.filter((l) => l.client === 'lmstudio');
-    expect(lm.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.lmstudio/mcp.json']);
+    expect(lm.map((l) => l.path.split(path.sep).join('/'))).toEqual([
+      '/home/u/.lmstudio/mcp.json',
+      '/home/u/.cache/lm-studio/mcp.json',
+    ]);
     expect(lm[0]!.format).toBe('mcpServers-json');
     const win = knownConfigLocations('C:\\Users\\u', 'win32').filter((l) => l.client === 'lmstudio');
-    expect(win).toHaveLength(1);
+    expect(win).toHaveLength(2);
   });
 
   it('locates the continue.dev global config', () => {
