@@ -102,13 +102,31 @@ const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 /** Release-style refs (v1.2.3, 2.3.0) are treated as pinned; branch-like refs are mutable. */
 const VERSION_REF = /^v?\d+(\.\d+)*([-+.][\w.]+)?$/;
 
-type MarketplaceSource = { source?: unknown; repo?: unknown; url?: unknown; ref?: unknown; sha?: unknown };
+type MarketplaceSource = { source?: unknown; repo?: unknown; url?: unknown; ref?: unknown; sha?: unknown; package?: unknown; version?: unknown; sha256?: unknown };
 
-/** True when a marketplace source fetches a mutable remote catalog (git-based, no sha, no release-style ref). */
+/** Exact npm versions (2.1.0, 2.1.0-beta.1) are pinned; ranges (^, ~, x, latest) and absent versions are mutable. */
+const EXACT_NPM_VERSION = /^\d+\.\d+\.\d+([-+][\w.]+)?$/;
+
+/** True when a marketplace source fetches mutable remote content (git with no sha/release ref, npm with no exact version, archive with no sha256 pin). */
 function isMutableMarketplaceSource(src: MarketplaceSource): boolean {
-  if (typeof src.source !== 'string' || !['github', 'git', 'url', 'git-subdir'].includes(src.source)) return false;
+  if (typeof src.source !== 'string') return false;
+  if (src.source === 'npm') return !(typeof src.version === 'string' && EXACT_NPM_VERSION.test(src.version));
+  if (src.source === 'archive') return !(typeof src.sha256 === 'string' && /^[0-9a-f]{64}$/i.test(src.sha256));
+  if (!['github', 'git', 'url', 'git-subdir'].includes(src.source)) return false;
   if (typeof src.sha === 'string' && /^[0-9a-f]{7,40}$/i.test(src.sha)) return false;
   return !(typeof src.ref === 'string' && VERSION_REF.test(src.ref));
+}
+
+/** Per-source-type pin advice and location description for mutable marketplace sources. */
+function describeMutableSource(src: MarketplaceSource): { where: string; advice: string } {
+  if (src.source === 'npm') {
+    return { where: typeof src.package === 'string' ? `npm:${src.package}${typeof src.version === 'string' ? `@${src.version}` : ''}` : 'npm package', advice: 'Pin an exact version' };
+  }
+  if (src.source === 'archive') {
+    return { where: typeof src.url === 'string' ? src.url : 'archive url', advice: 'Pin the archive with a sha256 digest' };
+  }
+  const where = typeof src.repo === 'string' ? src.repo : typeof src.url === 'string' ? src.url : 'remote source';
+  return { where: `${where}${typeof src.ref === 'string' ? `#${src.ref}` : ''}`, advice: 'Pin a sha or release ref' };
 }
 
 /** Findings for Claude Code plugins auto-enabled from mutable marketplace sources. */
@@ -158,7 +176,7 @@ function checkMarketplaceCatalog(rule: Rule, file: string, content: string) {
     if (typeof source !== 'object' || source === null) continue;
     if (!isMutableMarketplaceSource(source as MarketplaceSource)) continue;
     const src = source as MarketplaceSource;
-    const where = typeof src.repo === 'string' ? src.repo : typeof src.url === 'string' ? src.url : 'remote source';
+    const { where, advice } = describeMutableSource(src);
     const pluginName = typeof name === 'string' ? name : 'unknown';
     const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${pluginName}"`)) + 1;
     findings.push(
@@ -167,7 +185,7 @@ function checkMarketplaceCatalog(rule: Rule, file: string, content: string) {
         target: file,
         file,
         ...(line > 0 ? { line } : {}),
-        message: `Marketplace plugin "${pluginName}" is served from a mutable git source (${where}${typeof src.ref === 'string' ? `#${src.ref}` : ''}) — everyone who installs it gets whatever the branch points at (rug-pull exposure). Pin a sha or release ref`,
+        message: `Marketplace plugin "${pluginName}" is served from a mutable source (${where}) — everyone who installs it gets whatever upstream serves next (rug-pull exposure). ${advice}`,
       }),
     );
   }
