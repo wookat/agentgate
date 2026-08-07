@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.42.0
+
+### Minor Changes
+
+- 7817ca4: AG-SK-003 checks Cursor project hooks (`.cursor/hooks.json`): hook commands run automatically around agent-loop stages (sessionStart, beforeShellExecution, afterFileEdit, …) — including in Cursor cloud agents — and get the same dangerous-command classification as Claude Code, Kiro, and Amazon Q hooks. Guard scripts and local formatters stay clean.
+- 454045e: AG-SC-001 flags unpinned OpenCode npm plugins: packages in the `plugin` array of `opencode.json`/`opencode.jsonc` are auto-installed by Bun and executed at startup, so specs without an exact version report medium (rug-pull / compromised-release exposure). Local plugin file paths and pinned specs stay clean.
+
+### Patch Changes
+
+- Updated dependencies [7817ca4]
+- Updated dependencies [454045e]
+  - mcp-agentgate-core@0.42.0
+
 ## 0.41.0
 
 ### Minor Changes
