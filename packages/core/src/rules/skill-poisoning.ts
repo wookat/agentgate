@@ -958,6 +958,13 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 const PLUGIN_MANIFEST_FILE = /(^|\/)\.claude-plugin\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)\.lsp\.json$/i;
+const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
+
+/** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
+export function extractMonitorCommands(monitors: unknown): string[] {
+  if (!Array.isArray(monitors)) return [];
+  return monitors.map((m) => (m as { command?: unknown })?.command).filter((c): c is string => typeof c === 'string');
+}
 
 /** Flatten `{ name: { command, args } }` LSP server maps into full command lines. */
 export function extractLspCommands(servers: unknown): string[] {
@@ -1100,7 +1107,8 @@ export const skillDynamicContextRule: Rule = {
     const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
     const isPluginLsp = PLUGIN_LSP_FILE.test(file);
-    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks && !isPluginLsp) return [];
+    const isPluginMonitors = PLUGIN_MONITORS_FILE.test(file);
+    if (!CLAUDE_SETTINGS_FILE.test(file) && !isKiroHook && !isAmazonqAgent && !isVscodeTasks && !isCursorHooks && !isCodexHooks && !isPluginHooks && !isPluginLsp && !isPluginMonitors) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
@@ -1175,6 +1183,27 @@ export const skillDynamicContextRule: Rule = {
         );
       }
       return findings;
+    }
+    if (isPluginMonitors || isPluginManifest) {
+      // Monitor commands run as persistent unsandboxed background processes for the whole session.
+      // The manifest key is migrating from top-level `monitors` to `experimental.monitors`; both load today.
+      const manifest = data as { monitors?: unknown; experimental?: { monitors?: unknown } };
+      const monitors = isPluginMonitors ? data : (manifest.experimental?.monitors ?? manifest.monitors);
+      for (const command of extractMonitorCommands(monitors)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Claude Code plugin monitor command ${hit.risk.replace('at skill load time', 'as a persistent background process for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      if (isPluginMonitors) return findings;
     }
     if (isPluginLsp || isPluginManifest) {
       // LSP server commands run automatically after workspace trust whenever matching files are edited.
