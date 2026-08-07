@@ -67,6 +67,26 @@ const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] 
 /** Claude Code settings files whose `permissions.allow` pre-approves tools for everyone using the project. */
 const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 
+/** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
+const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+
+/** Dangerous OpenCode permission keys and severities when their effective action is "allow". */
+const OPENCODE_RISKY_KEYS: { key: string; severity: 'high' | 'medium'; risk: string }[] = [
+  { key: 'bash', severity: 'high', risk: 'unrestricted shell execution' },
+  { key: 'edit', severity: 'medium', risk: 'unrestricted file edits' },
+  { key: 'write', severity: 'medium', risk: 'unrestricted file writes' },
+  { key: 'webfetch', severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
+];
+
+/** True when an OpenCode permission value's catch-all resolves to "allow". */
+function opencodeAllowsAll(value: unknown): boolean {
+  if (value === 'allow') return true;
+  if (typeof value === 'object' && value !== null) {
+    return (value as Record<string, unknown>)['*'] === 'allow';
+  }
+  return false;
+}
+
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
 export function parseJsonc(content: string): unknown {
   try {
@@ -140,9 +160,43 @@ export const skillOverprivilegeRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    if (!CLAUDE_SETTINGS_FILE.test(file)) return [];
+    const isClaude = CLAUDE_SETTINGS_FILE.test(file);
+    const isOpencode = OPENCODE_CONFIG_FILE.test(file);
+    if (!isClaude && !isOpencode) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
+    if (isOpencode) {
+      const findings = [];
+      const permission = (data as { permission?: unknown }).permission;
+      if (permission === 'allow' || (typeof permission === 'object' && permission !== null && (permission as Record<string, unknown>)['*'] === 'allow')) {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes('"permission"')) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'OpenCode config sets a catch-all "allow" permission — every tool (including shell) runs without prompts for anyone opening this project',
+          }),
+        );
+      } else if (typeof permission === 'object' && permission !== null) {
+        for (const { key, severity, risk } of OPENCODE_RISKY_KEYS) {
+          if (opencodeAllowsAll((permission as Record<string, unknown>)[key])) {
+            const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
+            findings.push(
+              finding(this, {
+                severity,
+                target: file,
+                file,
+                ...(line > 0 ? { line } : {}),
+                message: `OpenCode config sets permission.${key} to "allow" — ${risk} without a permission prompt; use granular rules (e.g. "git *": "allow") or "ask"`,
+              }),
+            );
+          }
+        }
+      }
+      return findings;
+    }
     const findings = [];
     const settings = data as { permissions?: { allow?: unknown; defaultMode?: unknown } };
     const allow = Array.isArray(settings.permissions?.allow) ? settings.permissions.allow : [];

@@ -384,6 +384,24 @@ describe('scanRepo', () => {
     expect(hits[0]!.message).toContain('enableAllProjectMcpServers');
   });
 
+  it('flags catch-all and per-tool "allow" in OpenCode config (AG-SK-002)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'opencode.jsonc'),
+      '{\n  // project config\n  "permission": {\n    "bash": { "*": "allow" },\n    "edit": "allow",\n    "webfetch": { "*": "ask", "https://docs.example/*": "allow" }\n  }\n}\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium']);
+    fs.writeFileSync(path.join(dir, 'opencode.jsonc'), '{ "permission": "allow" }\n');
+    const catchAll = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(catchAll).toHaveLength(1);
+    expect(catchAll[0]!.severity).toBe('high');
+    fs.writeFileSync(
+      path.join(dir, 'opencode.jsonc'),
+      '{ "permission": { "*": "ask", "bash": { "*": "ask", "git *": "allow" } } }\n',
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
