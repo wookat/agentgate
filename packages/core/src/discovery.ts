@@ -168,12 +168,43 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
   for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
     if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && entry.name !== '.claude-plugin')) continue;
     const dir = path.join(projectDir, entry.name);
-    if (entry.name === '.claude-plugin' && depth > 0 && fs.existsSync(path.join(dir, 'plugin.json'))) {
-      const mcpJson = path.join(projectDir, '.mcp.json');
-      if (fs.existsSync(mcpJson)) out.push({ client: 'claude-plugin', path: mcpJson, format: 'mcpServers-json' });
+    if (entry.name === '.claude-plugin' && fs.existsSync(path.join(dir, 'plugin.json'))) {
+      if (depth > 0) {
+        const mcpJson = path.join(projectDir, '.mcp.json');
+        if (fs.existsSync(mcpJson)) out.push({ client: 'claude-plugin', path: mcpJson, format: 'mcpServers-json' });
+      }
+      out.push(...pluginManifestServerLocations(projectDir, path.join(dir, 'plugin.json')));
       continue;
     }
     out.push(...pluginServerLocations(dir, depth + 1));
+  }
+  if (depth > 0) return out;
+  const seen = new Set<string>();
+  return out.filter((l) => !seen.has(l.path) && seen.add(l.path));
+}
+
+/**
+ * A plugin manifest's `mcpServers` field may be inline config (an object) or
+ * one or more config paths relative to the plugin root.
+ */
+function pluginManifestServerLocations(pluginRoot: string, manifestPath: string): ClientConfigLocation[] {
+  let manifest: Record<string, unknown>;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+  } catch {
+    return [];
+  }
+  const field = manifest?.mcpServers;
+  if (typeof field === 'object' && field !== null && !Array.isArray(field)) {
+    return [{ client: 'claude-plugin', path: manifestPath, format: 'mcpServers-json' }];
+  }
+  const out: ClientConfigLocation[] = [];
+  for (const ref of typeof field === 'string' ? [field] : Array.isArray(field) ? field : []) {
+    if (typeof ref !== 'string') continue;
+    const resolved = path.resolve(pluginRoot, ref.replace(/^\$\{CLAUDE_PLUGIN_ROOT\}\/?/, ''));
+    if (resolved.startsWith(path.resolve(pluginRoot)) && fs.existsSync(resolved)) {
+      out.push({ client: 'claude-plugin', path: resolved, format: 'mcpServers-json' });
+    }
   }
   return out;
 }
