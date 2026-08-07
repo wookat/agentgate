@@ -89,8 +89,11 @@ export const ssrfRule: Rule = {
     const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
     // Security guidance / defensive code references the endpoint to block it
     // (e.g. "MUST reject ... the metadata IP"); an exfil vector doesn't.
-    const matchedLine = content.split(/\r?\n/)[line - 1] ?? '';
-    const defensive = /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF)\b/i.test(matchedLine);
+    // Guards often explain themselves in a comment block, so look at the
+    // surrounding lines too, not just the one carrying the IP literal.
+    const allLines = content.split(/\r?\n/);
+    const context = allLines.slice(Math.max(0, line - 3), line + 2).join('\n');
+    const defensive = /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*)\b/i.test(context);
     if (defensive && !testPath) {
       return [
         finding(this, {

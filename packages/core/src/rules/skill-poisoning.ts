@@ -1471,13 +1471,24 @@ export const skillPoisoningRule: Rule = {
       // ordinary prompt-template structure there — not a concealment channel
       // like they are in a tool description.
       const isStructural = (s: string) => label === 'hidden instruction tag' && /^<(instructions|important)>$/i.test(s);
+      // Inline code spans (`...`) quote a pattern the same way a fenced
+      // block does — e.g. a path template like `blocks/<name>--<system>.md`.
+      const inlineQuoted = ({ m, line }: { m: RegExpMatchArray; line: number }) => {
+        const col = (m.index ?? 0) - (content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1);
+        const text = content.split('\n')[line - 1] ?? '';
+        for (const span of text.matchAll(/`[^`\n]*`/g)) {
+          const s = span.index ?? 0;
+          if (col > s && col < s + span[0].length - 1) return true;
+        }
+        return false;
+      };
       const best =
-        all.find(({ m, line }) => !codeLines.has(line) && !isStructural(m[0])) ??
-        all.find(({ line }) => !codeLines.has(line)) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isStructural(c.m[0])) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c)) ??
         all[0];
       if (best) {
         const { m, line } = best;
-        const quoted = codeLines.has(line);
+        const quoted = codeLines.has(line) || inlineQuoted(best);
         const structural = isStructural(m[0]);
         findings.push(
           finding(this, {

