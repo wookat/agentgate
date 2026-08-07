@@ -142,6 +142,19 @@ const ZED_HIGH_RISK_TOOLS = new Set(['terminal']);
 /** Zed tools whose auto-approval means unrestricted writes/deletes or network egress. */
 const ZED_MEDIUM_RISK_TOOLS = new Set(['edit_file', 'write_file', 'delete_path', 'move_path', 'fetch']);
 
+/** Amazon Q CLI project custom-agent files whose allowedTools list pre-approves tool use. */
+const AMAZONQ_AGENT_FILE = /(^|\/)\.amazonq\/cli-agents\/[^/]+\.json$/i;
+
+/** Amazon Q built-in tools whose unrestricted pre-approval means shell execution or AWS API access. */
+const AMAZONQ_HIGH_RISK_TOOLS = new Set(['execute_bash', 'use_aws']);
+
+/** toolsSettings keys that scope a pre-approved Amazon Q tool to an allowlist. */
+const AMAZONQ_SCOPING_KEYS: Record<string, string> = {
+  execute_bash: 'allowedCommands',
+  use_aws: 'allowedServices',
+  fs_write: 'allowedPaths',
+};
+
 /** True when a terminal auto-approve map value means "approve". */
 function vscodeApproves(value: unknown): boolean {
   return value === true || (typeof value === 'object' && value !== null && (value as { approve?: unknown }).approve === true);
@@ -226,7 +239,8 @@ export const skillOverprivilegeRule: Rule = {
     const isRooMcp = ROO_MCP_FILE.test(file);
     const isVscode = VSCODE_SETTINGS_FILE.test(file);
     const isZed = ZED_SETTINGS_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed) return [];
+    const isAmazonqAgent = AMAZONQ_AGENT_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -307,6 +321,69 @@ export const skillOverprivilegeRule: Rule = {
               message: isCatchAll
                 ? `VS Code workspace settings auto-approve every terminal command ("${key}" in chat.tools.terminal.autoApprove) — arbitrary shell execution without approval for anyone opening this project`
                 : `VS Code workspace settings auto-approve terminal command "${key}" — ${commandWord} is in VS Code's own default-deny list; it runs without approval for anyone opening this project`,
+            }),
+          );
+        }
+      }
+      return findings;
+    }
+    if (isAmazonqAgent) {
+      const findings = [];
+      const allowed = (data as { allowedTools?: unknown }).allowedTools;
+      const settings = (data as { toolsSettings?: Record<string, unknown> }).toolsSettings ?? {};
+      const isScoped = (tool: string) => {
+        const cfg = settings[tool];
+        if (typeof cfg !== 'object' || cfg === null) return false;
+        const list = (cfg as Record<string, unknown>)[AMAZONQ_SCOPING_KEYS[tool] ?? ''];
+        return Array.isArray(list) && list.length > 0;
+      };
+      for (const entry of Array.isArray(allowed) ? allowed : []) {
+        if (typeof entry !== 'string') continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
+        if (entry === '*' || entry === '@*' || entry === '@*/*') {
+          findings.push(
+            finding(this, {
+              severity: 'high',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Amazon Q agent pre-approves every tool ("${entry}" in allowedTools) — all tool calls run without prompting for anyone using this checked-in agent`,
+            }),
+          );
+          continue;
+        }
+        if (AMAZONQ_HIGH_RISK_TOOLS.has(entry) && !isScoped(entry)) {
+          findings.push(
+            finding(this, {
+              severity: 'high',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Amazon Q agent pre-approves "${entry}" without a toolsSettings allowlist — ${entry === 'execute_bash' ? 'arbitrary shell commands run' : 'AWS CLI calls run'} without prompting for anyone using this checked-in agent`,
+            }),
+          );
+          continue;
+        }
+        if (entry === 'fs_write' && !isScoped(entry)) {
+          findings.push(
+            finding(this, {
+              severity: 'medium',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: 'Amazon Q agent pre-approves "fs_write" without a toolsSettings allowedPaths allowlist — unrestricted file writes without prompting',
+            }),
+          );
+          continue;
+        }
+        if (/^@[^/]+(\/\*)?$/.test(entry)) {
+          findings.push(
+            finding(this, {
+              severity: 'medium',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Amazon Q agent pre-approves every tool of MCP server "${entry}" — all its tool calls run without prompting for anyone using this checked-in agent`,
             }),
           );
         }

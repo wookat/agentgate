@@ -81,6 +81,13 @@ per-tool `default: "allow"` is `high` for `terminal` and `medium` for
 file-write/delete/fetch tools. `always_allow` pattern rules with a
 `confirm` default are fine.
 
+Amazon Q CLI project agent files (`.amazonq/cli-agents/*.json`) are
+checked for `allowedTools` pre-approvals: a catch-all (`"*"`) is `high`,
+unscoped `execute_bash`/`use_aws` are `high`, unscoped `fs_write` is
+`medium`, and a whole-MCP-server allow (`"@server"` / `"@server/*"`) is
+`medium`. Tools scoped by a matching `toolsSettings` allowlist
+(`allowedCommands`, `allowedServices`, `allowedPaths`) are not flagged.
+
 ## Why it matters
 
 Individually harmless tools compose into an exfiltration pipeline the moment a poisoned description (see [AG-TP-001](/docs/rules/tool-poisoning/)) chains them. Least privilege at the server level is the mitigation that still works when prompt-level defenses fail.
