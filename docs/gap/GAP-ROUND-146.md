@@ -47,5 +47,5 @@ invisible.
 
 ## Evidence
 
-- Full suite green: core 220, cli 47, config-convert 24.
+- Full suite green: core 221, cli 47, config-convert 24.
 - Self-scan unchanged (17 findings) — agentgate has no .vscode dir.
