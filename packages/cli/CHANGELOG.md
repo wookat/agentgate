@@ -1,5 +1,16 @@
 # mcp-agentgate
 
+## 0.29.0
+
+### Minor Changes
+
+- 9cde860: Discover Amazon Q Developer MCP configs (`~/.aws/amazonq/mcp.json`, `~/.aws/amazonq/default.json`, project `.amazonq/mcp.json` / `.amazonq/default.json`), and scan + `lock --skills` its project rules (`.amazonq/rules/**.md`).
+
+### Patch Changes
+
+- Updated dependencies [9cde860]
+  - mcp-agentgate-core@0.29.0
+
 ## 0.28.0
 
 ### Minor Changes
