@@ -57,21 +57,39 @@ export function gatherServers(opts: GatherOptions): { servers: McpServerConfig[]
   return { servers: filtered, files };
 }
 
+/** How many servers to connect to at once during live gathering. */
+const GATHER_CONCURRENCY = 4;
+
 export async function gatherSurfaces(servers: McpServerConfig[], timeoutMs: number): Promise<{ surfaces: Record<string, ToolSurface[]>; errors: { server: string; error: string }[] }> {
+  const results: ({ server: string; tools: ToolSurface[] } | { server: string; error: string })[] = new Array(servers.length);
+  let next = 0;
+
+  async function worker(): Promise<void> {
+    while (next < servers.length) {
+      const index = next++;
+      const server = servers[index]!;
+      if (!server.command && !server.url) {
+        results[index] = { server: server.name, error: 'has neither a stdio command nor a url' };
+        continue;
+      }
+      try {
+        debugLog(`connecting to "${server.name}" (${server.command ?? server.url}) with timeout ${timeoutMs}ms`);
+        const tools = await fetchToolSurface(server, { timeoutMs });
+        debugLog(`"${server.name}" exposed ${tools.length} tool(s)`);
+        results[index] = { server: server.name, tools };
+      } catch (err) {
+        results[index] = { server: server.name, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(GATHER_CONCURRENCY, servers.length) }, worker));
+
   const surfaces: Record<string, ToolSurface[]> = {};
   const errors: { server: string; error: string }[] = [];
-  for (const server of servers) {
-    if (!server.command && !server.url) {
-      errors.push({ server: server.name, error: 'has neither a stdio command nor a url' });
-      continue;
-    }
-    try {
-      debugLog(`connecting to "${server.name}" (${server.command ?? server.url}) with timeout ${timeoutMs}ms`);
-      surfaces[server.name] = await fetchToolSurface(server, { timeoutMs });
-      debugLog(`"${server.name}" exposed ${surfaces[server.name]?.length ?? 0} tool(s)`);
-    } catch (err) {
-      errors.push({ server: server.name, error: err instanceof Error ? err.message : String(err) });
-    }
+  for (const result of results) {
+    if ('tools' in result) surfaces[result.server] = result.tools;
+    else errors.push(result);
   }
   return { surfaces, errors };
 }
