@@ -316,6 +316,24 @@ describe('discoverConfigFiles', () => {
     expect(found[0]!.format).toBe('mcpServers-json');
   });
 
+  it('finds .mcp.json bundled by nested Claude Code plugins', () => {
+    const project = path.join(dir, 'proj8');
+    fs.mkdirSync(path.join(project, 'plugins', 'my-plugin', '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'plugins', 'my-plugin', '.claude-plugin', 'plugin.json'), '{"name":"my-plugin"}');
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'my-plugin', '.mcp.json'),
+      '{"mcpServers":{"bundled":{"command":"npx","args":["@company/mcp-server"]}}}',
+    );
+    // A nested directory without a plugin manifest is not a plugin root.
+    fs.mkdirSync(path.join(project, 'plugins', 'not-a-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'plugins', 'not-a-plugin', '.mcp.json'), '{"mcpServers":{"loose":{"command":"npx","args":["x"]}}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['claude-plugin']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['bundled']);
+  });
+
   it('finds every .continue/mcpServers/*.yaml workspace block', () => {
     const project = path.join(dir, 'proj3');
     fs.mkdirSync(path.join(project, '.continue', 'mcpServers'), { recursive: true });
