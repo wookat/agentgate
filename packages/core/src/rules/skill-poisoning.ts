@@ -162,6 +162,18 @@ export const skillOverprivilegeRule: Rule = {
         );
       }
     }
+    if ((data as { enableAllProjectMcpServers?: unknown }).enableAllProjectMcpServers === true) {
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes('enableAllProjectMcpServers')) + 1;
+      findings.push(
+        finding(this, {
+          severity: 'medium',
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: 'Claude Code settings enable enableAllProjectMcpServers — every MCP server in project .mcp.json files is auto-approved without review',
+        }),
+      );
+    }
     if (settings.permissions?.defaultMode === 'bypassPermissions') {
       const line = content.split(/\r?\n/).findIndex((l) => l.includes('bypassPermissions')) + 1;
       findings.push(
