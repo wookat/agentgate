@@ -9,7 +9,7 @@ export interface CiOptions {
   server?: string[];
   lockfile: string;
   timeout: string;
-  failOn: Severity;
+  failOn: Severity | 'never';
   /** true = current directory; string = explicit directory */
   skills?: boolean | string;
 }
@@ -45,7 +45,7 @@ export async function runCi(opts: CiOptions): Promise<number> {
   if (isGitHubActions() && findings.length > 0) {
     console.log(renderGitHubAnnotations(findings));
   }
-  if (maxSeverityAtLeast(findings, opts.failOn)) {
+  if (opts.failOn !== 'never' && maxSeverityAtLeast(findings, opts.failOn)) {
     console.log(pc.red(`\nGate failed: findings at or above "${opts.failOn}" severity`));
     failed = true;
   }

@@ -19,7 +19,7 @@ agentgate ci [options]
 | `-s, --server <names...>` | all | Restrict to specific server names. |
 | `-l, --lockfile <file>` | `agentgate.lock` | Lockfile path. |
 | `--skills [dir]` | `.` | Directory to re-hash locked skill files from (only used when the lockfile pinned skills). |
-| `--fail-on <severity>` | `high` | Severity gate for static findings: `info`, `low`, `medium`, `high`, `critical`. |
+| `--fail-on <severity>` | `high` | Severity gate for static findings: `info`, `low`, `medium`, `high`, `critical` — or `never` to gate on drift only. |
 | `-t, --timeout <ms>` | `15000` | Per-server connect timeout. |
 
 ## Exit codes

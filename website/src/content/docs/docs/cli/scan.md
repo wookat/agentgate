@@ -34,7 +34,7 @@ live tool surface was not inspected rather than reporting a clean bill.
 | `-s, --server <names...>` | all | Restrict to specific server names. |
 | `-f, --format <format>` | `table` | Output format: `table`, `json`, `sarif`. JSON follows the [scan output spec](/docs/spec/scan-output/). |
 | `-o, --output <file>` | stdout | Write the report to a file. |
-| `--fail-on <severity>` | off | Exit non-zero when findings reach this severity: `info`, `low`, `medium`, `high`, `critical`. |
+| `--fail-on <severity>` | off | Exit non-zero when findings reach this severity: `info`, `low`, `medium`, `high`, `critical` (`never` = report only). |
 | `-t, --timeout <ms>` | `15000` | Per-server connect timeout for `--live`. |
 
 ## Examples

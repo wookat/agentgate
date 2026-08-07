@@ -36,7 +36,7 @@ program
   .addOption(serverOption)
   .addOption(new Option('-f, --format <format>', 'output format').choices(['table', 'json', 'sarif']).default('table'))
   .option('-o, --output <file>', 'write the report to a file instead of stdout')
-  .addOption(new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity').choices([...SEVERITIES]))
+  .addOption(new Option('--fail-on <severity>', 'exit non-zero when findings reach this severity').choices([...SEVERITIES, 'never']))
   .option('--ignore <globs...>', 'glob patterns (relative to the scan root) to exclude from repo scans')
   .addOption(timeoutOption)
   .action(async (target, opts) => {
@@ -75,7 +75,7 @@ program
   .addOption(serverOption)
   .option('-l, --lockfile <file>', 'lockfile path', 'agentgate.lock')
   .option('--skills [dir]', 'directory to re-hash locked skill files from (default: current directory)')
-  .addOption(new Option('--fail-on <severity>', 'severity gate for static findings').choices([...SEVERITIES]).default('high'))
+  .addOption(new Option('--fail-on <severity>', 'severity gate for static findings (`never` gates on drift only)').choices([...SEVERITIES, 'never']).default('high'))
   .addOption(timeoutOption)
   .action(async (opts) => {
     process.exitCode = await runCi(opts);
