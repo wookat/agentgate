@@ -402,6 +402,35 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags "allow" rules in per-agent OpenCode permission blocks (AG-SK-002)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'opencode.json'),
+      JSON.stringify(
+        {
+          permission: { websearch: 'allow' },
+          agent: {
+            reviewer: {
+              permission: {
+                edit: 'ask',
+                webfetch: 'allow',
+                bash: { '*': 'ask', 'git status *': 'allow', 'gh pr list *': 'allow' },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.severity, f.message.includes('agent.reviewer.permission')])).toEqual([
+      ['medium', false],
+      ['medium', true],
+    ]);
+    expect(hits[0]!.message).toContain('permission.websearch');
+    expect(hits[1]!.message).toContain('agent.reviewer.permission.webfetch');
+  });
+
   it('parses JSONC Claude Code settings (comments, trailing commas)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(

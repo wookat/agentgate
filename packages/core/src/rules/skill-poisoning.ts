@@ -76,6 +76,7 @@ const OPENCODE_RISKY_KEYS: { key: string; severity: 'high' | 'medium'; risk: str
   { key: 'edit', severity: 'medium', risk: 'unrestricted file edits' },
   { key: 'write', severity: 'medium', risk: 'unrestricted file writes' },
   { key: 'webfetch', severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
+  { key: 'websearch', severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
 ];
 
 /** True when an OpenCode permission value's catch-all resolves to "allow". */
@@ -85,6 +86,20 @@ function opencodeAllowsAll(value: unknown): boolean {
     return (value as Record<string, unknown>)['*'] === 'allow';
   }
   return false;
+}
+
+/** Collect the permission blocks in an OpenCode config: top-level and per-agent. */
+function opencodePermissionBlocks(data: object): { scope: string; permission: unknown }[] {
+  const out: { scope: string; permission: unknown }[] = [{ scope: 'permission', permission: (data as { permission?: unknown }).permission }];
+  const agents = (data as { agent?: unknown }).agent;
+  if (typeof agents === 'object' && agents !== null) {
+    for (const [name, agent] of Object.entries(agents)) {
+      if (typeof agent === 'object' && agent !== null && 'permission' in agent) {
+        out.push({ scope: `agent.${name}.permission`, permission: (agent as { permission?: unknown }).permission });
+      }
+    }
+  }
+  return out;
 }
 
 /** Parse JSON tolerating the JSONC forms Claude Code accepts: comments and trailing commas. */
@@ -167,31 +182,32 @@ export const skillOverprivilegeRule: Rule = {
     if (typeof data !== 'object' || data === null) return [];
     if (isOpencode) {
       const findings = [];
-      const permission = (data as { permission?: unknown }).permission;
-      if (permission === 'allow' || (typeof permission === 'object' && permission !== null && (permission as Record<string, unknown>)['*'] === 'allow')) {
-        const line = content.split(/\r?\n/).findIndex((l) => l.includes('"permission"')) + 1;
-        findings.push(
-          finding(this, {
-            severity: 'high',
-            target: file,
-            file,
-            ...(line > 0 ? { line } : {}),
-            message: 'OpenCode config sets a catch-all "allow" permission — every tool (including shell) runs without prompts for anyone opening this project',
-          }),
-        );
-      } else if (typeof permission === 'object' && permission !== null) {
-        for (const { key, severity, risk } of OPENCODE_RISKY_KEYS) {
-          if (opencodeAllowsAll((permission as Record<string, unknown>)[key])) {
-            const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
-            findings.push(
-              finding(this, {
-                severity,
-                target: file,
-                file,
-                ...(line > 0 ? { line } : {}),
-                message: `OpenCode config sets permission.${key} to "allow" — ${risk} without a permission prompt; use granular rules (e.g. "git *": "allow") or "ask"`,
-              }),
-            );
+      for (const { scope, permission } of opencodePermissionBlocks(data)) {
+        if (opencodeAllowsAll(permission)) {
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes('"permission"')) + 1;
+          findings.push(
+            finding(this, {
+              severity: 'high',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `OpenCode config sets a catch-all "allow" ${scope} — every tool (including shell) runs without prompts for anyone opening this project`,
+            }),
+          );
+        } else if (typeof permission === 'object' && permission !== null) {
+          for (const { key, severity, risk } of OPENCODE_RISKY_KEYS) {
+            if (opencodeAllowsAll((permission as Record<string, unknown>)[key])) {
+              const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${key}"`)) + 1;
+              findings.push(
+                finding(this, {
+                  severity,
+                  target: file,
+                  file,
+                  ...(line > 0 ? { line } : {}),
+                  message: `OpenCode config sets ${scope}.${key} to "allow" — ${risk} without a permission prompt; use granular rules (e.g. "git *": "allow") or "ask"`,
+                }),
+              );
+            }
           }
         }
       }
