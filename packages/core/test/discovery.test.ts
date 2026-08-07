@@ -324,6 +324,23 @@ describe('discoverConfigFiles', () => {
     expect(ext.flatMap((f) => parseConfigFile(f)).map((s) => s.name).sort()).toEqual(['fs', 'gcp']);
   });
 
+  it('finds Copilot agent profiles with mcp-servers frontmatter (.github/agents)', () => {
+    const project = path.join(dir, 'proj9');
+    fs.mkdirSync(path.join(project, '.github', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.github', 'agents', 'my-agent.md'),
+      '---\nname: my-agent\ndescription: d\nmcp-servers:\n  custom-mcp:\n    type: local\n    command: npx\n    args: ["-y", "some-mcp"]\n---\nPrompt body\n',
+    );
+    fs.writeFileSync(path.join(project, '.github', 'agents', 'plain.md'), '---\nname: plain\ndescription: d\n---\nNo servers here\n');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const agents = found.filter((f) => f.client === 'copilot-agent');
+    expect(agents).toHaveLength(1);
+    const servers = agents.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['custom-mcp']);
+    expect(servers[0]!.command).toBe('npx');
+    expect(servers[0]!.args).toEqual(['-y', 'some-mcp']);
+  });
+
   it('finds gemini extension manifests (project root + installed)', () => {
     const project = path.join(dir, 'proj6');
     fs.mkdirSync(project, { recursive: true });
