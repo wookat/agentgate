@@ -37,6 +37,7 @@ describe('knownConfigLocations', () => {
         'windsurf',
         'cline',
         'gemini-cli',
+        'qwen-code',
         'kiro',
         'roo-code',
         'zed',
@@ -293,6 +294,18 @@ describe('discoverConfigFiles', () => {
     expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['dev-agent.json', 'reviewer.json']);
     const servers = found.flatMap((f) => parseConfigFile(f));
     expect(servers.map((s) => s.name).sort()).toEqual(['fs', 'remote']);
+  });
+
+  it('locates the qwen-code settings.json (user + project)', () => {
+    const linux = knownConfigLocations('/home/u', 'linux').filter((l) => l.client === 'qwen-code');
+    expect(linux.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.qwen/settings.json']);
+    const project = path.join(dir, 'proj7');
+    fs.mkdirSync(path.join(project, '.qwen'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.qwen', 'settings.json'), '{"mcpServers":{"fs":{"command":"npx","args":["-y","fs-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const qwen = found.filter((f) => f.client === 'qwen-code');
+    expect(qwen).toHaveLength(1);
+    expect(qwen.flatMap((f) => parseConfigFile(f)).map((s) => s.name)).toEqual(['fs']);
   });
 
   it('finds gemini extension manifests (project root + installed)', () => {

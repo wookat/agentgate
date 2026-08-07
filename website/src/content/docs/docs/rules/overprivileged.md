@@ -58,6 +58,14 @@ confirmation dialog, and `general.defaultApprovalMode: "auto_edit"`
 `mcpServers` entry (`medium` — all that server's tool calls bypass
 confirmation). Scoped grants such as `run_shell_command(git)` are fine.
 
+Qwen Code project settings (`.qwen/settings.json`, a Gemini CLI fork with
+Claude-style permission rules) are checked too: `tools.approvalMode:
+"yolo"` (`high` — every tool call runs unapproved) or `"auto-edit"`
+(`medium`), unscoped `Bash` / `Write`/`Edit` / `WebFetch` grants in
+`permissions.allow` (`high`/`medium`, same classification as Claude Code
+settings), and `trust: true` on an `mcpServers` entry (`medium`). Scoped
+grants such as `Bash(git *)` and `deny`/`ask` rules are fine.
+
 Roo Code project MCP configs (`.roo/mcp.json`) are checked as well: a
 wildcard `"*"` in a server's `alwaysAllow`/`autoApprove` list is `high`,
 and auto-approved tools with destructive-looking names (`execute_sql`,

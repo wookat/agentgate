@@ -537,6 +537,34 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags risky Qwen Code project settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.qwen'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.qwen', 'settings.json'),
+      JSON.stringify(
+        {
+          tools: { approvalMode: 'yolo' },
+          permissions: { allow: ['Bash', 'Bash(git *)', 'WebFetch'] },
+          mcpServers: {
+            docs: { httpUrl: 'https://docs.example/mcp', trust: true },
+            search: { command: 'npx', args: ['-y', 'mcp-search'] },
+          },
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'high', 'medium', 'medium']);
+    expect(hits.some((f) => f.message.includes('yolo'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('"docs" as trusted'))).toBe(true);
+    fs.writeFileSync(
+      path.join(dir, '.qwen', 'settings.json'),
+      JSON.stringify({ tools: { approvalMode: 'default' }, permissions: { allow: ['Bash(npm test *)'], deny: ['Read(.env)'] } }, null, 2),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('flags dangerous Gemini CLI hook commands (AG-SK-003)', () => {
     fs.mkdirSync(path.join(dir, '.gemini'), { recursive: true });
     fs.writeFileSync(

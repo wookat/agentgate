@@ -76,6 +76,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   }
   // Gemini CLI — mcpServers key inside settings.json
   push('gemini-cli', path.join(homeDir, '.gemini', 'settings.json'));
+  // Qwen Code — Gemini CLI fork, mcpServers key inside settings.json
+  push('qwen-code', path.join(homeDir, '.qwen', 'settings.json'));
   // Gemini CLI extensions — each installed extension's manifest carries an optional mcpServers map
   locations.push(...geminiExtensionLocations(path.join(homeDir, '.gemini', 'extensions')));
   // Kiro — user-level mcp.json, standard mcpServers format
@@ -131,6 +133,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'opencode', path: path.join(projectDir, 'opencode.json'), format: 'opencode-json' },
     { client: 'gemini-cli', path: path.join(projectDir, '.gemini', 'settings.json'), format: 'mcpServers-json' },
     { client: 'gemini-extension', path: path.join(projectDir, 'gemini-extension.json'), format: 'mcpServers-json' },
+    { client: 'qwen-code', path: path.join(projectDir, '.qwen', 'settings.json'), format: 'mcpServers-json' },
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
