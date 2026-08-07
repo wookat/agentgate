@@ -42,6 +42,9 @@ Any of these markdown layouts are treated as skill files:
   `.rules`, and GitHub Copilot's `.github/copilot-instructions.md`.
 - Copilot path-specific instructions (`.github/instructions/**.instructions.md`)
   and prompt files (`.github/prompts/*.prompt.md`).
+- VS Code custom agents (`.github/agents/*.md` — `*.agent.md` and the
+  legacy `*.chatmode.md`; VS Code loads any Markdown file in that folder
+  as an agent definition).
 - Amazon Q Developer project rules (`.amazonq/rules/**.md`, subdirectories
   included — auto-loaded as chat context in the IDE and CLI).
 
