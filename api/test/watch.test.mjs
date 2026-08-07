@@ -122,6 +122,18 @@ test("renderReport includes sections and warnings", () => {
   assert.match(report, /GHSA-new1-new1-new1.*high, CVE-2026-3333/);
   assert.match(report, /`npm:known-pkg` \(published 2026-08-05\)/);
   assert.match(report, /> warning: OSV querybatch 500/);
+  assert.match(report, /### Triage/);
+  assert.match(report, /node api\/scripts\/watch\.mjs --draft GHSA-new1-new1-new1/);
+  assert.match(report, /api\/advisories\/watch-ignore\.json/);
+});
+
+test("renderReport omits the triage section when only OSV hits exist", () => {
+  const report = renderReport({
+    days: 8,
+    ghsa: { error: null, hits: [] },
+    osv: { error: null, hits: [{ id: "GHSA-xxxx-1", pkgs: [{ ecosystem: "npm", name: "known-pkg" }], published: "2026-08-05" }] },
+  });
+  assert.doesNotMatch(report, /### Triage/);
 });
 
 test("draftFromGhsa prefills an MCPA skeleton from a GHSA detail payload", () => {

@@ -123,5 +123,19 @@ export function renderReport({ days, ghsa, osv }) {
   for (const e of [ghsa.error, osv.error].filter(Boolean)) {
     lines.push(`> warning: ${e}`);
   }
+  if (ghsa.hits.length > 0) {
+    lines.push(
+      "",
+      "### Triage",
+      "",
+      "For each true hit, prefill an MCPA draft (review every field, then run `node api/scripts/validate.mjs`):",
+      "",
+      "```bash",
+      ...ghsa.hits.map((a) => `node api/scripts/watch.mjs --draft ${a.ghsa_id}`),
+      "```",
+      "",
+      "False positives: add the GHSA/CVE id to `api/advisories/watch-ignore.json`.",
+    );
+  }
   return lines.join("\n").trim();
 }
