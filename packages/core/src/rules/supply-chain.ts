@@ -310,6 +310,20 @@ export const supplyChainRule: Rule = {
     if (typeof data !== 'object' || data === null) return [];
     const plugins = (data as { plugin?: unknown }).plugin;
     const findings = [];
+    const instructions = (data as { instructions?: unknown }).instructions;
+    for (const entry of Array.isArray(instructions) ? instructions : []) {
+      if (typeof entry !== 'string' || !/^https?:\/\//i.test(entry)) continue;
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes(entry)) + 1;
+      findings.push(
+        finding(this, {
+          severity: 'high',
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: `OpenCode instruction "${entry.slice(0, 100)}" is fetched from a remote URL and injected into the system prompt on every session — the host can change the content at any time (remote prompt injection / rug-pull). Vendor the file into the repo instead`,
+        }),
+      );
+    }
     for (const spec of Array.isArray(plugins) ? plugins : []) {
       if (typeof spec !== 'string') continue;
       // Local plugin files/paths are loaded from the repo, not fetched from npm.
