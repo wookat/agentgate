@@ -18,6 +18,7 @@ export interface DependencyRef {
 /** A dependency declared with a non-registry specifier (git remote, VCS shorthand, or archive URL). */
 export interface RemoteDepSpec {
   name: string;
+  ecosystem: DepEcosystem;
   spec: string;
   /** File (relative to the scan root) the declaration came from. */
   file: string;

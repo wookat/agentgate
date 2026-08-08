@@ -211,4 +211,36 @@ describe('collectDependencies remote specs', () => {
     ]);
     expect(remoteSpecs[0]!.context).toBe('dependencies');
   });
+
+  it('records PEP 508 direct-URL requirements as remoteSpecs (requirements.txt + pyproject)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'requirements.txt'),
+      ['requests>=2.0', 'tweety-ns @ https://github.com/acme/tweety/archive/main.zip', '# comment', ''].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'pyproject.toml'),
+      [
+        '[project]',
+        'name = "demo"',
+        'dependencies = [',
+        '  "flask>=2.0",',
+        '  "tinker @ git+https://github.com/acme/tinker.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",',
+        ']',
+        '[project.optional-dependencies]',
+        'bench = ["yc-bench @ git+https://github.com/acme/yc-bench.git@main ; python_version >= \'3.12\'"]',
+        '[dependency-groups]',
+        'docs = ["mkdocs>=1.0", "mkdocs-click-zoom @ git+https://github.com/acme/mkdocs-click-zoom.git@v0.2.0"]',
+        '',
+      ].join('\n'),
+    );
+    const { refs, remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(refs.map((r) => r.name).sort()).toEqual(['flask', 'mkdocs', 'requests']);
+    expect(remoteSpecs.map((s) => `${s.ecosystem}:${s.name}:${s.spec}`).sort()).toEqual([
+      'pypi:mkdocs-click-zoom:git+https://github.com/acme/mkdocs-click-zoom.git@v0.2.0',
+      'pypi:tinker:git+https://github.com/acme/tinker.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'pypi:tweety-ns:https://github.com/acme/tweety/archive/main.zip',
+      'pypi:yc-bench:git+https://github.com/acme/yc-bench.git@main',
+    ]);
+    expect(remoteSpecs.find((s) => s.name === 'yc-bench')!.context).toBe('project.optional-dependencies.bench');
+  });
 });

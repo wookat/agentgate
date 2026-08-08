@@ -34,6 +34,9 @@ this before installation.
    (`AG-DP-005`). Dependencies declared with a mutable remote specifier —
    a git ref that isn't a full commit SHA (**medium**) or a non-registry
    archive URL (**high**) — are flagged as `AG-DP-007` (works offline too).
+   This covers npm `package.json` git/URL specifiers and Python PEP 508
+   direct references (`name @ git+https://…` / `name @ https://…`) in
+   `requirements*.txt` and `pyproject.toml`.
 4. **Checks known-malware advisories** against [OSV.dev](https://osv.dev)
    (which aggregates the GitHub Advisory Database, PyPI, and the OSV
    malicious-packages project). A dependency with a `MAL-*` advisory is a
