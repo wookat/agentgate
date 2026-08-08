@@ -19,7 +19,7 @@ npx mcp-agentgate scan
 
 ## 1. Scan
 
-Audit every MCP server your clients (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code, GitHub Copilot CLI, JetBrains Junie, Factory Droid, Goose, Crush) are configured to run — config paths are discovered automatically:
+Audit every MCP server your clients (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code, GitHub Copilot CLI, JetBrains Junie, Factory Droid, Antigravity, Goose, Crush) are configured to run — config paths are discovered automatically:
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
