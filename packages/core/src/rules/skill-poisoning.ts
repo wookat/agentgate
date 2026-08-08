@@ -1305,6 +1305,9 @@ const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 /** Cursor cloud-agent environment config; `install` runs at Build creation and `start`/`terminals[].command` run when an agent boots — all sourced from the repo. */
 const CURSOR_ENVIRONMENT_FILE = /(^|\/)\.cursor\/environment\.json$/i;
 
+/** Cursor command surfaces whose embedded commands AG-SK-003 classifies directly — the generic curl|sh text warning would only duplicate those findings. */
+export const CURSOR_COMMAND_SURFACE_FILE = /(^|\/)\.cursor\/(hooks|environment)\.json$/i;
+
 /** Collect the auto-executed command strings (with their config key) from a Cursor environment.json document. */
 export function extractCursorEnvironmentCommands(doc: unknown): { key: string; command: string }[] {
   if (typeof doc !== 'object' || doc === null) return [];
