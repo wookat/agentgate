@@ -132,6 +132,7 @@ describe('scoreRemoteSpecs', () => {
       scoreRemoteSpecs([
         spec('pinned', 'git+https://github.com/acme/pinned.git#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
         spec('registry', 'https://registry.npmjs.org/x/-/x-1.0.0.tgz'),
+        pySpec('sha-archive', 'https://github.com/acme/pyrav4l2/archive/3c071a7494b6b67263c4dddb87b47025338fd960.zip'),
       ]),
     ).toEqual([]);
   });

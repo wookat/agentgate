@@ -243,4 +243,26 @@ describe('collectDependencies remote specs', () => {
     ]);
     expect(remoteSpecs.find((s) => s.name === 'yc-bench')!.context).toBe('project.optional-dependencies.bench');
   });
+
+  it('handles extras, editable/egg, and bare-URL requirement forms', () => {
+    fs.writeFileSync(
+      path.join(dir, 'requirements.txt'),
+      [
+        'unsloth[colab-new] @ git+https://github.com/acme/unsloth.git',
+        '-e https://github.com/acme/pushbullet.py/archive/master.zip#egg=pushbullet.py',
+        'https://github.com/kpu/kenlm/archive/master.zip',
+        'git+https://github.com/acme/open_lm.git',
+        'https://download.example.org/whl/torch-2.0.1+cu118-cp310-none-linux_x86_64.whl',
+        '--index-url https://pypi.org/simple',
+        '',
+      ].join('\n'),
+    );
+    const { remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
+      'kenlm:https://github.com/kpu/kenlm/archive/master.zip',
+      'open_lm:git+https://github.com/acme/open_lm.git',
+      'pushbullet.py:https://github.com/acme/pushbullet.py/archive/master.zip#egg=pushbullet.py',
+      'unsloth:git+https://github.com/acme/unsloth.git',
+    ]);
+  });
 });
