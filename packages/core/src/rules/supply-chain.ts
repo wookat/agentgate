@@ -78,7 +78,7 @@ const COMMIT_PIN = /[#@][0-9a-f]{40}$/i;
  * unpinned registry version: the artifact behind the URL can be swapped in
  * place, with no version to pin and no registry metadata or provenance.
  */
-function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host: string } | undefined {
+export function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host: string } | undefined {
   if (!REMOTE_SOURCE_SPEC.test(spec)) return undefined;
   const shorthand = spec.match(/^(github|gitlab|bitbucket):/i);
   if (shorthand?.[1] !== undefined) return { kind: 'git', host: `${shorthand[1].toLowerCase()}.com` };
@@ -92,6 +92,11 @@ function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host: string
   if (/^git[+:]/i.test(spec) || /\.git(@|#|$)/i.test(url)) return { kind: 'git', host };
   if (/\.(tgz|tar\.gz|zip)(\?|#|$)/i.test(url)) return { kind: 'archive', host };
   return undefined;
+}
+
+/** Full commit SHA or a version-addressed registry tarball: the content behind the spec cannot silently change. */
+export function isImmutableRemoteSpec(spec: string): boolean {
+  return COMMIT_PIN.test(spec) || REGISTRY_TARBALL_HOST.test(spec);
 }
 
 function isPinned(spec: string): boolean {

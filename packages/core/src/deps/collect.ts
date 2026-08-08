@@ -4,7 +4,7 @@ import { builtinModules } from 'node:module';
 import { parse as parseToml } from 'smol-toml';
 import { globToRegExp } from '../scanner.js';
 import { PYTHON_STDLIB } from './popular.js';
-import { DependencyRef, DepEcosystem, DepOrigin } from './types.js';
+import { DependencyRef, DepEcosystem, DepOrigin, RemoteDepSpec } from './types.js';
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -45,6 +45,8 @@ export interface CollectOptions {
 
 export interface CollectResult {
   refs: DependencyRef[];
+  /** Dependencies declared with non-registry specifiers (git remotes, archive URLs). */
+  remoteSpecs: RemoteDepSpec[];
   scannedFiles: string[];
   /** Non-fatal problems, e.g. unparseable manifests. */
   warnings: string[];
@@ -122,7 +124,7 @@ export function parseRequirementLine(line: string): string | undefined {
   return m?.[1];
 }
 
-function refsFromPackageJson(file: string, content: string, localNames: Set<string>, warnings: string[]): DependencyRef[] {
+function refsFromPackageJson(file: string, content: string, localNames: Set<string>, warnings: string[], remoteSpecs: RemoteDepSpec[]): DependencyRef[] {
   const refs: DependencyRef[] = [];
   let data: unknown;
   try {
@@ -142,6 +144,7 @@ function refsFromPackageJson(file: string, content: string, localNames: Set<stri
       // declared — record them so imports don't get flagged — but not verified
       if (typeof spec === 'string' && /^(workspace:|file:|link:|git|https?:|npm:)/.test(spec)) {
         localNames.add(name);
+        if (/^(git|https?:)/.test(spec)) remoteSpecs.push({ name, spec, file, context: section });
         continue;
       }
       refs.push({ name, ecosystem: 'npm', origin: 'manifest', file, context: section });
@@ -217,6 +220,7 @@ function refsFromPyproject(file: string, content: string, warnings: string[]): D
 export function collectDependencies(dir: string, opts: CollectOptions = {}): CollectResult {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const manifestRefs: DependencyRef[] = [];
+  const remoteSpecs: RemoteDepSpec[] = [];
   const importRefs: DependencyRef[] = [];
   const scannedFiles: string[] = [];
   const warnings: string[] = [];
@@ -253,7 +257,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
       continue;
     }
     scannedFiles.push(rel);
-    if (base === 'package.json') manifestRefs.push(...refsFromPackageJson(rel, content, localNames, warnings));
+    if (base === 'package.json') manifestRefs.push(...refsFromPackageJson(rel, content, localNames, warnings, remoteSpecs));
     else if (base === 'pyproject.toml') manifestRefs.push(...refsFromPyproject(rel, content, warnings));
     else if (isManifest) manifestRefs.push(...refsFromRequirementsTxt(rel, content));
     else if (JS_EXTENSIONS.has(ext)) {
@@ -280,7 +284,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     seenImports.add(key);
     refs.push(ref);
   }
-  return { refs: dedupe(refs), scannedFiles, warnings };
+  return { refs: dedupe(refs), remoteSpecs, scannedFiles, warnings };
 }
 
 export function normalizeName(name: string, ecosystem: DepEcosystem): string {

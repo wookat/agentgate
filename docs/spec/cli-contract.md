@@ -58,7 +58,7 @@ renaming fields, or changing semantics, requires bumping `version`.
       "file": "path the reference came from"
     }
   ],
-  "findings": [ /* same Finding shape as `scan`; ruleIds AG-DP-001..AG-DP-005, category supply-chain.
+  "findings": [ /* same Finding shape as `scan`; ruleIds AG-DP-001..AG-DP-007, category supply-chain.
                    target is "<ecosystem>:<name>", with an " (import)" suffix for refs found
                    only in source imports */ ],
   "warnings": ["string"]      // offline-mode notice, unparseable-manifest warnings

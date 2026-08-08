@@ -179,3 +179,36 @@ describe('collectDependencies', () => {
     expect(refs.map((r) => r.name)).toEqual(['realjs']);
   });
 });
+
+describe('collectDependencies remote specs', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-deps-remote-'));
+  });
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('records git and archive-URL specifiers as remoteSpecs (still declared, never registry-verified)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        dependencies: {
+          branchdep: 'github:acme/branchdep#main',
+          tarball: 'https://cdn.example.com/tarball-1.0.0.tgz',
+          pinned: 'git+https://github.com/acme/pinned.git#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          express: '^4.0.0',
+          local: 'file:../local',
+        },
+      }),
+    );
+    const { refs, remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(refs.map((r) => r.name)).toEqual(['express']);
+    expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
+      'branchdep:github:acme/branchdep#main',
+      'pinned:git+https://github.com/acme/pinned.git#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'tarball:https://cdn.example.com/tarball-1.0.0.tgz',
+    ]);
+    expect(remoteSpecs[0]!.context).toBe('dependencies');
+  });
+});

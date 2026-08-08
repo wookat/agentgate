@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { editDistance, findTyposquatTarget, scoreDependencies, scoreDependency, scoreOffline } from '../src/deps/score.js';
+import { editDistance, findTyposquatTarget, scoreDependencies, scoreDependency, scoreOffline, scoreRemoteSpecs } from '../src/deps/score.js';
 import { DepCheckResult, DependencyRef } from '../src/deps/types.js';
 
 function ref(partial: Partial<DependencyRef> = {}): DependencyRef {
@@ -107,5 +107,31 @@ describe('scoreDependencies / scoreOffline', () => {
     const findings = scoreOffline([ref({ name: 'lodahs' }), ref({ name: 'totally-unknown-pkg' })]);
     expect(findings).toHaveLength(1);
     expect(findings[0]).toMatchObject({ ruleId: 'AG-DP-002', severity: 'high' });
+  });
+});
+
+describe('scoreRemoteSpecs', () => {
+  const spec = (name: string, s: string) => ({ name, spec: s, file: 'package.json', context: 'dependencies' });
+
+  it('flags unpinned git refs medium and non-registry archive URLs high (AG-DP-007)', () => {
+    const findings = scoreRemoteSpecs([
+      spec('branchdep', 'github:acme/branchdep#main'),
+      spec('tagdep', 'git+https://github.com/acme/tagdep.git#v1.2.3'),
+      spec('tarball', 'https://cdn.example.com/tarball-1.0.0.tgz'),
+    ]);
+    expect(findings.map((f) => `${f.ruleId}:${f.severity}:${f.target}`)).toEqual([
+      'AG-DP-007:medium:npm:branchdep',
+      'AG-DP-007:medium:npm:tagdep',
+      'AG-DP-007:high:npm:tarball',
+    ]);
+  });
+
+  it('does not flag commit-pinned git specs or registry tarball hosts', () => {
+    expect(
+      scoreRemoteSpecs([
+        spec('pinned', 'git+https://github.com/acme/pinned.git#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+        spec('registry', 'https://registry.npmjs.org/x/-/x-1.0.0.tgz'),
+      ]),
+    ).toEqual([]);
   });
 });

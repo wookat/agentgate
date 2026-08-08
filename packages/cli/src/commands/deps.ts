@@ -10,6 +10,7 @@ import {
   scoreAdvisories,
   scoreDependencies,
   scoreOffline,
+  scoreRemoteSpecs,
   sortFindings,
   toSarif,
   verifyDependencies,
@@ -37,23 +38,23 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
     return 2;
   }
 
-  const { refs, scannedFiles, warnings: collectWarnings } = collectDependencies(dir, {
+  const { refs, remoteSpecs, scannedFiles, warnings: collectWarnings } = collectDependencies(dir, {
     ignore: opts.ignore,
     includeImports: opts.imports !== false,
   });
   debugLog(`collected ${refs.length} dependency ref(s) from ${scannedFiles.length} file(s)`);
 
-  let findings: Finding[];
+  let findings: Finding[] = scoreRemoteSpecs(remoteSpecs);
   const warnings: string[] = [...collectWarnings];
   if (opts.offline) {
-    findings = scoreOffline(refs);
+    findings.push(...scoreOffline(refs));
     warnings.push('offline mode: registry existence/metadata checks skipped, name-shape checks only');
   } else {
     const results = await verifyDependencies(refs, {
       timeoutMs: Number(opts.timeout),
       concurrency: Number(opts.concurrency),
     });
-    findings = scoreDependencies(results);
+    findings.push(...scoreDependencies(results));
     // When the registry is unreachable every ref fails identically; one warning
     // beats a page of per-package "could not verify" rows.
     const unverified = findings.filter((f) => f.ruleId === 'AG-DP-001' && f.severity === 'info' && f.message.startsWith('could not verify'));
