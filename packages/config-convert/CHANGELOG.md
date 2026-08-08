@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.12.1
+
+### Patch Changes
+
+- c77b8d8: `config convert`: `qwen-code` now uses Gemini CLI notation (Qwen Code is a Gemini CLI fork) — `httpUrl` parses as streamable HTTP and `url` as SSE, and remote servers render with the same fields; previously `httpUrl` remote servers were silently dropped.
+
 ## 0.12.0
 
 ### Minor Changes
