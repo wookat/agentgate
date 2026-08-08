@@ -1048,12 +1048,12 @@ const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 /** Codex project hook files; command hooks run on lifecycle events for anyone who trusts the project layer. */
 const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 
-/** Claude Code plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks. */
+/** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
-const PLUGIN_MANIFEST_FILE = /(^|\/)\.claude-plugin\/plugin\.json$/i;
+export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin)\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)\.lsp\.json$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
-const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
+const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin)\/marketplace\.json$/i;
 
 /** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
 export function extractMonitorCommands(monitors: unknown): string[] {
@@ -1240,7 +1240,9 @@ export const skillDynamicContextRule: Rule = {
       const plugins = (data as { plugins?: unknown }).plugins;
       for (const entry of Array.isArray(plugins) ? plugins : []) {
         const name = (entry as { name?: unknown })?.name;
-        for (const command of extractHookCommands((entry as { hooks?: unknown })?.hooks)) {
+        const entryHooks = (entry as { hooks?: unknown })?.hooks;
+        // Claude marketplaces use the nested settings-hooks shape; Copilot marketplaces use the flat event → [{ type: "command", bash, powershell }] shape.
+        for (const command of [...extractHookCommands(entryHooks), ...extractCopilotHookCommands(entryHooks)]) {
           const hit = classifyRiskyCommand(command);
           if (!hit) continue;
           const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
@@ -1387,8 +1389,9 @@ export const skillDynamicContextRule: Rule = {
       if (isPluginLsp) return findings;
     }
     if (isPluginHooks) {
-      // Same nested shape as Claude Code settings hooks; a manifest's `hooks` field may also be inline config.
-      for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
+      // Claude plugins use the nested settings-hooks shape; Copilot plugins use the flat event shape. A manifest's `hooks` field may also be inline config.
+      const pluginHooks = (data as { hooks?: unknown }).hooks;
+      for (const command of [...extractHookCommands(pluginHooks), ...extractCopilotHookCommands(pluginHooks)]) {
         const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;

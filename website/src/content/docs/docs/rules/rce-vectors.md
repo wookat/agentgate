@@ -101,7 +101,13 @@ Claude Code plugin hooks are covered too: a plugin ships hook config in
 commands run automatically on lifecycle events for everyone who installs
 the plugin. `type: "command"` entries get the same classification;
 manifests whose `hooks` field is just a config path and bundled formatter
-scripts stay clean.
+scripts stay clean. Copilot CLI plugins use the same manifest idea at
+`.plugin/plugin.json` or `.github/plugin/plugin.json` (inline `hooks` use
+the flat Copilot event schema), and a Copilot marketplace catalog
+(`.github/plugin/marketplace.json`) can carry inline entry-level hooks —
+both get the same classification, and marketplace plugin `source` entries
+without a `sha` or release-style `ref` report under supply-chain like
+their Claude counterparts.
 
 Plugin LSP servers get the same treatment: `.lsp.json` (or inline
 `lspServers` in the manifest) declares commands that run automatically
