@@ -116,6 +116,13 @@ export function extractPyImports(content: string): string[] {
   return [...names];
 }
 
+/** PEP 508 direct reference: `name @ <url>` (environment markers after ';' ignored). */
+export function directUrlRequirement(line: string): { name: string; spec: string } | undefined {
+  const stripped = line.replace(/(^|\s)#.*$/, '').split(';')[0]!.trim();
+  const m = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)\s*@\s*((?:[a-z]+\+)?[a-z]+:\/\/\S+)$/i.exec(stripped);
+  return m ? { name: m[1]!, spec: m[2]! } : undefined;
+}
+
 /** Strip a PEP 508 requirement line down to the distribution name. */
 export function parseRequirementLine(line: string): string | undefined {
   const stripped = line.replace(/(^|\s)#.*$/, '').trim();
@@ -144,7 +151,7 @@ function refsFromPackageJson(file: string, content: string, localNames: Set<stri
       // declared — record them so imports don't get flagged — but not verified
       if (typeof spec === 'string' && /^(workspace:|file:|link:|git|https?:|npm:)/.test(spec)) {
         localNames.add(name);
-        if (/^(git|https?:)/.test(spec)) remoteSpecs.push({ name, spec, file, context: section });
+        if (/^(git|https?:)/.test(spec)) remoteSpecs.push({ name, ecosystem: 'npm', spec, file, context: section });
         continue;
       }
       refs.push({ name, ecosystem: 'npm', origin: 'manifest', file, context: section });
@@ -170,16 +177,21 @@ function declareDenoImportMap(content: string, localNames: Set<string>): void {
   }
 }
 
-function refsFromRequirementsTxt(file: string, content: string): DependencyRef[] {
+function refsFromRequirementsTxt(file: string, content: string, remoteSpecs: RemoteDepSpec[]): DependencyRef[] {
   const refs: DependencyRef[] = [];
   for (const line of content.split('\n')) {
     const name = parseRequirementLine(line);
-    if (name) refs.push({ name, ecosystem: 'pypi', origin: 'manifest', file, context: 'requirements' });
+    if (name) {
+      refs.push({ name, ecosystem: 'pypi', origin: 'manifest', file, context: 'requirements' });
+      continue;
+    }
+    const direct = directUrlRequirement(line);
+    if (direct) remoteSpecs.push({ ...direct, ecosystem: 'pypi', file, context: 'requirements' });
   }
   return refs;
 }
 
-function refsFromPyproject(file: string, content: string, warnings: string[]): DependencyRef[] {
+function refsFromPyproject(file: string, content: string, warnings: string[], remoteSpecs: RemoteDepSpec[]): DependencyRef[] {
   const refs: DependencyRef[] = [];
   let data: Record<string, unknown>;
   try {
@@ -191,16 +203,28 @@ function refsFromPyproject(file: string, content: string, warnings: string[]): D
   const push = (name: string | undefined, context: string): void => {
     if (name && name.toLowerCase() !== 'python') refs.push({ name, ecosystem: 'pypi', origin: 'manifest', file, context });
   };
+  const pushDep = (dep: string, context: string): void => {
+    const direct = directUrlRequirement(dep);
+    if (direct) remoteSpecs.push({ ...direct, ecosystem: 'pypi', file, context });
+    else push(parseRequirementLine(dep), context);
+  };
   const project = data['project'] as Record<string, unknown> | undefined;
   if (project) {
     for (const dep of (project['dependencies'] as unknown[] | undefined) ?? []) {
-      if (typeof dep === 'string') push(parseRequirementLine(dep), 'project.dependencies');
+      if (typeof dep === 'string') pushDep(dep, 'project.dependencies');
     }
     const optional = project['optional-dependencies'] as Record<string, unknown> | undefined;
     for (const [group, deps] of Object.entries(optional ?? {})) {
       for (const dep of (deps as unknown[] | undefined) ?? []) {
-        if (typeof dep === 'string') push(parseRequirementLine(dep), `project.optional-dependencies.${group}`);
+        if (typeof dep === 'string') pushDep(dep, `project.optional-dependencies.${group}`);
       }
+    }
+  }
+  // PEP 735 dependency groups (uv, pip >= 25.1)
+  const groups = data['dependency-groups'] as Record<string, unknown> | undefined;
+  for (const [group, deps] of Object.entries(groups ?? {})) {
+    for (const dep of Array.isArray(deps) ? deps : []) {
+      if (typeof dep === 'string') pushDep(dep, `dependency-groups.${group}`);
     }
   }
   const tool = data['tool'] as Record<string, unknown> | undefined;
@@ -258,8 +282,8 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     }
     scannedFiles.push(rel);
     if (base === 'package.json') manifestRefs.push(...refsFromPackageJson(rel, content, localNames, warnings, remoteSpecs));
-    else if (base === 'pyproject.toml') manifestRefs.push(...refsFromPyproject(rel, content, warnings));
-    else if (isManifest) manifestRefs.push(...refsFromRequirementsTxt(rel, content));
+    else if (base === 'pyproject.toml') manifestRefs.push(...refsFromPyproject(rel, content, warnings, remoteSpecs));
+    else if (isManifest) manifestRefs.push(...refsFromRequirementsTxt(rel, content, remoteSpecs));
     else if (JS_EXTENSIONS.has(ext)) {
       for (const name of extractJsImports(stripJsComments(content))) {
         importRefs.push({ name, ecosystem: 'npm', origin: 'import', file: rel });
@@ -275,6 +299,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     ...manifestRefs.map((r) => `${r.ecosystem}:${normalizeName(r.name, r.ecosystem)}`),
     ...[...localNames].map((n) => `npm:${n}`),
     ...[...localPyModules].map((n) => `pypi:${normalizeName(n, 'pypi')}`),
+    ...remoteSpecs.map((s) => `${s.ecosystem}:${normalizeName(s.name, s.ecosystem)}`),
   ]);
   const refs = [...manifestRefs];
   const seenImports = new Set<string>();

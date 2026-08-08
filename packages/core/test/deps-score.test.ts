@@ -111,7 +111,8 @@ describe('scoreDependencies / scoreOffline', () => {
 });
 
 describe('scoreRemoteSpecs', () => {
-  const spec = (name: string, s: string) => ({ name, spec: s, file: 'package.json', context: 'dependencies' });
+  const spec = (name: string, s: string) => ({ name, ecosystem: 'npm' as const, spec: s, file: 'package.json', context: 'dependencies' });
+  const pySpec = (name: string, s: string) => ({ name, ecosystem: 'pypi' as const, spec: s, file: 'requirements.txt', context: 'requirements' });
 
   it('flags unpinned git refs medium and non-registry archive URLs high (AG-DP-007)', () => {
     const findings = scoreRemoteSpecs([
@@ -133,5 +134,17 @@ describe('scoreRemoteSpecs', () => {
         spec('registry', 'https://registry.npmjs.org/x/-/x-1.0.0.tgz'),
       ]),
     ).toEqual([]);
+  });
+
+  it('classifies PyPI direct-URL requirements with pypi targets', () => {
+    const findings = scoreRemoteSpecs([
+      pySpec('tweety-ns', 'https://github.com/acme/tweety/archive/main.zip'),
+      pySpec('tagged', 'git+https://github.com/acme/tagged.git@v0.2.0'),
+      pySpec('pinned', 'git+https://github.com/acme/pinned.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    ]);
+    expect(findings.map((f) => `${f.ruleId}:${f.severity}:${f.target}`)).toEqual([
+      'AG-DP-007:high:pypi:tweety-ns',
+      'AG-DP-007:medium:pypi:tagged',
+    ]);
   });
 });

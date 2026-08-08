@@ -220,7 +220,7 @@ export function scoreAdvisories(advisories: OsvAdvisory[], resolveVersion?: (ref
  */
 export function scoreRemoteSpecs(specs: RemoteDepSpec[]): Finding[] {
   const findings: Finding[] = [];
-  for (const { name, spec, file, context } of specs) {
+  for (const { name, ecosystem, spec, file, context } of specs) {
     const remote = remoteSourceSpec(spec);
     if (!remote || isImmutableRemoteSpec(spec)) continue;
     if (remote.kind === 'git') {
@@ -229,7 +229,7 @@ export function scoreRemoteSpecs(specs: RemoteDepSpec[]): Finding[] {
         category: 'supply-chain',
         severity: 'medium',
         message: `"${name}" is installed from a git source without a full commit pin ("${spec}") — the ref can be moved to different code; pin a 40-character commit SHA`,
-        target: `npm:${name}`,
+        target: `${ecosystem}:${name}`,
         file,
         detail: `${context} in ${file}`,
       });
@@ -239,7 +239,7 @@ export function scoreRemoteSpecs(specs: RemoteDepSpec[]): Finding[] {
         category: 'supply-chain',
         severity: 'high',
         message: `"${name}" is installed from a non-registry archive URL ("${spec}") on ${remote.host} — the artifact behind the URL can be replaced in place with no registry provenance; prefer a registry version, or verify the lockfile records its integrity hash`,
-        target: `npm:${name}`,
+        target: `${ecosystem}:${name}`,
         file,
         detail: `${context} in ${file}`,
       });
