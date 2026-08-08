@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0068",
+ "title": "mcp-pdf-vision page-extraction command injection (CVE-2026-19279)",
+ "summary": "mcp-pdf-vision (npm) 1.1.0: the load_pdf/extract_page path in src/index.ts interpolates the pdfPath and sessionId arguments into a pdftoppm shell command executed via child_process exec, allowing command injection through crafted paths or session ids (a double quote in pdfPath escapes the quoting). Version 1.0.0 does not contain the exec-based extraction. The project was informed through a public issue but has not responded and no fixed release exists, so the range is recorded as last_affected 1.1.0 per the public advisory.",
+ "type": "rce-vectors",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19279",
+  "GHSA-jgc6-5vgc-hvqg"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-74"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "mcp-pdf-vision",
+   "ranges": [
+    {
+     "introduced": "1.1.0",
+     "last_affected": "1.1.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-jgc6-5vgc-hvqg"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19279"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/MIMICLab/mcp-pdf-vision"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

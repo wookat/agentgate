@@ -1,0 +1,37 @@
+{
+ "id": "MCPA-2026-0069",
+ "title": "opencode-engos-ai (npm) installs a non-publisher OpenCode binary at install time and symlinks it into system paths",
+ "summary": "The npm package opencode-engos-ai poses as an OpenCode distribution. Its postinstall script resolves platform packages named opencode-engos-<platform>-<arch> to their current 'latest' tag at install time, installs whatever binary the attacker has most recently published, copies it over the package's `opencode-engos` bin entry, and symlinks it into /usr/local/bin/innexarcode and /usr/bin/innexarcode without user prompt \u2014 an unpinned, attacker-updatable binary drop with system-path persistence (same campaign shape as MCPA-2026-0061). Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.21.8 tarball verified on 2026-08-08 still contains the same pipeline, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-12405"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "opencode-engos-ai",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-12405"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/opencode-engos-ai"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

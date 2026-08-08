@@ -1802,5 +1802,42 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0068",
+    "title": "mcp-pdf-vision page-extraction command injection (CVE-2026-19279)",
+    "type": "rce-vectors",
+    "severity": "low",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-pdf-vision",
+        "ranges": [
+          {
+            "introduced": "1.1.0",
+            "last_affected": "1.1.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0069",
+    "title": "opencode-engos-ai (npm) installs a non-publisher OpenCode binary at install time and symlinks it into system paths",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "opencode-engos-ai",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
