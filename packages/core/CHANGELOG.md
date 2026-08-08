@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.5
+
+### Patch Changes
+
+- 5f58db3: AG-SK-001 now scans string-literal `description:` fields in Copilot CLI extension files (`.github/extensions/*/extension.{mjs,cjs,js}` and plugin-shipped `com.github.copilot/extensions/`) for hidden Unicode and prompt-injection patterns — tool/canvas descriptions registered via `joinSession({tools, canvases})` are injected into the model's context, so poisoned description text is an instruction channel even when the extension code itself is benign.
+- d7a7d84: Repo scans now walk the Crush `.crush/skills` project tree (one of Crush's four upstream project-skill conventions; the other three were already covered), so poisoned Crush skill files are scanned by AG-SK-001 and pinned by `lock --skills`. `allowed-tools:` frontmatter under `.crush/skills` is treated as inert (Crush's skill parser ignores it), so no AG-SK-002 noise is added.
+
 ## 0.67.4
 
 ### Patch Changes
