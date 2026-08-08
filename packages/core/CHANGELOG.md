@@ -1,5 +1,16 @@
 # mcp-agentgate-core
 
+## 0.67.0
+
+### Minor Changes
+
+- 46fcb74: Cover the Codex Agent Plugins repository surface: discover MCP servers from `.codex-plugin/plugin.json` and `.cursor-plugin/plugin.json` manifests (inline `mcpServers` and sibling `.mcp.json`), scan repo plugin marketplaces at `.agents/plugins/marketplace.json` for mutable sources and inline hooks (AG-SC-001/AG-SK-003), classify inline Codex manifest hook lists, and skill-scan plugin trees under `.codex-plugin/`/`.cursor-plugin/`.
+
+### Patch Changes
+
+- 950d9b1: Advisories MCPA-2026-0074..0077: @cliphijack/santaclaude remote tmux keystroke injection, claw-subagent-service privileged self-updating IM-controlled service, claude-cup agent-driven credential inventory, code-analyzer-mcp launch-time recon + unrestricted run_command tool
+- cd69235: AG-SC-001 classifies remote-source MCP server launch specs: git sources without a commit pin get git-specific advice (tags called out as movable), non-registry archive URLs (.tgz/.tar.gz/.zip) report high — the artifact behind the URL can be replaced in place with no version or provenance. Registry tarball hosts and commit-pinned specs are not flagged, and the low `-y` auto-confirm finding is only emitted alongside an unpinned spec.
+
 ## 0.66.0
 
 ### Minor Changes
