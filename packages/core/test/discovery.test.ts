@@ -45,6 +45,7 @@ describe('knownConfigLocations', () => {
         'amp',
         'warp',
         'lmstudio',
+        'junie',
         'qoder',
         'amazonq',
         'copilot-cli',
@@ -390,6 +391,22 @@ describe('discoverConfigFiles', () => {
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client)).toEqual(['trae']);
     expect(found[0]!.format).toBe('mcpServers-json');
+  });
+
+  it('finds JetBrains Junie user and project configs', () => {
+    const project = path.join(dir, 'proj-junie');
+    fs.mkdirSync(path.join(dir, '.junie', 'mcp'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.junie', 'mcp', 'mcp.json'), '{"mcpServers":{"global":{"command":"tubebrain"}}}');
+    fs.mkdirSync(path.join(project, '.junie', 'mcp'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.junie', 'mcp', 'mcp.json'),
+      '{"mcpServers":{"boost":{"command":"php","args":["artisan","boost:mcp"]}}}',
+    );
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['junie', 'junie']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['boost', 'global']);
   });
 
   it('finds .mcp.json bundled by nested Claude Code plugins', () => {
