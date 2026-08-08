@@ -1,7 +1,7 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
-import { parseJsonc } from './skill-poisoning.js';
+import { COPILOT_SETTINGS_FILE, parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
 const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
@@ -129,8 +129,8 @@ function describeMutableSource(src: MarketplaceSource): { where: string; advice:
   return { where: `${where}${typeof src.ref === 'string' ? `#${src.ref}` : ''}`, advice: 'Pin a sha or release ref' };
 }
 
-/** Findings for Claude Code plugins auto-enabled from mutable marketplace sources. */
-function checkClaudeMarketplaces(rule: Rule, file: string, content: string) {
+/** Findings for plugins auto-enabled from mutable marketplace sources (Claude Code and Copilot CLI settings share the schema). */
+function checkClaudeMarketplaces(rule: Rule, file: string, content: string, client = 'Claude Code') {
   const data = parseJsonc(content);
   if (typeof data !== 'object' || data === null) return [];
   const marketplaces = (data as { extraKnownMarketplaces?: unknown }).extraKnownMarketplaces;
@@ -152,7 +152,7 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string) {
         target: file,
         file,
         ...(line > 0 ? { line } : {}),
-        message: `Claude Code plugin "${pluginSpec}" is auto-enabled from marketplace "${marketplaceName}" fetched from a mutable source (${where}${typeof market.source.ref === 'string' ? `#${market.source.ref}` : ''}) — plugins install hooks, MCP servers, and skills for anyone who trusts this folder, and every fetch picks up whatever the branch points at. Pin a release ref or sha`,
+        message: `${client} plugin "${pluginSpec}" is auto-enabled from marketplace "${marketplaceName}" fetched from a mutable source (${where}${typeof market.source.ref === 'string' ? `#${market.source.ref}` : ''}) — plugins install hooks, MCP servers, and skills for anyone who trusts this folder, and every fetch picks up whatever the branch points at. Pin a release ref or sha`,
       }),
     );
   }
@@ -274,6 +274,7 @@ export const supplyChainRule: Rule = {
   },
   checkSource(file, content) {
     if (CLAUDE_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content);
+    if (COPILOT_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content, 'Copilot CLI');
     if (MARKETPLACE_CATALOG_FILE.test(file)) return checkMarketplaceCatalog(this, file, content);
     if (!OPENCODE_CONFIG_FILE.test(file)) return [];
     const data = parseJsonc(content);
