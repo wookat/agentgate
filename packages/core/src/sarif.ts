@@ -46,6 +46,7 @@ const RULE_SECURITY_SEVERITY: Record<string, string> = {
   'AG-DP-004': '5.0',
   'AG-DP-005': '4.0',
   'AG-DP-006': '9.5',
+  'AG-DP-007': '7.0',
 };
 
 /** Advisory-driven rules emitted by the scan pipeline outside ALL_RULES/DEP_RULES. */

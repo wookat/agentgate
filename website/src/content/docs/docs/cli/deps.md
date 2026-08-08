@@ -31,7 +31,9 @@ this before installation.
    popular packages (`AG-DP-002`, typosquats), young/near-zero-download
    packages (`AG-DP-003`), npm install scripts combined with other risk signals
    (`AG-DP-004`), and weak metadata like missing repository/license
-   (`AG-DP-005`).
+   (`AG-DP-005`). Dependencies declared with a mutable remote specifier —
+   a git ref that isn't a full commit SHA (**medium**) or a non-registry
+   archive URL (**high**) — are flagged as `AG-DP-007` (works offline too).
 4. **Checks known-malware advisories** against [OSV.dev](https://osv.dev)
    (which aggregates the GitHub Advisory Database, PyPI, and the OSV
    malicious-packages project). A dependency with a `MAL-*` advisory is a

@@ -2,7 +2,8 @@ import { Finding } from '../types.js';
 import { normalizeName } from './collect.js';
 import { OsvAdvisory } from './osv.js';
 import { POPULAR_NPM, POPULAR_PYPI } from './popular.js';
-import { DepCheckResult, DependencyRef } from './types.js';
+import { isImmutableRemoteSpec, remoteSourceSpec } from '../rules/supply-chain.js';
+import { DepCheckResult, DependencyRef, RemoteDepSpec } from './types.js';
 
 export const DEP_RULES = [
   { id: 'AG-DP-001', description: 'Dependency does not exist on the registry (likely AI-hallucinated / slopsquatting target)' },
@@ -11,6 +12,7 @@ export const DEP_RULES = [
   { id: 'AG-DP-004', description: 'npm dependency runs install scripts (preinstall/install/postinstall)' },
   { id: 'AG-DP-005', description: 'Dependency has weak registry metadata (no repository/license/description, single version)' },
   { id: 'AG-DP-006', description: 'Dependency is a known-malicious package (OSV.dev MAL advisory)' },
+  { id: 'AG-DP-007', description: 'Dependency is fetched from a mutable remote source (unpinned git ref or non-registry archive URL)' },
 ] as const;
 
 /** Damerau-Levenshtein distance (optimal string alignment), capped early for speed. */
@@ -203,6 +205,43 @@ export function scoreAdvisories(advisories: OsvAdvisory[], resolveVersion?: (ref
         ...base,
         severity: 'high',
         message: `"${ref.name}" had compromised release(s) ${list} (${label}) — could not determine the resolved version; verify your lockfile pins none of them`,
+      });
+    }
+  }
+  return findings;
+}
+
+/**
+ * Flag dependencies whose specifier fetches mutable remote content: a git
+ * ref that is not a full commit SHA (branches and tags can be moved), or an
+ * archive URL outside the registries' version-addressed tarball hosts (the
+ * artifact behind the URL can be swapped in place, with no registry metadata
+ * or provenance). Needs no network, so it runs in offline mode too.
+ */
+export function scoreRemoteSpecs(specs: RemoteDepSpec[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const { name, spec, file, context } of specs) {
+    const remote = remoteSourceSpec(spec);
+    if (!remote || isImmutableRemoteSpec(spec)) continue;
+    if (remote.kind === 'git') {
+      findings.push({
+        ruleId: 'AG-DP-007',
+        category: 'supply-chain',
+        severity: 'medium',
+        message: `"${name}" is installed from a git source without a full commit pin ("${spec}") — the ref can be moved to different code; pin a 40-character commit SHA`,
+        target: `npm:${name}`,
+        file,
+        detail: `${context} in ${file}`,
+      });
+    } else {
+      findings.push({
+        ruleId: 'AG-DP-007',
+        category: 'supply-chain',
+        severity: 'high',
+        message: `"${name}" is installed from a non-registry archive URL ("${spec}") on ${remote.host} — the artifact behind the URL can be replaced in place with no registry provenance; prefer a registry version, or verify the lockfile records its integrity hash`,
+        target: `npm:${name}`,
+        file,
+        detail: `${context} in ${file}`,
       });
     }
   }
