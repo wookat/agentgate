@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.60.0
+
+### Minor Changes
+
+- df62f33: AG-SK-003 now classifies the Claude Code settings keys that run a command through the system shell automatically — `apiKeyHelper`, `awsAuthRefresh`, `awsCredentialExport`, and `statusLine.command` — with the shared dangerous-command classifier.
+
 ## 0.59.1
 
 ### Patch Changes
