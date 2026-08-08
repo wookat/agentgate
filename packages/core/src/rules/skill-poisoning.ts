@@ -81,6 +81,9 @@ const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
 /** Crush (Charm) legacy JSON config (project `.crush.json`/`crush.json`, user `.config/crush/crush.json`, JSONC). */
 export const CRUSH_CONFIG_FILE = /(^|\/)\.?crush\.json$/i;
 
+/** Crush `crushrc`/`.crushrc` — a Bash program Crush executes with shell privileges at startup. */
+export const CRUSHRC_FILE = /(^|\/)\.?crushrc$/i;
+
 /** Crush built-in tools whose auto-approval is risky (`permissions.allowed_tools`). */
 const CRUSH_RISKY_TOOLS: Record<string, { severity: 'high' | 'medium'; risk: string }> = {
   bash: { severity: 'high', risk: 'arbitrary shell commands run' },
@@ -296,6 +299,32 @@ export function parseJsonc(content: string): unknown {
 /** Codex project-scoped config overrides, loaded for anyone who trusts the project. */
 const CODEX_CONFIG_FILE = /(^|\/)\.codex\/config\.toml$/i;
 
+/** Flag risky tools on `permissions allow ...` command lines in a crushrc (Bash) file. */
+function checkCrushrcPermissions(rule: Rule, file: string, content: string) {
+  const findings = [];
+  const lines = content.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!.trim();
+    if (line.startsWith('#')) continue;
+    const match = /^permissions\s+allow\s+(.+)$/.exec(line);
+    if (!match) continue;
+    for (const tool of match[1]!.split(/\s+/)) {
+      const hit = CRUSH_RISKY_TOOLS[tool.toLowerCase()];
+      if (!hit) continue;
+      findings.push(
+        finding(rule, {
+          severity: hit.severity,
+          target: file,
+          file,
+          line: i + 1,
+          message: `crushrc pre-approves the "${tool}" tool via \`permissions allow\` — ${hit.risk} without a permission prompt for anyone opening this project in Crush`,
+        }),
+      );
+    }
+  }
+  return findings;
+}
+
 /** Check a project-scoped Codex config.toml for sandbox/approval opt-outs. */
 function checkCodexConfig(rule: Rule, file: string, content: string) {
   let data: Record<string, unknown>;
@@ -442,6 +471,7 @@ export const skillOverprivilegeRule: Rule = {
   },
   checkSource(file, content) {
     if (CODEX_CONFIG_FILE.test(file)) return checkCodexConfig(this, file, content);
+    if (CRUSHRC_FILE.test(file)) return checkCrushrcPermissions(this, file, content);
     const isClaude = CLAUDE_SETTINGS_FILE.test(file);
     const isOpencode = OPENCODE_CONFIG_FILE.test(file);
     const isGemini = GEMINI_SETTINGS_FILE.test(file);

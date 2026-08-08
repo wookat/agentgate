@@ -27,7 +27,7 @@ const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpSer
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
 function isExecutableFile(file: string): boolean {
-  return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file);
+  return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file) || /(^|\/)\.?crushrc$/i.test(file);
 }
 
 /**
