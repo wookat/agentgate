@@ -1,0 +1,53 @@
+{
+  "id": "MCPA-2026-0026",
+  "title": "Flowise CSV Agent remote code execution via Pyodide code injection (CVE-2026-69255)",
+  "summary": "Flowise 3.1.2 and earlier allow code injection through the CSV Agent: attacker-controlled input reaches the Pyodide Python execution environment and escapes it, achieving remote code execution on the host (root shell verified by the reporter). Affects the flowise and flowise-components npm packages. Fixed in 3.1.3.",
+  "type": "rce-vectors",
+  "severity": "critical",
+  "aliases": [
+    "CVE-2026-69255",
+    "GHSA-vmv7-4m6c-3cg5"
+  ],
+  "cwe": [
+    "CWE-94"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "flowise",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "flowise-components",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-vmv7-4m6c-3cg5"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/FlowiseAI/Flowise/security/advisories/GHSA-vmv7-4m6c-3cg5"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-69255"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-04"
+  }
+}

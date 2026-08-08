@@ -814,5 +814,139 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0022",
+    "title": "Dynatrace MCP Server unauthenticated HTTP MCP tool invocation (GHSA-p7w7-4929-vpj5)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-31",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@dynatrace-oss/dynatrace-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.0.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0023",
+    "title": "Dynatrace MCP Server workflow template injection via create_workflow_for_notification (GHSA-xrmj-5g4g-8987)",
+    "type": "rce-vectors",
+    "severity": "medium",
+    "published": "2026-07-31",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@dynatrace-oss/dynatrace-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.0.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0024",
+    "title": "Dynatrace MCP Server DQL injection via parameters not documented as DQL (GHSA-pqh8-p93p-2rx7)",
+    "type": "overprivileged",
+    "severity": "medium",
+    "published": "2026-07-31",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@dynatrace-oss/dynatrace-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.1.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0025",
+    "title": "Flowise sandbox escape to remote code execution (CVE-2026-69253)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0026",
+    "title": "Flowise CSV Agent remote code execution via Pyodide code injection (CVE-2026-69255)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0027",
+    "title": "Flowise SSRF protection bypass via IPv4-mapped IPv6 addresses (CVE-2026-69257)",
+    "type": "ssrf",
+    "severity": "high",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
   }
 ];
