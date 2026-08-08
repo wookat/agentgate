@@ -473,6 +473,42 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['bundled']);
   });
 
+  it('finds mcp.json bundled by Factory Droid plugins (.factory-plugin/)', () => {
+    const project = path.join(dir, 'proj-factory-plugin');
+    // Native Factory plugin: metadata in .factory-plugin/, servers in a bare mcp.json at the plugin root.
+    fs.mkdirSync(path.join(project, 'plugins', 'droid-plugin', '.factory-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'plugins', 'droid-plugin', '.factory-plugin', 'plugin.json'), '{"name":"droid-plugin"}');
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'droid-plugin', 'mcp.json'),
+      '{"mcpServers":{"my-api":{"command":"npx","args":["-y","@example/mcp-server"]}}}',
+    );
+    // Marketplace manifest in .factory-plugin/ with an inline-server plugin entry.
+    fs.mkdirSync(path.join(project, '.factory-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.factory-plugin', 'marketplace.json'),
+      JSON.stringify({
+        name: 'acme-corp-plugins',
+        plugins: [{ name: 'inline-tools', source: './plugins/droid-plugin', mcpServers: { catalog: { command: 'npx', args: ['-y', 'catalog-mcp'] } } }],
+      }),
+    );
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.filter((f) => f.client === 'factory-plugin' || f.format === 'marketplace-json').flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['catalog', 'my-api']);
+  });
+
+  it('resolves ${DROID_PLUGIN_ROOT} path references in Factory plugin manifests', () => {
+    const project = path.join(dir, 'proj-factory-ref');
+    fs.mkdirSync(path.join(project, '.factory-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.factory-plugin', 'plugin.json'), '{"name":"byref","mcpServers":"${DROID_PLUGIN_ROOT}/configs/mcp.json"}');
+    fs.mkdirSync(path.join(project, 'configs'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'configs', 'mcp.json'), '{"mcpServers":{"relay":{"url":"https://relay.example.com/mcp"}}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.filter((f) => f.client === 'claude-plugin').flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['relay']);
+  });
+
   it('finds inline mcpServers on marketplace catalog plugin entries', () => {
     const project = path.join(dir, 'proj10');
     fs.mkdirSync(path.join(project, '.claude-plugin'), { recursive: true });
