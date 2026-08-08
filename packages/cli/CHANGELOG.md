@@ -1,5 +1,12 @@
 # mcp-agentgate
 
+## 0.64.2
+
+### Patch Changes
+
+- f8149f1: Findings table shows the source config file under the target for server-scoped findings, so identical findings for the same server declared in several client configs (e.g. `.roo/mcp.json` + `.kilocode/mcp.json` + `.gemini/settings.json`) are distinguishable instead of looking like duplicate rows.
+  - mcp-agentgate-core@0.64.2
+
 ## 0.64.1
 
 ### Patch Changes

@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wookat/agentgate/packages/action@v0.64.1
+      - uses: wookat/agentgate/packages/action@v0.64.2
         with:
           command: ci            # ci | scan | diff | lock
           lockfile: agentgate.lock
@@ -34,7 +34,7 @@ permissions:
 
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@v0.64.1
+  - uses: wookat/agentgate/packages/action@v0.64.2
     with:
       command: scan
       sarif-file: agentgate.sarif
