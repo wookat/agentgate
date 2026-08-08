@@ -50,16 +50,19 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (`system-prompt-<mode-slug>`, no extension).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|crush|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
 
 /**
  * Command files whose host client ignores `allowed-tools` frontmatter
  * (verified in upstream source): Roo Code commands honor only
  * description/argument-hint/mode, Kilo Code commands only
  * description/agent/model/subtask — a pasted `allowed-tools:` grant is inert
- * there, so it is not an approval surface.
+ * there, so it is not an approval surface. Crush skill frontmatter parses only
+ * name/description/user-invocable/disable-model-invocation/license/
+ * compatibility/metadata, so `allowed-tools:` in a Crush-only skill tree is
+ * inert too.
  */
-const ALLOWED_TOOLS_INERT_FILE = /(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$/i;
+const ALLOWED_TOOLS_INERT_FILE = /(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$|(^|\/)\.crush\/skills\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
