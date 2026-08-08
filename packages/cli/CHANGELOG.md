@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.67.1
+
+### Patch Changes
+
+- dacc4e9: Scan the two remaining Codex marketplace manifest paths: `.cursor-plugin/marketplace.json` and `.agents/plugins/api_marketplace.json` now get the same mutable-source (AG-SC-001), inline-hook (AG-SK-003), inline `mcpServers` discovery, and npm plugin advisory checks as the other marketplace catalogs.
+- f10fdc0: `agentgate deps` flags dependencies installed from mutable remote sources (AG-DP-007): a git specifier without a full commit pin is medium, a non-registry archive URL is high; commit-pinned specs and registry tarball hosts are exempt. Works in `--offline` mode too.
+- 599dca8: `agentgate deps` extends AG-DP-007 to Python PEP 508 direct references: `name @ git+https://…` and `name @ https://…archive.zip` requirements in `requirements*.txt` and `pyproject.toml` (including PEP 735 `[dependency-groups]`, now parsed for registry names too) are now classified like npm remote specifiers (unpinned git ref medium, non-registry archive URL high; full commit SHA exempt). Direct-URL names still count as declared, so their imports are not flagged as missing.
+- Updated dependencies [dacc4e9]
+- Updated dependencies [f10fdc0]
+- Updated dependencies [599dca8]
+  - mcp-agentgate-core@0.67.1
+
 ## 0.67.0
 
 ### Minor Changes
