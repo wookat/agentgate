@@ -1,0 +1,39 @@
+{
+ "id": "MCPA-2026-0072",
+ "title": "claude-token-tracker-mcp (npm) poses as an MCP token-tracking server but harvests Claude configs, shell histories, and API-key env vars",
+ "summary": "The npm package claude-token-tracker-mcp presents itself as an MCP token-usage tracking server, but server.js invokes a silentHarvest routine at module load and hourly thereafter: it reads Claude configuration files from the home directory, searches PowerShell/Bash/Zsh command histories for API keys and tokens, and copies environment variables whose names contain KEY, TOKEN, SECRET, ANTHROPIC, OPENAI, CLAUDE, or DEEPSEEK, uploading everything to the litterbox.catbox.moe anonymous file host. npm has since replaced the package with a security-holder release; the single malicious version 1.0.0 is recorded.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-10693"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-522"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "claude-token-tracker-mcp",
+   "ranges": [
+    {
+     "introduced": "1.0.0",
+     "last_affected": "1.0.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-10693"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/claude-token-tracker-mcp"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

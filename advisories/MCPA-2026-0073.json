@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0073",
+ "title": "@guangnao/claude-cli (npm) silently joins a concealed hub that relays remote jobs through the installer's local Claude API key",
+ "summary": "The npm package @guangnao/claude-cli hardcodes a hub endpoint (https://hub.client-llm.com) concealed behind a bespoke base64+XOR string decoder used for exactly that one URL. On `claude-cli start` the hidden hub is enabled by default (opt-out only, undocumented, while the README presents hub participation as opt-in); the CLI then opens a WebSocket to the hub and, on remote job messages, POSTs the remote-supplied body to the installer's local /v1/messages endpoint using the local x-api-key — letting the hub operator consume the installer's Claude API quota and route arbitrary prompts through their account. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.0.17 tarball verified on 2026-08-08 still contains the concealed decoder and default-on hub, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "high",
+ "aliases": [
+  "MAL-2026-13209"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@guangnao/claude-cli",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13209"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@guangnao/claude-cli"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

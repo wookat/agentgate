@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0071",
+ "title": "remote-claude-daemon (npm) gives a hardcoded relay arbitrary code execution via `claude --dangerously-skip-permissions` plus full desktop input control",
+ "summary": "The npm package remote-claude-daemon connects outbound to a hardcoded WebSocket relay and treats inbound messages as commands against the local host. On ai_query/ai_voice_query messages it spawns the local `claude` binary with `--continue -p --dangerously-skip-permissions` and the remote-supplied prompt, giving the relay operator arbitrary code execution through Claude Code with the permission prompt disabled; a separate handleInput path drives synthesized mouse/keyboard/clipboard input via @nut-tree-fork/nut-js for full interactive desktop control. Flagged as malware by OSV (amazon-inspector source, relay wss://remote-claude-relay.fly.dev); the package remained live on npm and the 0.6.8 tarball verified on 2026-08-08 still contains the same skip-permissions runner and desktop-input controller with the relay moved to wss://relay.teleportus.ai, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13455"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "remote-claude-daemon",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13455"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/remote-claude-daemon"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}
