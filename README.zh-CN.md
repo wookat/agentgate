@@ -54,7 +54,7 @@ agentgate ci --fail-on high    # CI 门禁：漂移或高危发现即非零退�
 # .github/workflows/mcp-gate.yml
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@v0.60.1
+  - uses: wookat/agentgate/packages/action@v0.61.0
     with:
       command: ci
 ```
@@ -67,7 +67,7 @@ steps:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/wookat/agentgate
-    rev: v0.60.1
+    rev: v0.61.0
     hooks:
       - id: agentgate-ci
 ```
