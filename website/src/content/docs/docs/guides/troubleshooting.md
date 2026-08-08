@@ -5,7 +5,7 @@ description: Common AgentGate errors and how to fix them.
 
 ## `scan` finds no servers
 
-Auto-discovery reads the standard config paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, and `.agents/.mcp.json` in your home directory.
+Auto-discovery reads the standard config paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code, GitHub Copilot CLI, JetBrains Junie, and `.agents/.mcp.json` in your home directory.
 
 - Running in CI, a container, or as another user? The home directory is different — pass `--config path/to/config` explicitly.
 - Project-scoped configs (e.g. `.mcp.json`, `.cursor/mcp.json`) are picked up when you pass the project directory: `agentgate scan .`.
