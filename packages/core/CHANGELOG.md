@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.59.0
+
+### Minor Changes
+
+- 3553120: AG-SC-001 now flags remote http(s) URLs in the OpenCode `instructions` array — the content is fetched and injected into the system prompt on every session, so the host can change it at any time (remote prompt injection / rug-pull).
+- ca67218: AG-RC-001 now treats auto-executed OpenCode plugin files (`.opencode/{plugin,plugins}/*.{ts,js}`) as startup exec surface: curl|sh patterns there report critical, and dynamic code-execution primitives report medium without requiring MCP markers.
+
 ## 0.58.0
 
 ### Minor Changes
