@@ -1,5 +1,24 @@
 # mcp-agentgate
 
+## 0.52.0
+
+### Minor Changes
+
+- e9d150c: Cover the Open Plugin Spec's first lookup location — a bare `plugin.json` at the plugin root (repo root or a marketplace's `plugins/<name>/`): its `mcpServers` (inline or path-referenced) are discovered and advisory-checked, and inline flat-event Copilot hooks are classified via the existing shape detection. `plugin.json` files from unrelated ecosystems (Grafana, Obsidian) carry neither shape and stay quiet.
+- 6a8153d: JetBrains Junie support: user-level `~/.junie/mcp/mcp.json` and project-level `.junie/mcp/mcp.json` MCP configs (shared by the IDE plugin and Junie CLI) are discovered and run through the full config rule set and advisory checks, and project guidelines (`.junie/guidelines.md`, auto-loaded into every Junie task) get AG-SK-001 injection/hidden-Unicode skill scanning.
+- 783ec14: OpenHands repository customization: `.openhands/skills/**.md` and the legacy `.openhands/microagents/**.md` (auto-loaded as agent context, always or on keyword triggers) get AG-SK-001 injection/hidden-Unicode skill scanning, and the `.openhands` tree is now walked so `.openhands/setup.sh` (runs automatically at session start) is covered by the source-scan rules (AG-RC-001 et al.).
+- a975ca8: Goose (Block) support: discover MCP extensions in the goose user config (`~/.config/goose/config.yaml`, Windows `%APPDATA%\Block\goose\config\config.yaml`) — `stdio` and remote (`streamable_http`/`sse`) extension types run the full config rule set plus advisory checks (goose-internal `builtin`/`platform`/`frontend`/`inline_python` types are skipped) — and scan `.goosehints` files (added to the system prompt for every request in their directory tree) for AG-SK-001 injection/hidden-Unicode poisoning.
+- 3c952f3: Goose recipes: project-root `recipe.yaml`/`recipe.json` (gated on the documented recipe shape) are discovered — their `extensions` list (stdio/streamable_http/sse entries, started automatically for everyone who runs the recipe) runs the full config rule set and advisory checks — and the recipe `instructions`/`prompt`/`activities` text is scanned for prompt injection and hidden Unicode (AG-SK-001).
+
+### Patch Changes
+
+- Updated dependencies [e9d150c]
+- Updated dependencies [6a8153d]
+- Updated dependencies [783ec14]
+- Updated dependencies [a975ca8]
+- Updated dependencies [3c952f3]
+  - mcp-agentgate-core@0.52.0
+
 ## 0.51.0
 
 ### Minor Changes
