@@ -1,5 +1,5 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
-import { CURSOR_COMMAND_SURFACE_FILE } from './skill-poisoning.js';
+import { DEDICATED_COMMAND_SURFACE_FILE } from './skill-poisoning.js';
 
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
 // The span may only cross a newline via a backslash continuation, so a pipe in a
@@ -115,7 +115,7 @@ export const rceVectorsRule: Rule = {
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
     // strings run through the risky-command classifier; the generic text warning
     // here would only duplicate that (more accurate) finding.
-    if (REMOTE_EXEC_RE.test(content) && !CURSOR_COMMAND_SURFACE_FILE.test(file)) {
+    if (REMOTE_EXEC_RE.test(content) && !DEDICATED_COMMAND_SURFACE_FILE.test(file)) {
       // A `#`-comment line in a shell/config script never executes — installer
       // scripts routinely quote their own curl|sh one-liner in a usage comment.
       // Prefer a live match over a commented one so a comment can't mask it.
