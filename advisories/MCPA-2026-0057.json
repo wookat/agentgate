@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0057",
+ "title": "Flowise OpenAI Assistants IDOR exposes cross-workspace credentials and files (CVE-2026-67622)",
+ "summary": "Flowise through 3.1.4: the OpenAI Assistants integration looks up credentials by UUID without verifying workspace ownership, so any authenticated user can enumerate cross-workspace assistant metadata, list files and vector stores, and upload files into victim workspaces by supplying arbitrary credential UUIDs. No fixed release: Flowise announced its sunset; through 3.1.4 (latest) remains affected.",
+ "type": "auth-missing",
+ "severity": "high",
+ "aliases": [
+  "CVE-2026-67622",
+  "GHSA-qvmw-v4w9-7c4j"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:L",
+  "score": 9.9
+ },
+ "cwe": [
+  "CWE-639"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "flowise",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "3.1.4"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-qvmw-v4w9-7c4j"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-67622"
+  },
+  {
+   "type": "web",
+   "url": "https://flowiseai.com/sunset"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-07"
+ }
+}

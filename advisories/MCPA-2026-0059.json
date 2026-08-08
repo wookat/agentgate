@@ -1,0 +1,51 @@
+{
+ "id": "MCPA-2026-0059",
+ "title": "OpenHands resolver command injection in initialize_repo (CVE-2026-19022)",
+ "summary": "OpenHands (PyPI: openhands-ai) up to 0.62.0: the initialize_repo function in resolver/send_pull_request.py passes attacker-influenced input into a shell command, allowing remote command injection through the resolver's pull-request flow. The vendor deleted the original issue report; the affected file was removed by the 1.x restructure (reported as gone in 1.7.0), so the range is recorded as last_affected 0.62.0 per the public advisory.",
+ "type": "rce-vectors",
+ "severity": "medium",
+ "aliases": [
+  "CVE-2026-19022",
+  "GHSA-f5cw-432q-pfqr"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 6.3
+ },
+ "cwe": [
+  "CWE-74"
+ ],
+ "packages": [
+  {
+   "ecosystem": "pypi",
+   "name": "openhands-ai",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "0.62.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-f5cw-432q-pfqr"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19022"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/OpenHands/OpenHands/issues/14903"
+  },
+  {
+   "type": "web",
+   "url": "https://vuldb.com/cve/CVE-2026-19022"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-06"
+ }
+}
