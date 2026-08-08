@@ -244,6 +244,35 @@ describe('collectDependencies remote specs', () => {
     expect(remoteSpecs.find((s) => s.name === 'yc-bench')!.context).toBe('project.optional-dependencies.bench');
   });
 
+  it('records remote overrides/resolutions redirections as remoteSpecs', () => {
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'app',
+        dependencies: { express: '^4.0.0' },
+        overrides: {
+          'left-pad': 'git+https://github.com/acme/left-pad.git#main',
+          express: { 'body-parser': 'https://evil.example.com/body-parser-1.0.0.tgz' },
+          semver: '^7.5.4',
+        },
+        resolutions: {
+          '**/@scope/pkg@^1': 'git+https://github.com/acme/pkg.git',
+          'registry-tarball': 'https://registry.npmjs.org/registry-tarball/-/registry-tarball-1.0.0.tgz',
+        },
+        pnpm: { overrides: { 'parent>child': 'github:acme/child' } },
+      }),
+    );
+    const { refs, remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(refs.map((r) => r.name)).toEqual(['express']);
+    expect(remoteSpecs.map((s) => `${s.context}:${s.name}:${s.spec}`).sort()).toEqual([
+      'overrides:body-parser:https://evil.example.com/body-parser-1.0.0.tgz',
+      'overrides:left-pad:git+https://github.com/acme/left-pad.git#main',
+      'pnpm.overrides:child:github:acme/child',
+      'resolutions:@scope/pkg:git+https://github.com/acme/pkg.git',
+      'resolutions:registry-tarball:https://registry.npmjs.org/registry-tarball/-/registry-tarball-1.0.0.tgz',
+    ]);
+  });
+
   it('records uv source overrides ([tool.uv.sources]) as remoteSpecs', () => {
     fs.writeFileSync(
       path.join(dir, 'pyproject.toml'),

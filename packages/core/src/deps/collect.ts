@@ -180,7 +180,39 @@ function refsFromPackageJson(file: string, content: string, localNames: Set<stri
       refs.push({ name, ecosystem: 'npm', origin: 'manifest', file, context: section });
     }
   }
+  // overrides / resolutions / pnpm.overrides can redirect any (transitive)
+  // dependency to a remote source — only remote redirections are of interest
+  const pushOverride = (key: string, spec: unknown, context: string): void => {
+    if (typeof spec === 'string') {
+      if (/^(git|https?:)/.test(spec)) {
+        remoteSpecs.push({ name: overrideKeyName(key), ecosystem: 'npm', spec, file, context });
+      }
+      return;
+    }
+    if (typeof spec !== 'object' || spec === null || Array.isArray(spec)) return;
+    for (const [k, v] of Object.entries(spec)) pushOverride(k === '.' ? key : k, v, context);
+  };
+  const record = data as Record<string, unknown>;
+  const pnpm = record['pnpm'] as Record<string, unknown> | undefined;
+  for (const [table, context] of [
+    [record['overrides'], 'overrides'],
+    [record['resolutions'], 'resolutions'],
+    [pnpm?.['overrides'], 'pnpm.overrides'],
+  ] as const) {
+    if (typeof table !== 'object' || table === null) continue;
+    for (const [key, spec] of Object.entries(table)) pushOverride(key, spec, context);
+  }
   return refs;
+}
+
+/** Package name from an overrides/resolutions key (glob prefixes, `parent>pkg`, `@scope/pkg@^1`). */
+function overrideKeyName(key: string): string {
+  const segs = key.split('>').pop()!.trim().split('/');
+  let name = segs.pop() ?? key;
+  const prev = segs.pop();
+  if (prev?.startsWith('@')) name = `${prev}/${name}`;
+  const at = name.lastIndexOf('@');
+  return at > 0 ? name.slice(0, at) : name;
 }
 
 /** Import-map keys in deno.json(c) resolve elsewhere (jsr:, https:, local paths) — never against npm. */
