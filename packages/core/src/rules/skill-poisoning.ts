@@ -42,7 +42,7 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * roleDefinition/customInstructions text is placed in the system prompt).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -88,8 +88,8 @@ export const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$
 /** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
 const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
 
-/** OpenCode agent markdown files (project `.opencode/agents/*.md`, permissions in YAML frontmatter). */
-const OPENCODE_AGENT_MD = /(^|\/)\.opencode\/agents\/.+\.md$/i;
+/** OpenCode agent/mode markdown files (project `.opencode/{agent,agents,mode,modes}/**.md` — OpenCode scans both singular and plural directories; permissions in YAML frontmatter). */
+const OPENCODE_AGENT_MD = /(^|\/)\.opencode\/(agents?|modes?)\/.+\.md$/i;
 
 /** Crush (Charm) legacy JSON config (project `.crush.json`/`crush.json`, user `.config/crush/crush.json`, JSONC). */
 export const CRUSH_CONFIG_FILE = /(^|\/)\.?crush\.json$/i;
