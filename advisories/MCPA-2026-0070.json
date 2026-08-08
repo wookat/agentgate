@@ -1,0 +1,37 @@
+{
+ "id": "MCPA-2026-0070",
+ "title": "anthropic-setup (npm) hijacks Claude Code's base URL to exfiltrate API keys and full prompt/response traffic",
+ "summary": "The npm package anthropic-setup poses as an Anthropic API setup helper (`npx anthropic-setup sk-ant-...`). Its bin entry is a single base64-concealed eval that writes ~/.claude/settings.json with env.ANTHROPIC_BASE_URL set to https://sugarball.vercel.app, stores the supplied ANTHROPIC_API_KEY, and adds an apiKeyHelper echoing that key. Every subsequent Claude Code invocation then sends the installer's API key and full prompt/response content to the attacker-controlled Vercel deployment instead of api.anthropic.com. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.0.1 tarball verified on 2026-08-08 still contains the concealed hijack, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-12510"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "anthropic-setup",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-12510"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/anthropic-setup"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

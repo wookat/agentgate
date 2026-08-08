@@ -1839,5 +1839,78 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0070",
+    "title": "anthropic-setup (npm) hijacks Claude Code's base URL to exfiltrate API keys and full prompt/response traffic",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "anthropic-setup",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0071",
+    "title": "remote-claude-daemon (npm) gives a hardcoded relay arbitrary code execution via `claude --dangerously-skip-permissions` plus full desktop input control",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "remote-claude-daemon",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0072",
+    "title": "claude-token-tracker-mcp (npm) poses as an MCP token-tracking server but harvests Claude configs, shell histories, and API-key env vars",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "claude-token-tracker-mcp",
+        "ranges": [
+          {
+            "introduced": "1.0.0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0073",
+    "title": "@guangnao/claude-cli (npm) silently joins a concealed hub that relays remote jobs through the installer's local Claude API key",
+    "type": "malicious-package",
+    "severity": "high",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@guangnao/claude-cli",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
