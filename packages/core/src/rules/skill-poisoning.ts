@@ -138,14 +138,34 @@ function opencodeAllowsAll(value: unknown): boolean {
   return false;
 }
 
+/**
+ * Effective permission of an OpenCode agent/mode frontmatter block. OpenCode
+ * normalizes the deprecated `tools` boolean map into `permission` (true →
+ * "allow", false → "deny"; `write`/`patch` fold into `edit`), with explicit
+ * `permission` keys taking precedence.
+ */
+function normalizeOpencodeAgentPermission(data: unknown): unknown {
+  const permission = (data as { permission?: unknown } | undefined)?.permission;
+  const tools = (data as { tools?: unknown } | undefined)?.tools;
+  if (typeof tools !== 'object' || tools === null) return permission;
+  const effective: Record<string, unknown> = {};
+  for (const [tool, enabled] of Object.entries(tools as Record<string, unknown>)) {
+    if (typeof enabled !== 'boolean') continue;
+    effective[tool === 'write' || tool === 'patch' ? 'edit' : tool] = enabled ? 'allow' : 'deny';
+  }
+  if (permission === 'allow') return permission;
+  if (typeof permission === 'object' && permission !== null) Object.assign(effective, permission);
+  return effective;
+}
+
 /** Collect the permission blocks in an OpenCode config: top-level and per-agent. */
 function opencodePermissionBlocks(data: object): { scope: string; permission: unknown }[] {
-  const out: { scope: string; permission: unknown }[] = [{ scope: 'permission', permission: (data as { permission?: unknown }).permission }];
+  const out: { scope: string; permission: unknown }[] = [{ scope: 'permission', permission: normalizeOpencodeAgentPermission(data) }];
   const agents = (data as { agent?: unknown }).agent;
   if (typeof agents === 'object' && agents !== null) {
     for (const [name, agent] of Object.entries(agents)) {
-      if (typeof agent === 'object' && agent !== null && 'permission' in agent) {
-        out.push({ scope: `agent.${name}.permission`, permission: (agent as { permission?: unknown }).permission });
+      if (typeof agent === 'object' && agent !== null && ('permission' in agent || 'tools' in agent)) {
+        out.push({ scope: `agent.${name}.permission`, permission: normalizeOpencodeAgentPermission(agent) });
       }
     }
   }
@@ -482,7 +502,7 @@ export const skillOverprivilegeRule: Rule = {
       } catch {
         data = undefined;
       }
-      const permission = (data as { permission?: unknown } | undefined)?.permission;
+      const permission = normalizeOpencodeAgentPermission(data);
       if (opencodeAllowsAll(permission)) {
         const permLine = content.split(/\r?\n/).findIndex((l) => /^permission\s*:/i.test(l)) + 1;
         findings.push(
@@ -497,7 +517,8 @@ export const skillOverprivilegeRule: Rule = {
       } else if (typeof permission === 'object' && permission !== null) {
         for (const { key, severity, risk } of OPENCODE_RISKY_KEYS) {
           if (opencodeAllowsAll((permission as Record<string, unknown>)[key])) {
-            const keyLine = content.split(/\r?\n/).findIndex((l) => new RegExp(`^\\s+${key}\\s*:`).test(l)) + 1;
+            const aliases = key === 'edit' ? '(edit|write|patch)' : key;
+            const keyLine = content.split(/\r?\n/).findIndex((l) => new RegExp(`^\\s+${aliases}\\s*:`).test(l)) + 1;
             findings.push(
               finding(this, {
                 severity,
