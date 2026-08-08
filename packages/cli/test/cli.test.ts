@@ -152,7 +152,8 @@ describe('agentgate scan', () => {
       .split('\n')
       .map((l) => l.split('│')[4] ?? '')
       .join('')
-      .replace(/\s/g, '');
+      .replace(/\s/g, '')
+      .replace(/\\/g, '/');
     expect(targetColumn).toContain('.roo/mcp.json');
     expect(targetColumn).toContain('.kilocode/mcp.json');
   });
