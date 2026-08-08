@@ -20,7 +20,15 @@ export function describeClients(): string {
 
 /** The source client's config file at its default location (project first, then user-level), if it exists. */
 export function defaultConfigPath(client: string, cwd = process.cwd()): string | undefined {
-  const candidates = [...projectConfigLocations(cwd), ...knownConfigLocations()].filter((l) => l.client === client);
+  // Discovery files both Kilo surfaces under the `kilocode` client id; the convert
+  // adapters split them by schema — `kilo` reads kilo.json(c) (OpenCode schema),
+  // `kilocode` reads the mcpServers-style mcp.json / mcp_settings.json files.
+  const matches = (l: { client: string; format: string }): boolean => {
+    if (client === 'kilo') return l.client === 'kilocode' && l.format === 'opencode-json';
+    if (client === 'kilocode') return l.client === 'kilocode' && l.format !== 'opencode-json';
+    return l.client === client;
+  };
+  const candidates = [...projectConfigLocations(cwd), ...knownConfigLocations()].filter(matches);
   return candidates.find((l) => fs.existsSync(l.path))?.path;
 }
 

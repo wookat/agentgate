@@ -12,13 +12,14 @@ Supported clients:
 | `cursor` | JSON `mcpServers` | `~/.cursor/mcp.json` / `.cursor/mcp.json` |
 | `vscode` | JSON `servers` (+`type`, `inputs`) | `.vscode/mcp.json` |
 | `codex` | TOML `[mcp_servers.<name>]` | `~/.codex/config.toml` |
-| `opencode` | JSON `mcp` (`local`/`remote`) | `opencode.json` |
+| `opencode` | JSON(C) `mcp` (`local`/`remote`) | `opencode.json` |
 | `windsurf` | JSON `mcpServers` (remote via `serverUrl`) | `~/.codeium/windsurf/mcp_config.json` |
 | `cline` | JSON `mcpServers` (+`disabled`) | `<vscode user dir>/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` |
 | `gemini-cli` | JSON `mcpServers` (`url` sse / `httpUrl` http) | `~/.gemini/settings.json` |
 | `kiro` | JSON `mcpServers` | `~/.kiro/settings/mcp.json` / `.kiro/settings/mcp.json` |
 | `roo-code` | JSON `mcpServers` | `<vscode user dir>/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json` / `.roo/mcp.json` |
 | `kilocode` | JSON `mcpServers` | `<vscode user dir>/globalStorage/kilocode.kilo-code/settings/mcp_settings.json` / `.kilocode/mcp.json` / `.kilo/mcp.json` |
+| `kilo` | JSON(C) `mcp` (Kilo CLI, OpenCode schema) | `kilo.json` / `kilo.jsonc` |
 | `zed` | JSONC `context_servers` inside settings | `~/.config/zed/settings.json` |
 | `continue` | YAML `mcpServers` list | `~/.continue/config.yaml` / `.continue/mcpServers/*.yaml` |
 | `amp` | `amp.mcpServers` key inside settings | `~/.config/amp/settings.json` / `.amp/settings.json` |

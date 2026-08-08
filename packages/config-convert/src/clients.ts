@@ -262,16 +262,24 @@ export const codex: ClientAdapter = {
   },
 };
 
-/** OpenCode — `opencode.json` with an `mcp` map (`type: "local" | "remote"`). */
-export const opencode: ClientAdapter = {
-  id: "opencode",
-  defaultPath: "opencode.json",
+/** OpenCode-schema adapter (`mcp` map, `type: "local" | "remote"`, JSONC allowed) — shared by OpenCode and the Kilo CLI fork. */
+function openCodeStyleAdapter(id: ClientId, defaultPath: string): ClientAdapter {
+  return {
+  id,
+  defaultPath,
   parse(content): ParseResult {
-    const data = parseJson("opencode", content);
+    let raw: unknown;
+    try {
+      raw = JSON.parse(stripJsonComments(content));
+    } catch (e) {
+      throw new ConfigParseError(id, `invalid JSON: ${(e as Error).message}`);
+    }
+    if (!isRecord(raw)) throw new ConfigParseError(id, "top level must be an object");
+    const data = raw;
     const warnings: string[] = [];
     const serversObj = data.mcp;
     if (serversObj !== undefined && !isRecord(serversObj)) {
-      throw new ConfigParseError("opencode", "mcp must be an object");
+      throw new ConfigParseError(id, "mcp must be an object");
     }
     const servers: CanonicalMcpServer[] = [];
     for (const [name, entry] of Object.entries(serversObj ?? {})) {
@@ -322,7 +330,7 @@ export const opencode: ClientAdapter = {
         if (s.cwd) entry.cwd = s.cwd;
       } else {
         if (s.transport === "sse") {
-          warnings.push(`${s.name}: opencode remote servers use streamable HTTP; sse emitted as remote url`);
+          warnings.push(`${s.name}: ${id} remote servers use streamable HTTP; sse emitted as remote url`);
         }
         entry.type = "remote";
         entry.url = s.url;
@@ -333,7 +341,14 @@ export const opencode: ClientAdapter = {
     }
     return { content: JSON.stringify({ mcp }, null, 2) + "\n", warnings };
   },
-};
+  };
+}
+
+/** OpenCode — `opencode.json(c)` with an `mcp` map (`type: "local" | "remote"`). */
+export const opencode = openCodeStyleAdapter("opencode", "opencode.json");
+
+/** Kilo CLI (OpenCode fork) — `kilo.json(c)` at the repo root or in `.kilo`/`.kilocode`; same schema as OpenCode. */
+export const kilo = openCodeStyleAdapter("kilo", "kilo.json");
 
 /** Windsurf — `~/.codeium/windsurf/mcp_config.json`; remote servers use `serverUrl`. */
 export const windsurf: ClientAdapter = {
@@ -951,6 +966,7 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   kiro,
   "roo-code": rooCode,
   kilocode,
+  kilo,
   zed,
   continue: continueDev,
   amp,

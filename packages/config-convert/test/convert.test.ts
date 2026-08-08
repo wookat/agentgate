@@ -86,6 +86,26 @@ describe("convert", () => {
     expect(content).toContain("enabled = false");
   });
 
+  it("kilo (Kilo CLI) parses JSONC kilo.jsonc and renders the OpenCode schema", () => {
+    const kiloJsonc = [
+      "{",
+      "  // Kilo CLI project config",
+      '  "mcp": {',
+      '    "fs": { "type": "local", "command": ["npx", "-y", "server-fs"], "environment": { "LOG": "1" } },',
+      '    "docs": { "type": "remote", "url": "https://example.com/mcp", "enabled": false },',
+      "  },",
+      "}",
+    ].join("\n");
+    const { config } = ADAPTERS.kilo.parse(kiloJsonc);
+    expect(config.servers).toHaveLength(2);
+    const { content } = convert("kilo", "cursor", kiloJsonc);
+    const out = JSON.parse(content);
+    expect(out.mcpServers.fs).toMatchObject({ command: "npx", args: ["-y", "server-fs"], env: { LOG: "1" } });
+    const back = convert("cursor", "kilo", content);
+    const rendered = JSON.parse(back.content);
+    expect(rendered.mcp.fs).toEqual({ type: "local", command: ["npx", "-y", "server-fs"], environment: { LOG: "1" } });
+  });
+
   it("vscode inputs produce a lossy warning", () => {
     const vs = JSON.stringify({
       inputs: [{ id: "api-key", type: "promptString" }],
