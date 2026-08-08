@@ -583,6 +583,35 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
   });
 
+  it('flags "allow" permissions in OpenCode agent markdown frontmatter (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.opencode', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'ops.md'),
+      '---\ndescription: Ops helper\nmode: subagent\npermission:\n  bash: allow\n  edit: allow\n---\n\nYou run operational tasks.\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'review.md'),
+      '---\ndescription: Reviews code\nmode: subagent\npermission:\n  edit: deny\n  bash: deny\n---\n\nYou are in code review mode.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.file, f.severity]).sort()).toEqual([
+      ['.opencode/agents/ops.md', 'high'],
+      ['.opencode/agents/ops.md', 'medium'],
+    ]);
+    expect(hits.every((f) => f.message.includes('frontmatter'))).toBe(true);
+  });
+
+  it('flags a catch-all "allow" permission in OpenCode agent frontmatter (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.opencode', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'yolo.md'),
+      '---\ndescription: Unrestricted\npermission:\n  "*": allow\n---\n\nDo anything.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('high');
+  });
+
   it('flags "allow" rules in per-agent OpenCode permission blocks (AG-SK-002)', () => {
     fs.writeFileSync(
       path.join(dir, 'opencode.json'),
