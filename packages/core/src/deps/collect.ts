@@ -218,7 +218,9 @@ function overrideKeyName(key: string): string {
 
 /** Default registry hosts plus version-addressed registry-path tarballs on any host (mirrors, private registries). */
 function isRegistryResolved(url: string): boolean {
-  return /^https?:\/\/(registry\.npmjs\.org|registry\.yarnpkg\.com)\//i.test(url) || /\/-\/[^/]+\.tgz([?#]|$)/i.test(url);
+  if (/^https?:\/\/(registry\.npmjs\.org|registry\.yarnpkg\.com)\//i.test(url)) return true;
+  // standard `/-/name-version.tgz` and cnpm-style `/name/download/[@scope/]name-version.tgz` paths
+  return /\/-\/[^/]+\.tgz([?#]|$)/i.test(url) || /\/download\/(@[^/]+\/)?[^/]+\.tgz([?#]|$)/i.test(url);
 }
 
 /**
@@ -247,6 +249,22 @@ function lockfileRemoteSpecs(file: string, content: string): RemoteDepSpec[] {
       if (idx !== -1) push(key.slice(idx + 'node_modules/'.length), entry?.resolved);
     }
     for (const [name, entry] of Object.entries(sections.dependencies ?? {})) push(name, entry?.resolved);
+  } else if (path.basename(file) === 'pnpm-lock.yaml') {
+    // packages-section blocks: a 2-space-indented key line followed by its fields.
+    // v6/v9 remote keys are `name@<url>`; v5 keys are paths/URLs with a `name:` field.
+    for (const block of content.split(/\n(?= {2}\S|'| {2}')/)) {
+      const key = block.match(/^ {2}'?([^'\n]+?)'?:\s*$/m)?.[1]?.replace(/\([^)]*\)/g, '');
+      if (!key) continue;
+      const tarball = block.match(/tarball: '?([^\s,}']+)/)?.[1];
+      const urlKey = key.match(/^(\/?(?:@[^/@]+\/)?[^/@]+)@((?:git\+)?(?:https?|git|ssh):\/\/.+)$/);
+      if (urlKey) {
+        push(urlKey[1]!.replace(/^\//, ''), tarball ?? urlKey[2]!);
+        continue;
+      }
+      if (!tarball) continue;
+      const name = block.match(/^ {4}name: '?([^\s']+)/m)?.[1] ?? (key.match(/^\/((?:@[^/@]+\/)?[^/@]+)@[^/]+$/)?.[1] ?? undefined);
+      if (name) push(name, tarball);
+    }
   } else {
     // yarn.lock v1: `name@range:` header followed by `  resolved "url"`
     for (const block of content.split(/\n\n/)) {
@@ -402,7 +420,7 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     const base = path.basename(file);
     const ext = path.extname(file);
     const isManifest = base === 'package.json' || base === 'pyproject.toml' || /^requirements[\w.-]*\.txt$/.test(base);
-    if (base === 'package-lock.json' || base === 'yarn.lock') {
+    if (base === 'package-lock.json' || base === 'yarn.lock' || base === 'pnpm-lock.yaml') {
       try {
         if (fs.statSync(file).size > MAX_LOCKFILE_BYTES) continue;
         lockSpecs.push(...lockfileRemoteSpecs(rel, fs.readFileSync(file, 'utf8')));

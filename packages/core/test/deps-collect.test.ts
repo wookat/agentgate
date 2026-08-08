@@ -316,6 +316,42 @@ describe('collectDependencies remote specs', () => {
     ]);
   });
 
+  it('records remote pnpm-lock.yaml resolutions as remoteSpecs', () => {
+    fs.writeFileSync(
+      path.join(dir, 'pnpm-lock.yaml'),
+      [
+        "lockfileVersion: '9.0'",
+        '',
+        'packages:',
+        '',
+        "  'ags@https://codeload.github.com/aylur/ags/tar.gz/main':",
+        '    resolution: {integrity: sha512-x, tarball: https://codeload.github.com/aylur/ags/tar.gz/main}',
+        '',
+        "  '@adguard/assistant@git+https://bitbucket.org/team/assistant.git#semver:v4.3.70':",
+        '    resolution: {commit: not-a-sha-ref, repo: git@bitbucket.org:team/assistant.git, type: git}',
+        '',
+        '  lodash@4.17.21:',
+        '    resolution: {integrity: sha512-y, tarball: https://registry.npmmirror.com/lodash/-/lodash-4.17.21.tgz}',
+        '',
+        '  asynckit@0.4.0:',
+        '    resolution: {integrity: sha512-z, tarball: https://registry.nlark.com/asynckit/download/asynckit-0.4.0.tgz}',
+        '',
+        '  https://example.com/evil.tgz:',
+        '    resolution: {integrity: sha512-w, tarball: https://example.com/evil.tgz}',
+        '    name: evil-dep',
+        '    version: 1.0.0',
+      ].join('\n'),
+    );
+    const { remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    // registry-path tarballs (mirror `/-/` and cnpm `/download/`) exempt; the
+    // mutable codeload/git/plain-tarball resolutions are collected
+    expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
+      '@adguard/assistant:git+https://bitbucket.org/team/assistant.git#semver:v4.3.70',
+      'ags:https://codeload.github.com/aylur/ags/tar.gz/main',
+      'evil-dep:https://example.com/evil.tgz',
+    ]);
+  });
+
   it('records uv source overrides ([tool.uv.sources]) as remoteSpecs', () => {
     fs.writeFileSync(
       path.join(dir, 'pyproject.toml'),
