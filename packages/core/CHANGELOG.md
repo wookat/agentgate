@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.60.1
+
+### Patch Changes
+
+- a347a97: Advisory database: add MCPA-2026-0060 — mcp-ui-probe (npm) ≤0.2.0 journey-storage path traversal (CVE-2026-19270), no fixed release (last_affected).
+
 ## 0.60.0
 
 ### Minor Changes
