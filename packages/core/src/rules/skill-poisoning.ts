@@ -1000,6 +1000,20 @@ export function classifyRiskyCommand(command: string): { severity: 'critical' | 
   return RISKY_COMMANDS.find((r) => r.re.test(effective));
 }
 
+/** Python idioms that go beyond local data processing in code executed at extension start. */
+const RISKY_PYTHON: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
+  { re: /\b(exec|eval)\s*\([^)]*\b(urlopen|requests\.(get|post)|b64decode)\b/, severity: 'critical', risk: 'executes downloaded or decoded code' },
+  { re: /\brequests\.(post|put)\s*\([^\n]*\b(os\.environ|environ\b|id_rsa|\.ssh|\.aws|\.env\b)/, severity: 'high', risk: 'sends local secrets to a remote host' },
+  { re: /\bopen\s*\([^)]*(id_rsa|id_ed25519|\.aws\/credentials|\.ssh\/|['"][^'"]*\.env['"])/, severity: 'high', risk: 'reads credential material' },
+];
+
+/** Classify inline Python code (Goose `inline_python` recipe extensions) against shell + Python risk patterns. */
+export function classifyRiskyPythonCode(code: string): { severity: 'critical' | 'high'; risk: string } | undefined {
+  const shell = classifyRiskyCommand(code);
+  if (shell) return { severity: shell.severity, risk: shell.risk.replace(' at skill load time', '') };
+  return RISKY_PYTHON.find((r) => r.re.test(code));
+}
+
 /** Collect `type: "command"` hook commands from a Claude Code settings `hooks` object. */
 export function extractHookCommands(hooks: unknown): string[] {
   if (typeof hooks !== 'object' || hooks === null) return [];
@@ -1164,6 +1178,38 @@ export const skillDynamicContextRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (GOOSE_RECIPE_FILE.test(file)) {
+      let doc: unknown;
+      try {
+        doc = parseYaml(content);
+      } catch {
+        return [];
+      }
+      if (typeof doc !== 'object' || doc === null) return [];
+      const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; extensions?: unknown };
+      if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
+      if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+      const findings = [];
+      for (const entryRaw of Array.isArray(recipe.extensions) ? recipe.extensions : []) {
+        if (typeof entryRaw !== 'object' || entryRaw === null) continue;
+        const entry = entryRaw as { type?: unknown; name?: unknown; code?: unknown };
+        if (entry.type !== 'inline_python' || typeof entry.code !== 'string') continue;
+        const name = typeof entry.name === 'string' ? entry.name : 'unnamed';
+        const hit = classifyRiskyPythonCode(entry.code);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes('inline_python')) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Goose recipe inline_python extension "${name}" ${hit.risk} — the code runs automatically (via uvx) for everyone who runs this recipe`,
+          }),
+        );
+      }
+      return findings;
+    }
     if (KIRO_AGENT_HOOK_FILE.test(file)) {
       const data = parseJsonc(content);
       if (typeof data !== 'object' || data === null) return [];
