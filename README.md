@@ -108,7 +108,7 @@ Docs, rule reference, and report viewer: **https://agentgate.zalize.com**.
 # .github/workflows/mcp-gate.yml
 steps:
   - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@v0.60.1
+  - uses: wookat/agentgate/packages/action@v0.61.0
     with:
       command: ci
 ```
@@ -121,7 +121,7 @@ Or as a pre-commit hook:
 # .pre-commit-config.yaml
 repos:
   - repo: https://github.com/wookat/agentgate
-    rev: v0.60.1
+    rev: v0.61.0
     hooks:
       - id: agentgate-ci
 ```
