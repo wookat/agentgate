@@ -31,7 +31,7 @@ Supported clients:
 | `factory` | standard `mcpServers` | `.factory/mcp.json` (project; also `~/.factory/mcp.json`) |
 | `junie` | standard `mcpServers` | `.junie/mcp/mcp.json` (project; also `~/.junie/mcp/mcp.json`) |
 | `qoder` | `mcpServers` key inside settings | `.qoder/settings.json` (project; also `~/.qoder/settings.json`) |
-| `qwen-code` | `mcpServers` key inside settings | `.qwen/settings.json` (project; also `~/.qwen/settings.json`) |
+| `qwen-code` | `mcpServers` key inside settings (Gemini CLI notation: `url` is SSE, `httpUrl` is streamable HTTP) | `.qwen/settings.json` (project; also `~/.qwen/settings.json`) |
 | `copilot-cli` | `mcpServers` map or bare project map (`type`: local/stdio/http/sse, `tools` allowlist) | `~/.copilot/mcp-config.json` / `.github/mcp.json` |
 
 ## CLI

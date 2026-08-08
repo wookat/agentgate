@@ -244,6 +244,25 @@ describe("convert", () => {
     expect(out.http.httpUrl).toBe("https://b.example/mcp");
   });
 
+  it("qwen-code uses gemini-cli notation (httpUrl is http, url is sse)", () => {
+    const qw = JSON.stringify({
+      mcpServers: {
+        context7: { httpUrl: "https://mcp.context7.com/mcp", headers: { Authorization: "Bearer T" } },
+        legacy: { url: "https://a.example/sse" },
+        local: { command: "npx", args: ["-y", "pkg"] },
+      },
+    });
+    const { config } = ADAPTERS["qwen-code"].parse(qw);
+    expect(config.servers.find((s) => s.name === "context7")?.transport).toBe("http");
+    expect(config.servers.find((s) => s.name === "context7")?.url).toBe("https://mcp.context7.com/mcp");
+    expect(config.servers.find((s) => s.name === "legacy")?.transport).toBe("sse");
+    const rendered = ADAPTERS["qwen-code"].render(config);
+    const out = JSON.parse(rendered.content).mcpServers;
+    expect(out.context7.httpUrl).toBe("https://mcp.context7.com/mcp");
+    expect(out.legacy.url).toBe("https://a.example/sse");
+    expect(out.local.command).toBe("npx");
+  });
+
   it("cline disabled flag maps to enabled and back, autoApprove warns", () => {
     const cl = JSON.stringify({
       mcpServers: { s: { command: "npx", args: ["x"], disabled: true, autoApprove: ["tool_a"] } },

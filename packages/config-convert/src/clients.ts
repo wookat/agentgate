@@ -413,69 +413,74 @@ export const cline: ClientAdapter = {
   },
 };
 
+/** Gemini CLI settings notation shared with its forks — `url` is SSE, `httpUrl` is streamable HTTP. */
+function geminiStyleAdapter(id: ClientId, defaultPath: string): ClientAdapter {
+  return {
+    id,
+    defaultPath,
+    parse(content): ParseResult {
+      const data = parseJson(id, content);
+      const warnings: string[] = [];
+      const serversObj = data.mcpServers;
+      if (serversObj !== undefined && !isRecord(serversObj)) {
+        throw new ConfigParseError(id, "mcpServers must be an object");
+      }
+      const servers: CanonicalMcpServer[] = [];
+      for (const [name, entry] of Object.entries(serversObj ?? {})) {
+        if (!isRecord(entry)) {
+          warnings.push(`${name}: entry is not an object; dropped`);
+          continue;
+        }
+        if (typeof entry.httpUrl === "string") {
+          servers.push({
+            name,
+            transport: "http",
+            url: entry.httpUrl,
+            headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
+          });
+          continue;
+        }
+        if (typeof entry.url === "string") {
+          servers.push({
+            name,
+            transport: "sse",
+            url: entry.url,
+            headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
+          });
+          continue;
+        }
+        const s = parseCommonEntry(id, name, entry, warnings);
+        if (s) servers.push(s);
+      }
+      return { config: { servers }, warnings };
+    },
+    render(config): RenderResult {
+      const warnings: string[] = [];
+      const mcpServers: Record<string, unknown> = {};
+      for (const s of config.servers) {
+        if (s.enabled === false) {
+          warnings.push(`${s.name}: ${id} has no disabled flag; server emitted as enabled`);
+        }
+        const entry: Record<string, unknown> = {};
+        if (s.transport === "stdio") {
+          entry.command = s.command;
+          if (s.args?.length) entry.args = s.args;
+          if (s.env && Object.keys(s.env).length) entry.env = s.env;
+          if (s.cwd) entry.cwd = s.cwd;
+        } else {
+          if (s.transport === "sse") entry.url = s.url;
+          else entry.httpUrl = s.url;
+          if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
+        }
+        mcpServers[s.name] = entry;
+      }
+      return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+    },
+  };
+}
+
 /** Gemini CLI — `~/.gemini/settings.json`; `url` is SSE, `httpUrl` is streamable HTTP. */
-export const geminiCli: ClientAdapter = {
-  id: "gemini-cli",
-  defaultPath: "~/.gemini/settings.json",
-  parse(content): ParseResult {
-    const data = parseJson("gemini-cli", content);
-    const warnings: string[] = [];
-    const serversObj = data.mcpServers;
-    if (serversObj !== undefined && !isRecord(serversObj)) {
-      throw new ConfigParseError("gemini-cli", "mcpServers must be an object");
-    }
-    const servers: CanonicalMcpServer[] = [];
-    for (const [name, entry] of Object.entries(serversObj ?? {})) {
-      if (!isRecord(entry)) {
-        warnings.push(`${name}: entry is not an object; dropped`);
-        continue;
-      }
-      if (typeof entry.httpUrl === "string") {
-        servers.push({
-          name,
-          transport: "http",
-          url: entry.httpUrl,
-          headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
-        });
-        continue;
-      }
-      if (typeof entry.url === "string") {
-        servers.push({
-          name,
-          transport: "sse",
-          url: entry.url,
-          headers: asStringRecord(entry.headers, `${name}.headers`, warnings),
-        });
-        continue;
-      }
-      const s = parseCommonEntry("gemini-cli", name, entry, warnings);
-      if (s) servers.push(s);
-    }
-    return { config: { servers }, warnings };
-  },
-  render(config): RenderResult {
-    const warnings: string[] = [];
-    const mcpServers: Record<string, unknown> = {};
-    for (const s of config.servers) {
-      if (s.enabled === false) {
-        warnings.push(`${s.name}: gemini-cli has no disabled flag; server emitted as enabled`);
-      }
-      const entry: Record<string, unknown> = {};
-      if (s.transport === "stdio") {
-        entry.command = s.command;
-        if (s.args?.length) entry.args = s.args;
-        if (s.env && Object.keys(s.env).length) entry.env = s.env;
-        if (s.cwd) entry.cwd = s.cwd;
-      } else {
-        if (s.transport === "sse") entry.url = s.url;
-        else entry.httpUrl = s.url;
-        if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
-      }
-      mcpServers[s.name] = entry;
-    }
-    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
-  },
-};
+export const geminiCli = geminiStyleAdapter("gemini-cli", "~/.gemini/settings.json");
 
 /** Kiro — `~/.kiro/settings/mcp.json` (or project `.kiro/settings/mcp.json`); standard `mcpServers`. */
 export const kiro = mcpServersAdapter("kiro", "~/.kiro/settings/mcp.json", { withType: false });
@@ -870,8 +875,8 @@ export const junie = mcpServersAdapter("junie", ".junie/mcp/mcp.json", { withTyp
 /** Qoder — project `.qoder/settings.json` (also `~/.qoder/settings.json`), `mcpServers` key inside settings. */
 export const qoder = mcpServersAdapter("qoder", ".qoder/settings.json", { withType: false });
 
-/** Qwen Code — project `.qwen/settings.json` (also `~/.qwen/settings.json`), `mcpServers` key inside settings. */
-export const qwenCode = mcpServersAdapter("qwen-code", ".qwen/settings.json", { withType: false });
+/** Qwen Code (Gemini CLI fork) — project `.qwen/settings.json` (also `~/.qwen/settings.json`); `mcpServers` key inside settings with Gemini CLI notation (`url` is SSE, `httpUrl` is streamable HTTP). */
+export const qwenCode = geminiStyleAdapter("qwen-code", ".qwen/settings.json");
 
 /** GitHub Copilot CLI — `~/.copilot/mcp-config.json` (user) or `.github/mcp.json`/`.mcp.json` (project); `mcpServers` map (project files may use a bare top-level map) with `type: local|stdio|http|sse` and a `tools` allowlist. */
 export const copilotCli: ClientAdapter = {
