@@ -118,9 +118,32 @@ export function extractPyImports(content: string): string[] {
 
 /** PEP 508 direct reference: `name @ <url>` (environment markers after ';' ignored). */
 export function directUrlRequirement(line: string): { name: string; spec: string } | undefined {
-  const stripped = line.replace(/(^|\s)#.*$/, '').split(';')[0]!.trim();
-  const m = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)\s*@\s*((?:[a-z]+\+)?[a-z]+:\/\/\S+)$/i.exec(stripped);
-  return m ? { name: m[1]!, spec: m[2]! } : undefined;
+  let stripped = line.replace(/(^|\s)#(?!egg=).*$/, '').split(';')[0]!.trim();
+  stripped = stripped.replace(/^(-e|--editable)\s+/, '');
+  const m = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)(?:\[[^\]]*\])?\s*@\s*((?:[a-z]+\+)?[a-z]+:\/\/\S+)$/i.exec(stripped);
+  if (m) return { name: m[1]!, spec: m[2]! };
+  // Bare URL requirement (pip installs these directly): name from #egg= or the repo/file path
+  const u = /^((?:[a-z]+\+)?[a-z]+:\/\/\S+)$/i.exec(stripped);
+  if (!u) return undefined;
+  const spec = u[1]!;
+  const egg = /#egg=([A-Za-z0-9._-]+)/i.exec(spec);
+  const name = egg?.[1] ?? bareUrlName(spec);
+  return name ? { name, spec } : undefined;
+}
+
+/** Best-effort distribution name for a bare URL requirement (repo or archive basename). */
+function bareUrlName(spec: string): string | undefined {
+  let path;
+  try {
+    path = new URL(spec.replace(/^[a-z]+\+/, '')).pathname;
+  } catch {
+    return undefined;
+  }
+  const segments = path.replace(/#.*$/, '').split('/').filter(Boolean);
+  const archiveAt = segments.findIndex((s) => s === 'archive' || s === 'releases' || s === 'zipball' || s === 'tarball');
+  const base = archiveAt > 0 ? segments[archiveAt - 1]! : (segments[segments.length - 1] ?? '');
+  const name = base.replace(/\.(git|zip|whl|tar\.gz|tar\.bz2|tgz)$/i, '');
+  return /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/.test(name) ? name : undefined;
 }
 
 /** Strip a PEP 508 requirement line down to the distribution name. */

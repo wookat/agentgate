@@ -70,6 +70,8 @@ export function serverPackageRef(server: McpServerConfig): (DependencyRef & { ve
 const REGISTRY_TARBALL_HOST = /^https?:\/\/(registry\.npmjs\.org|registry\.yarnpkg\.com|files\.pythonhosted\.org)\//i;
 const REMOTE_SOURCE_SPEC = /^(https?:\/\/|git\+|git:\/\/|ssh:\/\/|github:|gitlab:|bitbucket:)/i;
 const COMMIT_PIN = /[#@][0-9a-f]{40}$/i;
+/** Commit-addressed forge archive, e.g. github.com/o/r/archive/<sha>.zip — content is fixed by the commit. */
+const COMMIT_ARCHIVE = /\/[0-9a-f]{40}(\.(zip|tar\.gz|tar\.bz2|tgz))?$/i;
 
 /**
  * A launch spec that fetches the server from somewhere other than a package
@@ -96,7 +98,7 @@ export function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host:
 
 /** Full commit SHA or a version-addressed registry tarball: the content behind the spec cannot silently change. */
 export function isImmutableRemoteSpec(spec: string): boolean {
-  return COMMIT_PIN.test(spec) || REGISTRY_TARBALL_HOST.test(spec);
+  return COMMIT_PIN.test(spec) || COMMIT_ARCHIVE.test(spec.split('#')[0]!) || REGISTRY_TARBALL_HOST.test(spec);
 }
 
 function isPinned(spec: string): boolean {
