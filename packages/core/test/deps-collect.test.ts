@@ -244,6 +244,32 @@ describe('collectDependencies remote specs', () => {
     expect(remoteSpecs.find((s) => s.name === 'yc-bench')!.context).toBe('project.optional-dependencies.bench');
   });
 
+  it('records uv source overrides ([tool.uv.sources]) as remoteSpecs', () => {
+    fs.writeFileSync(
+      path.join(dir, 'pyproject.toml'),
+      [
+        '[project]',
+        'name = "app"',
+        'dependencies = ["requests>=2", "s2wrapper", "Flash_Attn", "pinned-dep", "local-dep"]',
+        '',
+        '[tool.uv.sources]',
+        's2wrapper = { git = "https://github.com/acme/scaling_on_scales.git" }',
+        'flash-attn = { url = "https://github.com/acme/prebuilt/releases/download/v1/flash_attn-2.5.6-cp311-linux_x86_64.whl" }',
+        'pinned-dep = { git = "https://github.com/acme/pinned.git", rev = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }',
+        'local-dep = { path = "../local" }',
+        'undeclared = { git = "https://github.com/acme/undeclared.git" }',
+      ].join('\n'),
+    );
+    const { refs, remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(refs.map((r) => r.name).sort()).toEqual(['local-dep', 'requests']);
+    expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
+      'Flash_Attn:https://github.com/acme/prebuilt/releases/download/v1/flash_attn-2.5.6-cp311-linux_x86_64.whl',
+      'pinned-dep:git+https://github.com/acme/pinned.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      's2wrapper:git+https://github.com/acme/scaling_on_scales.git',
+    ]);
+    expect(remoteSpecs.find((s) => s.name === 's2wrapper')!.context).toBe('tool.uv.sources (project.dependencies)');
+  });
+
   it('records Poetry table-form git/url dependencies as remoteSpecs', () => {
     fs.writeFileSync(
       path.join(dir, 'pyproject.toml'),

@@ -223,8 +223,24 @@ function refsFromPyproject(file: string, content: string, warnings: string[], re
     warnings.push(`${file}: unparseable TOML, skipped (${err instanceof Error ? err.message.split('\n')[0] : 'parse error'})`);
     return refs;
   }
+  const tool = data['tool'] as Record<string, unknown> | undefined;
+  // uv source overrides: [tool.uv.sources] redirects a dependency name to a git/url source
+  const uvSources = new Map<string, string>();
+  const uv = tool?.['uv'] as Record<string, unknown> | undefined;
+  for (const [name, value] of Object.entries((uv?.['sources'] as Record<string, unknown> | undefined) ?? {})) {
+    for (const entry of Array.isArray(value) ? value : [value]) {
+      const remote = tableRemoteSpec(entry);
+      if (remote) {
+        uvSources.set(normalizePyName(name), remote);
+        break;
+      }
+    }
+  }
   const push = (name: string | undefined, context: string): void => {
-    if (name && name.toLowerCase() !== 'python') refs.push({ name, ecosystem: 'pypi', origin: 'manifest', file, context });
+    if (!name || name.toLowerCase() === 'python') return;
+    const uvSource = uvSources.get(normalizePyName(name));
+    if (uvSource) remoteSpecs.push({ name, ecosystem: 'pypi', spec: uvSource, file, context: `tool.uv.sources (${context})` });
+    else refs.push({ name, ecosystem: 'pypi', origin: 'manifest', file, context });
   };
   const pushDep = (dep: string, context: string): void => {
     const direct = directUrlRequirement(dep);
@@ -250,10 +266,9 @@ function refsFromPyproject(file: string, content: string, warnings: string[], re
       if (typeof dep === 'string') pushDep(dep, `dependency-groups.${group}`);
     }
   }
-  const tool = data['tool'] as Record<string, unknown> | undefined;
   const poetry = tool?.['poetry'] as Record<string, unknown> | undefined;
   const pushPoetryDep = (name: string, value: unknown, context: string): void => {
-    const remote = poetryRemoteSpec(value);
+    const remote = tableRemoteSpec(value);
     if (remote) remoteSpecs.push({ name, ecosystem: 'pypi', spec: remote, file, context });
     else push(name, context);
   };
@@ -271,8 +286,13 @@ function refsFromPyproject(file: string, content: string, warnings: string[], re
   return refs;
 }
 
-/** Poetry table-form remote source (`{ git = …, branch/tag/rev }` or `{ url = … }`) as a pip-style spec. */
-function poetryRemoteSpec(value: unknown): string | undefined {
+/** PEP 503 normalized distribution name. */
+function normalizePyName(name: string): string {
+  return name.toLowerCase().replace(/[-_.]+/g, '-');
+}
+
+/** Poetry/uv table-form remote source (`{ git = …, branch/tag/rev }` or `{ url = … }`) as a pip-style spec. */
+function tableRemoteSpec(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
   const dep = value as Record<string, unknown>;
   if (typeof dep['git'] === 'string') {
