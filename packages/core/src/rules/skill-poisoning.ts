@@ -1193,6 +1193,32 @@ export function extractDynamicCommands(content: string): { command: string; line
   return out;
 }
 
+/**
+ * Copilot CLI project extensions: each `.github/extensions/<name>/extension.{mjs,cjs,js}`
+ * is forked as a Node child process on session start and registers tools/hooks
+ * with the agent. Plugins ship extensions the same way under a
+ * `com.github.copilot/extensions/` directory.
+ */
+export const COPILOT_EXTENSION_FILE = /(^|\/)(\.github|com\.github\.copilot)\/extensions\/[^/]+\/extension\.(mjs|cjs|js)$/i;
+
+/**
+ * String literals assigned to `description:` keys in extension source —
+ * tool/canvas descriptions registered via `joinSession({tools, canvases})`
+ * are injected into the model's context, so they are a text surface like a
+ * tool description in an MCP server. Template literals with interpolation
+ * are skipped (their content is not statically known).
+ */
+export function extractDescriptionLiterals(content: string): { text: string; line: number }[] {
+  const out: { text: string; line: number }[] = [];
+  const re = /\bdescription\s*:\s*(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\$]|\\.)*)`)/g;
+  for (const m of content.matchAll(re)) {
+    const text = m[1] ?? m[2] ?? m[3] ?? '';
+    if (!text) continue;
+    out.push({ text, line: content.slice(0, m.index ?? 0).split('\n').length });
+  }
+  return out;
+}
+
 /** Load-time command patterns that go beyond gathering local context. */
 const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string }[] = [
   { re: /\b(curl|wget)\b[^|;&\n]*\|\s*(ba|z|da)?sh\b/, severity: 'critical', risk: 'downloads and executes a remote script at skill load time' },
@@ -2019,6 +2045,38 @@ export const skillPoisoningRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (COPILOT_EXTENSION_FILE.test(file)) {
+      const findings = [];
+      for (const { text, line } of extractDescriptionLiterals(content)) {
+        const hidden = findHiddenInSource(text);
+        if (hidden) {
+          const codepoint = `U+${hidden.char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+          findings.push(
+            finding(this, {
+              severity: 'critical',
+              target: file,
+              file,
+              line,
+              message: `Copilot CLI extension description contains a hidden/invisible Unicode character (${codepoint}) — tool/canvas descriptions registered by the extension are injected into the model's context`,
+            }),
+          );
+        }
+        for (const { re, label } of INJECTION_PATTERNS) {
+          const m = text.match(re);
+          if (!m) continue;
+          findings.push(
+            finding(this, {
+              severity: 'critical',
+              target: file,
+              file,
+              line,
+              message: `Copilot CLI extension description matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — tool/canvas descriptions registered by the extension are injected into the model's context`,
+            }),
+          );
+        }
+      }
+      return findings;
+    }
     const recipe = parseGooseRecipeDoc(file, content);
     if (recipe) {
       const texts: Array<{ field: string; text: string }> = [];
