@@ -1,5 +1,41 @@
 # mcp-agentgate
 
+## 0.56.0
+
+### Minor Changes
+
+- 1ff33d7: Factory Droid client coverage: discover user-level `~/.factory/mcp.json` and project-level `.factory/mcp.json` (standard `mcpServers`, stdio/http/sse) through the full config rule set and advisory cross-check; classify hook commands in `.factory/hooks.json` (legacy `.factory/hooks/hooks.json`, or a `hooks` key in `.factory/settings.json`) with AG-SK-003; and scan `.factory/skills/**.md`, `.factory/commands/**.md`, and `.factory/droids/*.md` instruction files with AG-SK-001.
+- e46f671: AG-SK-002 checks Factory Droid settings (`.factory/settings.json` and `settings.local.json`): dangerous `commandAllowlist` entries (shells, rm, curl, privilege escalation run without confirmation), high default autonomy (`sessionDefaultSettings.autonomyLevel: high` or legacy `autonomyMode: auto-high`), and `enableDroidShield: false` (disables secret scanning and git guardrails). The AG-SK-003 hook check also covers a `hooks` key in `settings.local.json`.
+- c6fb840: Cover the Factory Droid plugin surface: discover MCP servers bundled by `.factory-plugin/` plugins (bare `mcp.json` at the plugin root, `${DROID_PLUGIN_ROOT}` path references, marketplace catalogs in `.factory-plugin/marketplace.json`), classify inline plugin/marketplace hooks (AG-SK-003), and flag plugins auto-enabled from mutable marketplace sources in `.factory/settings.json` (AG-SC-001).
+- 615b65a: Google Antigravity client support: discover global `~/.gemini/config/mcp_config.json` and workspace `.agents/mcp_config.json` MCP configs (serverUrl normalized), classify `.agents/hooks.json` / `~/.gemini/config/hooks.json` hook commands (AG-SK-003), and scan workspace rules `.agents/rules/*.md` incl. legacy `.agent/rules` (AG-SK-001).
+- 3755720: Scan Google Antigravity workflow files (`.agents/workflows/*.md`, legacy `.agent/workflows/*.md`) for prompt-injection/poisoning (AG-SK-001) — workflows run as /slash commands and feed trajectory-level agent instructions.
+- 73acf28: `config convert` supports `antigravity` (Google Antigravity): parse/render `.agents/mcp_config.json` / `~/.gemini/config/mcp_config.json`, emitting remote servers with the official `serverUrl` field.
+- 6466b7d: Scan Roo Code project custom modes (`.roomodes`, YAML or legacy JSON) for prompt-injection/poisoning (AG-SK-001) — a mode's roleDefinition/customInstructions text is injected into the system prompt for every request in that mode.
+- d8bbd57: AG-SK-002 checks OpenCode agent markdown frontmatter permissions (`.opencode/agents/*.md`): catch-all `"*": allow` or `bash: allow` report high, unrestricted `edit`/`write`/`webfetch`/`websearch` allows report medium — same semantics as the existing `opencode.json` permission checks.
+
+### Patch Changes
+
+- 8eb30e9: Bundle advisories MCPA-2026-0028..0034: mcp-atlassian batch (unauthenticated SSRF via X-Atlassian-\*-Url headers CVE-2026-27826, DNS-rebinding TOCTOU bypass of that fix, two arbitrary server-side file reads via attachment-upload file_path — all fixed in 0.22.0) and MCP Python SDK batch (cross-session task access CVE-2026-52870, HTTP session requests served without principal verification CVE-2026-52869 — fixed 1.27.2; WebSocket transport missing Host/Origin validation CVE-2026-59950 — fixed 1.28.1).
+- fee61f3: Bundle advisories MCPA-2026-0035..0044: meta-ads-mcp SSRF + auth bypass (CVE-2026-54549/54547), LangBot STDIO MCP config RCE (CVE-2026-54449), netlicensing-mcp unauthenticated server-key use (CVE-2026-54446), mcp-documentation-server unauthenticated Web UI on all interfaces (CVE-2026-54504), mcp-memory-keeper file read (CVE-2026-54561), gittensory-mcp access-control leak, phantom-audio arbitrary file write, PraisonAI unauthenticated MCP HTTP-stream default (CVE-2026-61427), and Dynatrace create_dynatrace_notebook approval-gate gap.
+- 58771da: Deduplicate discovered config locations by path: a project-root `.mcp.json` reachable both as the claude-code location and via a plugin manifest's path ref (or a bare `mcp.json` doubling as a Factory plugin sibling) was scanned twice, duplicating its servers and findings.
+- 7679e5c: Bundle advisories MCPA-2026-0045..0055: Serena dashboard DNS-rebinding RCE (CVE-2026-49471), Prompty JS-frontmatter execution and file-reference read (CVE-2026-53597/53598), and the Flowise 2026-08-04 critical batch (OAuth2 token-refresh leak, six RCE vectors, TTS endpoint auth gap fixed in 3.1.4).
+- 6b42862: Advisory database: MCPA-2026-0056..0059 — Flowise post-sunset batch (unauthenticated OAuth2 credential refresh CVE-2026-70636, OpenAI Assistants cross-workspace IDOR CVE-2026-67622, document store missing authorization CVE-2026-67621; no fixed release — Flowise is sunset, ≤3.1.4 affected) and OpenHands resolver command injection (CVE-2026-19022, pypi openhands-ai ≤0.62.0).
+- Updated dependencies [1ff33d7]
+- Updated dependencies [e46f671]
+- Updated dependencies [8eb30e9]
+- Updated dependencies [fee61f3]
+- Updated dependencies [c6fb840]
+- Updated dependencies [58771da]
+- Updated dependencies [7679e5c]
+- Updated dependencies [615b65a]
+- Updated dependencies [3755720]
+- Updated dependencies [73acf28]
+- Updated dependencies [6b42862]
+- Updated dependencies [6466b7d]
+- Updated dependencies [d8bbd57]
+  - mcp-agentgate-core@0.56.0
+  - mcp-agentgate-config-convert@0.10.0
+
 ## 0.55.0
 
 ### Minor Changes
