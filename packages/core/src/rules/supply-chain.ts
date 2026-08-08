@@ -1,7 +1,7 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
-import { COPILOT_SETTINGS_FILE, parseGooseRecipeDoc, parseJsonc } from './skill-poisoning.js';
+import { COPILOT_SETTINGS_FILE, FACTORY_SETTINGS_FILE, parseGooseRecipeDoc, parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
 const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
@@ -183,8 +183,8 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string, clie
   return findings;
 }
 
-/** In-repo plugin marketplace catalog (Claude Code `.claude-plugin/`, Copilot CLI `.github/plugin/`); each entry's `source` tells installers where plugin code comes from. */
-export const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin)\/marketplace\.json$/i;
+/** In-repo plugin marketplace catalog (Claude Code `.claude-plugin/`, Copilot CLI `.github/plugin/`, Factory Droid `.factory-plugin/`); each entry's `source` tells installers where plugin code comes from. */
+export const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin)\/marketplace\.json$/i;
 
 /**
  * Registry package refs for the npm-distributed plugins in a marketplace
@@ -303,6 +303,7 @@ export const supplyChainRule: Rule = {
   checkSource(file, content) {
     if (CLAUDE_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content);
     if (COPILOT_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content, 'Copilot CLI');
+    if (FACTORY_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content, 'Factory Droid');
     if (MARKETPLACE_CATALOG_FILE.test(file)) return checkMarketplaceCatalog(this, file, content);
     if (!OPENCODE_CONFIG_FILE.test(file)) return [];
     const data = parseJsonc(content);

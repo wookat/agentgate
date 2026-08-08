@@ -253,8 +253,8 @@ function gooseRecipeLocations(projectDir: string): ClientConfigLocation[] {
 /** Directory names never descended into while looking for plugin roots. */
 const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 
-/** Plugin metadata dirs marking a plugin/marketplace root (Claude Code and Copilot CLI conventions). */
-const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin']);
+/** Plugin metadata dirs marking a plugin/marketplace root (Claude Code, Copilot CLI, and Factory Droid conventions). */
+const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin']);
 
 /**
  * MCP servers bundled by Claude Code / Copilot CLI plugins: a plugin root is any directory
@@ -293,6 +293,11 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
         const mcpJson = path.join(projectDir, '.mcp.json');
         if (fs.existsSync(mcpJson)) out.push({ client: 'claude-plugin', path: mcpJson, format: 'mcpServers-json' });
       }
+      if (entry.name === '.factory-plugin') {
+        // Factory Droid plugins bundle MCP servers in a bare `mcp.json` at the plugin root.
+        const factoryMcp = path.join(projectDir, 'mcp.json');
+        if (fs.existsSync(factoryMcp)) out.push({ client: 'factory-plugin', path: factoryMcp, format: 'mcpServers-json' });
+      }
       out.push(...pluginManifestServerLocations(projectDir, path.join(dir, 'plugin.json')));
       continue;
     }
@@ -329,7 +334,7 @@ function pluginManifestServerLocations(pluginRoot: string, manifestPath: string)
   const out: ClientConfigLocation[] = [];
   for (const ref of typeof field === 'string' ? [field] : Array.isArray(field) ? field : []) {
     if (typeof ref !== 'string') continue;
-    const resolved = path.resolve(pluginRoot, ref.replace(/^\$\{CLAUDE_PLUGIN_ROOT\}\/?/, ''));
+    const resolved = path.resolve(pluginRoot, ref.replace(/^\$\{(CLAUDE|DROID)_PLUGIN_ROOT\}\/?/, ''));
     if (resolved.startsWith(path.resolve(pluginRoot)) && fs.existsSync(resolved)) {
       out.push({ client: 'claude-plugin', path: resolved, format: 'mcpServers-json' });
     }

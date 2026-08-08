@@ -79,7 +79,7 @@ const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] 
 const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 
 /** Factory Droid settings (project `.factory/settings.json` plus `settings.local.json` overrides); `commandAllowlist` entries and high autonomy pre-authorize execution for anyone opening the project. */
-const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$/i;
+export const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$/i;
 
 /** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
 const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
@@ -1206,12 +1206,12 @@ const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 /** Codex project hook files; command hooks run on lifecycle events for anyone who trusts the project layer. */
 const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 
-/** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`). */
+/** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
-export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin)\/plugin\.json$/i;
+export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin)\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
-const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin)\/marketplace\.json$/i;
+const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin)\/marketplace\.json$/i;
 
 /** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
 export function extractMonitorCommands(monitors: unknown): string[] {
