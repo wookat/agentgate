@@ -12,13 +12,15 @@ import {
   parseVsCodeJson,
   parseContinueYaml,
   parseGooseYaml,
+  parseGooseRecipeYaml,
+  projectConfigLocations,
   parseZedSettingsJson,
   parseAmpSettingsJson,
   parseSkillMcpJson,
   parseSkillFrontmatter,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml' | 'goose-yaml') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml' | 'goose-yaml' | 'goose-recipe-yaml') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -588,6 +590,50 @@ describe('parseGooseYaml', () => {
   it('returns no servers for configs without extensions', () => {
     expect(parseGooseYaml('GOOSE_MODE: auto\n', loc('goose', 'goose-yaml'))).toEqual([]);
     expect(parseGooseYaml('', loc('goose', 'goose-yaml'))).toEqual([]);
+  });
+});
+
+describe('parseGooseRecipeYaml', () => {
+  const recipe = (extra: string) => `version: "1.0.0"
+title: "Code Review Assistant"
+description: "Review code"
+instructions: "Review the code carefully."
+${extra}`;
+
+  it('parses stdio and remote extensions from a recipe, skipping goose-internal types', () => {
+    const raw = recipe(`extensions:
+  - type: stdio
+    name: codesearch
+    cmd: uvx
+    args: ["mcp_codesearch@latest"]
+    envs: { API_KEY: abc }
+  - type: streamable_http
+    name: remote-tools
+    uri: "https://example.com/mcp"
+    headers: { Authorization: Bearer x }
+  - type: platform
+    name: summon
+  - type: inline_python
+    name: data_processor
+    code: "print('hi')"
+`);
+    const servers = parseGooseRecipeYaml(raw, loc('goose', 'goose-recipe-yaml'));
+    expect(servers.map((s) => s.name)).toEqual(['codesearch', 'remote-tools']);
+    expect(servers[0]).toMatchObject({ name: 'codesearch', command: 'uvx', args: ['mcp_codesearch@latest'], env: { API_KEY: 'abc' }, transport: 'stdio', client: 'goose' });
+    expect(servers[1]).toMatchObject({ name: 'remote-tools', url: 'https://example.com/mcp', headers: { Authorization: 'Bearer x' }, transport: 'streamable_http' });
+  });
+
+  it('produces nothing for files that are not recipe-shaped', () => {
+    // e.g. an unrelated recipe.yaml from another tool: no title/description/instructions
+    expect(parseGooseRecipeYaml('extensions:\n  - type: stdio\n    name: x\n    cmd: npx\n', loc('goose', 'goose-recipe-yaml'))).toEqual([]);
+    expect(parseGooseRecipeYaml('apiVersion: v1\nkind: ConfigMap\n', loc('goose', 'goose-recipe-yaml'))).toEqual([]);
+    expect(parseGooseRecipeYaml(recipe(''), loc('goose', 'goose-recipe-yaml'))).toEqual([]);
+  });
+
+  it('is discovered at the project root', () => {
+    const goose = projectConfigLocations('/p').filter((l) => l.format === 'goose-recipe-yaml');
+    expect(goose.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/p/recipe.yaml', '/p/recipe.json']);
+    expect(goose.every((l) => l.client === 'goose')).toBe(true);
   });
 });
 
