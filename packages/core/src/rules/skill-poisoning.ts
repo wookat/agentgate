@@ -1345,12 +1345,12 @@ export function extractCursorEnvironmentCommands(doc: unknown): { key: string; c
 /** Codex project hook files; command hooks run on lifecycle events for anyone who trusts the project layer. */
 const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 
-/** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`). */
+/** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`, Codex `.codex-plugin/` and `.cursor-plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
-export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin)\/plugin\.json$/i;
+export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin)\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
-const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin)\/marketplace\.json$/i;
+const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin|\.agents\/plugins)\/marketplace\.json$/i;
 
 /** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
 export function extractMonitorCommands(monitors: unknown): string[] {
@@ -1828,9 +1828,11 @@ export const skillDynamicContextRule: Rule = {
       if (isPluginLsp) return findings;
     }
     if (isPluginHooks) {
-      // Claude plugins use the nested settings-hooks shape; Copilot plugins use the flat event shape. A manifest's `hooks` field may also be inline config.
+      // Claude plugins use the nested settings-hooks shape; Copilot plugins use the flat event shape. A manifest's `hooks` field may also be inline config —
+      // Codex plugin manifests inline a list of hooks-file objects, each wrapping the nested shape under its own `hooks` key.
       const pluginHooks = (data as { hooks?: unknown }).hooks;
-      for (const command of [...extractHookCommands(pluginHooks), ...extractCopilotHookCommands(pluginHooks)]) {
+      const hookMaps = Array.isArray(pluginHooks) ? pluginHooks.map((h) => (h as { hooks?: unknown })?.hooks) : [pluginHooks];
+      for (const command of hookMaps.flatMap((h) => [...extractHookCommands(h), ...extractCopilotHookCommands(h)])) {
         const hit = classifyRiskyCommand(command);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
