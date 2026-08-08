@@ -116,6 +116,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   locations.push(...amazonqAgentLocations(path.join(homeDir, '.aws', 'amazonq', 'cli-agents')));
   // GitHub Copilot CLI — `copilot mcp add` / `/mcp add` write the user config here
   push('copilot-cli', path.join(homeDir, '.copilot', 'mcp-config.json'));
+  // JetBrains Junie — global MCP config shared by the IDE plugin and Junie CLI
+  push('junie', path.join(homeDir, '.junie', 'mcp', 'mcp.json'));
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -146,6 +148,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'junie', path: path.join(projectDir, '.junie', 'mcp', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.json'), format: 'mcpServers-json' },
     { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.local.json'), format: 'mcpServers-json' },
     { client: 'amazonq', path: path.join(projectDir, '.amazonq', 'mcp.json'), format: 'mcpServers-json' },
