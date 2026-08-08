@@ -273,6 +273,49 @@ describe('collectDependencies remote specs', () => {
     ]);
   });
 
+  it('records undeclared remote lockfile resolutions as remoteSpecs', () => {
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'app',
+        dependencies: { declared: 'git+https://github.com/acme/declared.git#main' },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'package-lock.json'),
+      JSON.stringify({
+        lockfileVersion: 3,
+        packages: {
+          '': { name: 'app' },
+          'node_modules/declared': { resolved: 'git+https://github.com/acme/declared.git#main' },
+          'node_modules/prism-media': { resolved: 'https://codeload.github.com/acme/prism-media/tar.gz/main' },
+          'node_modules/left-pad': { resolved: 'https://registry.npmjs.org/left-pad/-/left-pad-1.3.0.tgz' },
+          'node_modules/mirror-dep': { resolved: 'https://registry.npmmirror.com/mirror-dep/-/mirror-dep-1.0.0.tgz' },
+        },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'yarn.lock'),
+      [
+        'difflib@^0.2.4:',
+        '  version "0.2.4"',
+        '  resolved "https://codeload.github.com/acme/difflib.js/tar.gz/32e8e38c7fcd935241b9baab6ba9c30bb4c47f7e"',
+        '',
+        'lodash@^4.17.21:',
+        '  version "4.17.21"',
+        '  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"',
+      ].join('\n'),
+    );
+    const { remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    // declared appears once (manifest); registry/mirror tarballs excluded; the
+    // sha-pinned yarn resolution is collected but exempted at scoring time
+    expect(remoteSpecs.map((s) => `${s.context}:${s.name}`).sort()).toEqual([
+      'dependencies:declared',
+      'lockfile resolved:difflib',
+      'lockfile resolved:prism-media',
+    ]);
+  });
+
   it('records uv source overrides ([tool.uv.sources]) as remoteSpecs', () => {
     fs.writeFileSync(
       path.join(dir, 'pyproject.toml'),

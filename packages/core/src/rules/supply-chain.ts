@@ -92,6 +92,8 @@ export function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host:
     return undefined;
   }
   if (/^git[+:]/i.test(spec) || /\.git(@|#|$)/i.test(url)) return { kind: 'git', host };
+  // codeload tarballs are git-ref-addressed: /owner/repo/(tar.gz|zip)/<ref>
+  if (/^codeload\.github\.com$/i.test(host)) return { kind: 'git', host: 'github.com' };
   if (/\.(tgz|tar\.gz|zip|whl)(\?|#|$)/i.test(url)) return { kind: 'archive', host };
   return undefined;
 }

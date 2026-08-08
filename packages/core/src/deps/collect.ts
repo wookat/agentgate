@@ -8,6 +8,7 @@ import { DependencyRef, DepEcosystem, DepOrigin, RemoteDepSpec } from './types.j
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 const MAX_FILE_BYTES = 1024 * 1024;
+const MAX_LOCKFILE_BYTES = 20 * 1024 * 1024;
 const JS_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.jsx', '.tsx']);
 
 const NODE_BUILTINS = new Set(builtinModules);
@@ -215,6 +216,48 @@ function overrideKeyName(key: string): string {
   return at > 0 ? name.slice(0, at) : name;
 }
 
+/** Default registry hosts plus version-addressed registry-path tarballs on any host (mirrors, private registries). */
+function isRegistryResolved(url: string): boolean {
+  return /^https?:\/\/(registry\.npmjs\.org|registry\.yarnpkg\.com)\//i.test(url) || /\/-\/[^/]+\.tgz([?#]|$)/i.test(url);
+}
+
+/**
+ * Remote (git/archive) `resolved` sources in npm/yarn lockfiles. A lockfile
+ * entry can point a transitive package at a source no manifest declares —
+ * the classic lockfile-poisoning shape, near-invisible in a PR diff.
+ */
+function lockfileRemoteSpecs(file: string, content: string): RemoteDepSpec[] {
+  const specs: RemoteDepSpec[] = [];
+  const push = (name: string, resolved: unknown): void => {
+    if (typeof resolved !== 'string' || isRegistryResolved(resolved)) return;
+    if (!/^(git\+|git:|ssh:)|^https?:\/\//i.test(resolved)) return;
+    specs.push({ name, ecosystem: 'npm', spec: resolved, file, context: 'lockfile resolved' });
+  };
+  if (path.basename(file) === 'package-lock.json') {
+    let lock: unknown;
+    try {
+      lock = JSON.parse(content);
+    } catch {
+      return specs;
+    }
+    if (typeof lock !== 'object' || lock === null) return specs;
+    const sections = lock as { packages?: Record<string, { resolved?: unknown }>; dependencies?: Record<string, { resolved?: unknown }> };
+    for (const [key, entry] of Object.entries(sections.packages ?? {})) {
+      const idx = key.lastIndexOf('node_modules/');
+      if (idx !== -1) push(key.slice(idx + 'node_modules/'.length), entry?.resolved);
+    }
+    for (const [name, entry] of Object.entries(sections.dependencies ?? {})) push(name, entry?.resolved);
+  } else {
+    // yarn.lock v1: `name@range:` header followed by `  resolved "url"`
+    for (const block of content.split(/\n\n/)) {
+      const header = block.match(/^"?((?:@[^\s/@]+\/)?[^\s/@"]+)@[^\n]*:\s*$/m);
+      const resolved = block.match(/^ {2}resolved "([^"]+)"/m);
+      if (header && resolved) push(header[1]!, resolved[1]!);
+    }
+  }
+  return specs;
+}
+
 /** Import-map keys in deno.json(c) resolve elsewhere (jsr:, https:, local paths) — never against npm. */
 function declareDenoImportMap(content: string, localNames: Set<string>): void {
   let data: unknown;
@@ -350,6 +393,8 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
   const localNames = new Set<string>();
   // first-party Python modules present in the tree: never registry-verified
   const localPyModules = new Set<string>();
+  // lockfile-resolved remote sources, held back until manifest-declared remotes are known
+  const lockSpecs: RemoteDepSpec[] = [];
 
   for (const file of walk(dir)) {
     const rel = path.relative(dir, file).split(path.sep).join('/');
@@ -357,6 +402,16 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     const base = path.basename(file);
     const ext = path.extname(file);
     const isManifest = base === 'package.json' || base === 'pyproject.toml' || /^requirements[\w.-]*\.txt$/.test(base);
+    if (base === 'package-lock.json' || base === 'yarn.lock') {
+      try {
+        if (fs.statSync(file).size > MAX_LOCKFILE_BYTES) continue;
+        lockSpecs.push(...lockfileRemoteSpecs(rel, fs.readFileSync(file, 'utf8')));
+        scannedFiles.push(rel);
+      } catch {
+        /* unreadable: ignore */
+      }
+      continue;
+    }
     if (base === 'deno.json' || base === 'deno.jsonc') {
       try {
         declareDenoImportMap(fs.readFileSync(file, 'utf8'), localNames);
@@ -399,6 +454,16 @@ export function collectDependencies(dir: string, opts: CollectOptions = {}): Col
     ...[...localPyModules].map((n) => `pypi:${normalizeName(n, 'pypi')}`),
     ...remoteSpecs.map((s) => `${s.ecosystem}:${normalizeName(s.name, s.ecosystem)}`),
   ]);
+  // a manifest-declared remote dep is already reported once from the manifest;
+  // only lockfile resolutions no manifest accounts for are new information
+  const declaredRemote = new Set(remoteSpecs.filter((s) => s.ecosystem === 'npm').map((s) => s.name));
+  const seenLock = new Set<string>();
+  for (const spec of lockSpecs) {
+    const key = `${spec.name}\u0000${spec.spec}`;
+    if (declaredRemote.has(spec.name) || seenLock.has(key)) continue;
+    seenLock.add(key);
+    remoteSpecs.push(spec);
+  }
   const refs = [...manifestRefs];
   const seenImports = new Set<string>();
   for (const ref of importRefs) {
