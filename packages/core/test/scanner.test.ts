@@ -2108,9 +2108,11 @@ describe('scanRepo', () => {
         2,
       ),
     );
-    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-003');
+    const all = scanRepo(dir).findings;
+    const hits = all.filter((f) => f.ruleId === 'AG-SK-003');
     expect(hits.map((f) => f.severity).sort()).toEqual(['critical', 'high']);
     expect(hits.every((f) => f.message.includes('Cursor hook command'))).toBe(true);
+    expect(all.filter((f) => f.ruleId === 'AG-RC-001')).toHaveLength(0);
   });
 
   it('flags dangerous Cursor cloud-agent environment commands (AG-SK-003)', () => {
@@ -2127,11 +2129,13 @@ describe('scanRepo', () => {
         2,
       ),
     );
-    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-003');
+    const all = scanRepo(dir).findings;
+    const hits = all.filter((f) => f.ruleId === 'AG-SK-003');
     expect(hits.map((f) => f.severity).sort()).toEqual(['critical', 'high']);
     expect(hits.every((f) => f.message.includes('Cursor cloud-agent environment'))).toBe(true);
     expect(hits.some((f) => f.message.includes('"install"'))).toBe(true);
     expect(hits.some((f) => f.message.includes('"terminals"'))).toBe(true);
+    expect(all.filter((f) => f.ruleId === 'AG-RC-001')).toHaveLength(0);
   });
 
   it('does not flag benign Cursor cloud-agent environment commands', () => {
