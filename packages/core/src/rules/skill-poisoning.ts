@@ -88,6 +88,9 @@ export const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$
 /** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
 const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
 
+/** OpenCode agent markdown files (project `.opencode/agents/*.md`, permissions in YAML frontmatter). */
+const OPENCODE_AGENT_MD = /(^|\/)\.opencode\/agents\/.+\.md$/i;
+
 /** Crush (Charm) legacy JSON config (project `.crush.json`/`crush.json`, user `.config/crush/crush.json`, JSONC). */
 export const CRUSH_CONFIG_FILE = /(^|\/)\.?crush\.json$/i;
 
@@ -469,6 +472,43 @@ export const skillOverprivilegeRule: Rule = {
             message: `Skill pre-approves "${grant}" via allowed-tools — ${hit.risk} without a permission prompt; scope the grant (e.g. Bash(git add *)) or remove it`,
           }),
         );
+      }
+    }
+    if (OPENCODE_AGENT_MD.test(file)) {
+      const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      let data: unknown;
+      try {
+        data = fm?.[1] ? parseYaml(fm[1]) : undefined;
+      } catch {
+        data = undefined;
+      }
+      const permission = (data as { permission?: unknown } | undefined)?.permission;
+      if (opencodeAllowsAll(permission)) {
+        const permLine = content.split(/\r?\n/).findIndex((l) => /^permission\s*:/i.test(l)) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: file,
+            file,
+            ...(permLine > 0 ? { line: permLine } : {}),
+            message: `OpenCode agent sets a catch-all "allow" permission in its frontmatter — every tool (including shell) runs without prompts for anyone using this checked-in agent`,
+          }),
+        );
+      } else if (typeof permission === 'object' && permission !== null) {
+        for (const { key, severity, risk } of OPENCODE_RISKY_KEYS) {
+          if (opencodeAllowsAll((permission as Record<string, unknown>)[key])) {
+            const keyLine = content.split(/\r?\n/).findIndex((l) => new RegExp(`^\\s+${key}\\s*:`).test(l)) + 1;
+            findings.push(
+              finding(this, {
+                severity,
+                target: file,
+                file,
+                ...(keyLine > 0 ? { line: keyLine } : {}),
+                message: `OpenCode agent sets permission.${key} to "allow" in its frontmatter — ${risk} without a permission prompt for anyone using this checked-in agent; use granular rules or "ask"`,
+              }),
+            );
+          }
+        }
       }
     }
     if (KIRO_AGENT_MD.test(file)) {
