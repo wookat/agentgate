@@ -1,5 +1,15 @@
 # mcp-agentgate-core
 
+## 0.67.6
+
+### Patch Changes
+
+- bff9496: Scan the goose `.goose` project tree (skills, agents, recipes) and follow in-repo symlinks: symlinked skill files/dirs are now scanned (dir dedupe by realpath, cycle-safe; links escaping the repo are skipped). `allowed-tools` in `.goose/skills` is inert for goose and no longer reported as a grant.
+- 8682ef7: Goose recipe precision: injection patterns quoted in code spans/fenced blocks/quotes inside recipe instructions now report low (quoted example) instead of critical, and a curl|sh string in recipe prose is no longer escalated as an executable launch vector (recipe-shaped YAML/JSON is prompt text; the medium text warning remains).
+- 7686a07: Deterministic repo walk: directory entries are sorted, so scan/lock file ordering — and which alias path a realpath-deduped symlink tree is reported under — is stable across filesystems and platforms.
+- 850fb99: Scan goose local memory files (`.goose/memory/*.txt`) for prompt poisoning and hidden Unicode (AG-SK-001) — committed memories become model context for everyone using the goose memory extension in the repo. They are also pinnable via `lock --skills`.
+- 2f64bfb: Cover goose Open Plugin manifests: `.goose-plugin/plugin.json` is now walked and scanned like other plugin metadata dirs, and the Open Plugin Spec component form `mcpServers: { paths: [...], exclusive }` resolves referenced config documents (plus the plugin root's `.mcp.json` when not exclusive) for discovery, pin, and advisory checks.
+
 ## 0.67.5
 
 ### Patch Changes
