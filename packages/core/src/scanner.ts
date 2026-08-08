@@ -121,6 +121,31 @@ export function globToRegExp(glob: string): RegExp {
   return new RegExp(`^${escaped}$`);
 }
 
+/** Plugin metadata dir names whose `plugin.json` marks a plugin root. */
+const PLUGIN_META_NAMES = ['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin'];
+const PLUGIN_COMPONENT_MD = /(^|\/)(skills|commands|agents)\/.+\.md$/gi;
+
+/**
+ * Markdown under a plugin root's `skills/`, `commands/`, or `agents/` component
+ * dirs is installed as skill/command/agent content for everyone who installs
+ * the plugin. Gated on a sibling plugin manifest so generic `commands/` or
+ * `agents/` doc trees are not misread as agent instructions.
+ */
+function isPluginComponentSkill(scanRoot: string, relPosix: string, cache: Map<string, boolean>): boolean {
+  PLUGIN_COMPONENT_MD.lastIndex = 0;
+  for (let m = PLUGIN_COMPONENT_MD.exec(relPosix); m; m = PLUGIN_COMPONENT_MD.exec(relPosix)) {
+    const root = relPosix.slice(0, m.index);
+    let hit = cache.get(root);
+    if (hit === undefined) {
+      hit = PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(scanRoot, ...root.split('/').filter(Boolean), meta, 'plugin.json')));
+      cache.set(root, hit);
+    }
+    if (hit) return true;
+    PLUGIN_COMPONENT_MD.lastIndex = m.index + 1;
+  }
+  return false;
+}
+
 export interface ScanRepoOptions {
   rules?: Rule[];
   /** Glob patterns (relative to the scan root) to exclude. */
@@ -133,9 +158,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const findings: Finding[] = [];
   const scannedFiles: string[] = [];
+  const pluginRootCache = new Map<string, boolean>();
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    const isSkill = SKILL_FILE.test(relPosix);
+    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(dir, relPosix, pluginRootCache);
     if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
     if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
@@ -170,9 +196,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
 export function collectSkillFiles(dir: string, opts: { ignore?: string[] } = {}): Record<string, string> {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const out: Record<string, string> = {};
+  const pluginRootCache = new Map<string, boolean>();
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    if (!SKILL_FILE.test(relPosix)) continue;
+    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(dir, relPosix, pluginRootCache)) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
