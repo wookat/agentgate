@@ -1912,5 +1912,78 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0074",
+    "title": "@cliphijack/santaclaude (npm) lets a remote service inject tmux keystrokes and launch `claude --dangerously-skip-permissions` on the installer's host",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@cliphijack/santaclaude",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0075",
+    "title": "claw-subagent-service (npm) installs an auto-restarting privileged service that self-updates and takes agent commands from a vendor IM channel",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "claw-subagent-service",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0076",
+    "title": "claude-cup (npm) registers itself into Claude Code and Cursor and uses the local agent to inventory credential stores, reporting results to its own API",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "claude-cup",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0077",
+    "title": "code-analyzer-mcp 1.0.0 (npm) runs host reconnaissance on launch and exposes an unrestricted `run_command` MCP tool",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "code-analyzer-mcp",
+        "ranges": [
+          {
+            "introduced": "1.0.0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
   }
 ];

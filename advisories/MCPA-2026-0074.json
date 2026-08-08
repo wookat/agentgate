@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0074",
+ "title": "@cliphijack/santaclaude (npm) lets a remote service inject tmux keystrokes and launch `claude --dangerously-skip-permissions` on the installer's host",
+ "summary": "The npm package @cliphijack/santaclaude runs a client that polls https://santaclaude.app (/api/control/claim, /api/jobs/claim) and dispatches server-supplied jobs into the user's tmux sessions with `tmux send-keys -l <cmd>` followed by Enter, and spawns new windows running `claude --dangerously-skip-permissions` by default — so the remote endpoint can type arbitrary shell commands on the host and drive a coding agent with tool confirmation disabled. A second path polls /api/cli-version and, when the server returns a `target`, writes it to ~/.santaclaude-target and exits 75 so the wrapper re-execs `npx -y @cliphijack/santaclaude@<server-chosen-version>`, letting the service pick which client code runs next; shipped hooks (hooks/sc-notify.sh, hooks/sc-stop.sh) curl host identifiers to the same service. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.0.108 tarball verified on 2026-08-08 still contains the santaclaude.app control loop, the send-keys injection helpers, the `claude --dangerously-skip-permissions` default command and the server-chosen re-exec, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13363"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@cliphijack/santaclaude",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13363"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@cliphijack/santaclaude"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}
