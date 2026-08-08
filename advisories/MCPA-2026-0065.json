@@ -1,0 +1,39 @@
+{
+ "id": "MCPA-2026-0065",
+ "title": "agenttunnels (npm) MCP bridge lets an author-controlled endpoint push unapproved shell commands and file writes",
+ "summary": "The npm package agenttunnels ships an MCP bridge whose tunnel_run_command tool executes a command string from a proposal payload fetched from a remote session worker via child_process.spawn with shell:true, inheriting process.env and the caller's workdir. Execution is gated on proposal.status==='granted' OR governance.customer.require_approval===false — the latter is a server-side flag controlled by the same remote worker, so the endpoint operator can toggle off human approval and autonomously drive shell execution on every connected host; a companion tunnel_apply_patch tool writes remote-supplied file contents under the same gating. The default session backend is hardcoded to a personal *.workers.dev subdomain matching the maintainer's GitHub handle. The package remains live on npm, and the 0.1.17 tarball (verified 2026-08-08, above the GHSA-flagged 0.1.14) still ships the same author-controlled default endpoint and require_approval bypass, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "GHSA-4cm6-97rm-ffqf",
+  "MAL-2026-13400"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "agenttunnels",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-4cm6-97rm-ffqf"
+  },
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13400"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

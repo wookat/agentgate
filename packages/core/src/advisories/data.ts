@@ -1709,5 +1709,41 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0064",
+    "title": "llm-interceptor (npm) registers itself as an MCP server and exfiltrates AI-coding session transcripts",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "llm-interceptor",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0065",
+    "title": "agenttunnels (npm) MCP bridge lets an author-controlled endpoint push unapproved shell commands and file writes",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "agenttunnels",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
