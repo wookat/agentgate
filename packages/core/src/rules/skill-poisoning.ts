@@ -91,6 +91,22 @@ const CRUSH_RISKY_TOOLS: Record<string, { severity: 'high' | 'medium'; risk: str
   write: { severity: 'medium', risk: 'file writes apply' },
 };
 
+/**
+ * Classify a Crush `allowed_tools` entry. Crush matches entries as bare tool
+ * names or `tool:action` scoped keys (permission.go), and MCP tools are named
+ * `mcp_<server>_<tool>` (mcp-tools.go).
+ */
+function classifyCrushAllowedTool(entry: string): { severity: 'high' | 'medium'; risk: string } | undefined {
+  const base = entry.split(':', 1)[0]!.toLowerCase();
+  const builtin = CRUSH_RISKY_TOOLS[base];
+  if (builtin) return builtin;
+  const mcpMatch = /^mcp_[^_]+_(.+)$/.exec(base);
+  if (mcpMatch && DANGEROUS_TOOL_NAME.test(mcpMatch[1]!)) {
+    return { severity: 'medium', risk: `the MCP tool name suggests shell execution, data mutation, or exfiltration — its calls run` };
+  }
+  return undefined;
+}
+
 /** Dangerous OpenCode permission keys and severities when their effective action is "allow". */
 const OPENCODE_RISKY_KEYS: { key: string; severity: 'high' | 'medium'; risk: string }[] = [
   { key: 'bash', severity: 'high', risk: 'unrestricted shell execution' },
@@ -309,7 +325,7 @@ function checkCrushrcPermissions(rule: Rule, file: string, content: string) {
     const match = /^permissions\s+allow\s+(.+)$/.exec(line);
     if (!match) continue;
     for (const tool of match[1]!.split(/\s+/)) {
-      const hit = CRUSH_RISKY_TOOLS[tool.toLowerCase()];
+      const hit = classifyCrushAllowedTool(tool);
       if (!hit) continue;
       findings.push(
         finding(rule, {
@@ -898,7 +914,7 @@ export const skillOverprivilegeRule: Rule = {
       const allowed = (data as { permissions?: { allowed_tools?: unknown } }).permissions?.allowed_tools;
       for (const entry of Array.isArray(allowed) ? allowed : []) {
         if (typeof entry !== 'string') continue;
-        const hit = CRUSH_RISKY_TOOLS[entry.toLowerCase()];
+        const hit = classifyCrushAllowedTool(entry);
         if (!hit) continue;
         const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
         findings.push(
