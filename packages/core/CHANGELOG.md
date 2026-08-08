@@ -1,5 +1,17 @@
 # mcp-agentgate-core
 
+## 0.53.0
+
+### Minor Changes
+
+- f509444: Goose recipe `inline_python` extensions (code executed via uvx for everyone who runs the recipe) are classified for dangerous idioms (AG-SK-003): shell download-and-execute strings, `exec`/`eval` of downloaded or base64-decoded content (critical), secret exfiltration via `requests.post(os.environ…)`, and credential-file reads (high).
+- 49f567f: Goose recipe `inline_python` PyPI `dependencies` (installed by uvx and imported for everyone who runs the recipe) are checked against the OSV known-malware (AG-SC-002) and MCPA advisory (AG-SC-003) databases, with `name==version` pins compared against version-scoped advisories.
+
+### Patch Changes
+
+- 405374a: Bundled advisory database: add MCPA-2026-0018 (n8n-MCP cross-tenant workflow-version backup access, CVE-2026-54052, critical, fixed 2.56.1), MCPA-2026-0019 (n8n-MCP default-scope backup exposure in multi-tenant HTTP mode, CVE-2026-55608, medium, fixed 2.57.4), and MCPA-2026-0020 (HKUDS nanobot `enabledTools` scope bypass, CVE-2026-19244, low, PyPI `nanobot-ai` fixed 0.3.0) — 34 advisories total.
+- be45212: Precision fixes from a real-corpus false-positive sweep: AG-RC-001 masks echo/printf string literals in shell scripts (help text quoting a curl|sh one-liner no longer reports; `$(…)` command substitutions stay live); AG-SS-001 reads one more surrounding line so a blocklist header comment above a metadata-IP entry is seen; AG-CL-001 treats underscore-delimited placeholder words (`sk-YOUR_OPENAI_KEY_HERE`) as placeholders; AG-TP-001 reports Trojan-Source bidi characters in test/fixture paths quietly (defensive fixtures).
+
 ## 0.52.0
 
 ### Minor Changes
