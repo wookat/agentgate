@@ -146,6 +146,69 @@ function isPluginComponentSkill(scanRoot: string, relPosix: string, cache: Map<s
   return false;
 }
 
+interface PluginComponentDecl {
+  files: Set<string>;
+  dirs: string[];
+  globs: RegExp[];
+}
+
+/** Read the manifest-declared commands/agents/skills paths for a plugin root, if any. */
+function readPluginComponentDecl(scanRoot: string, rootPrefix: string): PluginComponentDecl | null {
+  let manifest: unknown;
+  for (const meta of PLUGIN_META_NAMES) {
+    const p = path.join(scanRoot, ...rootPrefix.split('/').filter(Boolean), meta, 'plugin.json');
+    if (!fs.existsSync(p)) continue;
+    try {
+      manifest = JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch {
+      return null;
+    }
+    break;
+  }
+  if (typeof manifest !== 'object' || manifest === null) return null;
+  const decl: PluginComponentDecl = { files: new Set(), dirs: [], globs: [] };
+  let any = false;
+  for (const key of ['commands', 'agents', 'skills'] as const) {
+    const value = (manifest as Record<string, unknown>)[key];
+    const entries = Array.isArray(value) ? value : [value];
+    for (const entry of entries) {
+      const raw = typeof entry === 'string' ? entry : typeof entry === 'object' && entry !== null && typeof (entry as { path?: unknown }).path === 'string' ? (entry as { path: string }).path : undefined;
+      if (raw === undefined) continue;
+      const norm = raw.replace(/^\.\//, '').replace(/\/+$/, '');
+      if (norm.startsWith('/') || norm.split('/').includes('..')) continue;
+      any = true;
+      if (/[*?]/.test(norm)) decl.globs.push(globToRegExp(norm));
+      else if (norm.toLowerCase().endsWith('.md')) decl.files.add(norm);
+      else decl.dirs.push(norm === '.' ? '' : norm);
+    }
+  }
+  return any ? decl : null;
+}
+
+/**
+ * Plugin manifests may point `commands`/`agents`/`skills` at custom paths
+ * (files, directories, or globs) outside the conventional component dirs;
+ * markdown reachable through those declarations is installed content too.
+ */
+function isDeclaredPluginComponentMd(scanRoot: string, relPosix: string, cache: Map<string, PluginComponentDecl | null>): boolean {
+  if (!relPosix.toLowerCase().endsWith('.md')) return false;
+  const segs = relPosix.split('/');
+  for (let i = 0; i < segs.length; i++) {
+    const rootPrefix = segs.slice(0, i).join('/');
+    let decl = cache.get(rootPrefix);
+    if (decl === undefined) {
+      decl = readPluginComponentDecl(scanRoot, rootPrefix);
+      cache.set(rootPrefix, decl);
+    }
+    if (!decl) continue;
+    const inner = segs.slice(i).join('/');
+    if (decl.files.has(inner)) return true;
+    if (decl.globs.some((re) => re.test(inner))) return true;
+    if (decl.dirs.some((d) => d === '' || inner === d || inner.startsWith(`${d}/`))) return true;
+  }
+  return false;
+}
+
 export interface ScanRepoOptions {
   rules?: Rule[];
   /** Glob patterns (relative to the scan root) to exclude. */
@@ -159,9 +222,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const findings: Finding[] = [];
   const scannedFiles: string[] = [];
   const pluginRootCache = new Map<string, boolean>();
+  const pluginDeclCache = new Map<string, PluginComponentDecl | null>();
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(dir, relPosix, pluginRootCache);
+    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(dir, relPosix, pluginRootCache) || isDeclaredPluginComponentMd(dir, relPosix, pluginDeclCache);
     if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
     if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
@@ -197,9 +261,10 @@ export function collectSkillFiles(dir: string, opts: { ignore?: string[] } = {})
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const out: Record<string, string> = {};
   const pluginRootCache = new Map<string, boolean>();
+  const pluginDeclCache = new Map<string, PluginComponentDecl | null>();
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(dir, relPosix, pluginRootCache)) continue;
+    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(dir, relPosix, pluginRootCache) && !isDeclaredPluginComponentMd(dir, relPosix, pluginDeclCache)) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
