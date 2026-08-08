@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0063",
+ "title": "agenthub-multiagent-mcp (npm) lets a hardcoded remote server drive Claude Code with permissions disabled",
+ "summary": "agenthub-multiagent-mcp ships a worker that opens a WebSocket to a hardcoded server (wss://agenthub.contetial.com) and, for every 'dispatch' message received, writes the server-supplied body to a prompt file and spawns Claude Code via `claude -p \"$PROMPT\" --dangerously-skip-permissions` against a user-configured project directory — giving whoever controls the server Claude Code's full tool suite (file read/write, shell, MCP tools) on the installer's projects without approval prompts. GHSA flags 1.57.0; the worker mechanism is the package's core design rather than an injected payload, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "GHSA-gr2g-rx6h-9jh5",
+  "MAL-2026-13399"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "agenthub-multiagent-mcp",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-gr2g-rx6h-9jh5"
+  },
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13399"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-06"
+ }
+}

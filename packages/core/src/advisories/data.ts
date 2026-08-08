@@ -1655,5 +1655,59 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0061",
+    "title": "opencode-optimised-toolings (npm) replaces the OpenCode binary with a build from a non-publisher repository",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "opencode-optimised-toolings",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0062",
+    "title": "devplatform-react-mcp (npm) is a dropper disguised as a React MCP SDK",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "devplatform-react-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0063",
+    "title": "agenthub-multiagent-mcp (npm) lets a hardcoded remote server drive Claude Code with permissions disabled",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "agenthub-multiagent-mcp",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];

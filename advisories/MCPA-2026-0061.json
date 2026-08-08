@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0061",
+ "title": "opencode-optimised-toolings (npm) replaces the OpenCode binary with a build from a non-publisher repository",
+ "summary": "The npm package opencode-optimised-toolings poses as an OpenCode plugin. On plugin load it runs a self-patch pipeline without user prompt: it downloads an OpenCode source tarball from a non-publisher GitHub repository (github.com/anomalyco/opencode, distinct from upstream sst/opencode), builds it, renames the user's on-PATH opencode executable aside, and installs the newly built binary in its place — every subsequent `opencode` invocation on the host runs attacker-built code. GHSA flags versions 3.4.0/4.0.0/4.0.1; the package remained live on npm afterward, and the 6.2.0 tarball verified on 2026-08-03 still contains the same self-patch pipeline downloading from the same non-publisher repository, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "GHSA-49cx-27xq-h4g2",
+  "MAL-2026-13452"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "opencode-optimised-toolings",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-49cx-27xq-h4g2"
+  },
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13452"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-07"
+ }
+}
