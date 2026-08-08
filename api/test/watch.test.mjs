@@ -4,6 +4,7 @@ import {
   buildContext,
   isIgnored,
   filterGhsa,
+  filterMalware,
   draftFromGhsa,
   collectOsvCandidates,
   filterOsvDetail,
@@ -79,6 +80,54 @@ test("filterGhsa matches mcp only at word edges", () => {
     filterGhsa(ctx, input).map((a) => a.ghsa_id),
     ["GHSA-ldus-ldus-ldus", "GHSA-caml-caml-caml", "GHSA-hyph-hyph-hyph"],
   );
+});
+
+test("filterMalware keeps only vocabulary-named npm/pypi packages not already covered", () => {
+  const mk = (ghsa_id, name, ecosystem = "npm", extra = {}) => ({
+    ghsa_id,
+    cve_id: null,
+    summary: "malware",
+    description: "",
+    vulnerabilities: [{ package: { ecosystem, name } }],
+    ...extra,
+  });
+  const input = [
+    mk("GHSA-mal1-mal1-mal1", "evil-claude-agent"),
+    mk("GHSA-mal2-mal2-mal2", "@scope/mcp-helper"),
+    mk("GHSA-mal3-mal3-mal3", "useragent-parser"),
+    mk("GHSA-mal4-mal4-mal4", "generic-trojan"),
+    mk("GHSA-mal5-mal5-mal5", "known-pkg"),
+    mk("GHSA-mal6-mal6-mal6", "noisy-pkg"),
+    mk("GHSA-mal7-mal7-mal7", "evil-copilot", "rubygems"),
+    { ghsa_id: "GHSA-mal8-mal8-mal8", cve_id: null, summary: "steals Model Context Protocol configs", description: "", vulnerabilities: [{ package: { ecosystem: "pip", name: "plainname" } }] },
+    mk("GHSA-aaaa-aaaa-aaaa", "another-agent"),
+  ];
+  assert.deepEqual(
+    filterMalware(ctx, input).map((h) => h.advisory.ghsa_id),
+    ["GHSA-mal1-mal1-mal1", "GHSA-mal2-mal2-mal2", "GHSA-mal8-mal8-mal8"],
+  );
+  const pypiHit = filterMalware(ctx, input).find((h) => h.advisory.ghsa_id === "GHSA-mal8-mal8-mal8");
+  assert.deepEqual(pypiHit.pkgs, [{ ecosystem: "pypi", name: "plainname" }]);
+});
+
+test("renderReport includes the malware section and its triage commands", () => {
+  const report = renderReport({
+    days: 8,
+    ghsa: { error: null, hits: [] },
+    osv: { error: null, hits: [] },
+    malware: {
+      error: null,
+      hits: [
+        {
+          advisory: { ghsa_id: "GHSA-mal1-mal1-mal1", summary: "evil-claude-agent is malware" },
+          pkgs: [{ ecosystem: "npm", name: "evil-claude-agent" }],
+        },
+      ],
+    },
+  });
+  assert.match(report, /GHSA malware advisories in the agent\/MCP name vocabulary/);
+  assert.match(report, /`npm:evil-claude-agent` — evil-claude-agent is malware/);
+  assert.match(report, /node api\/scripts\/watch\.mjs --draft GHSA-mal1-mal1-mal1/);
 });
 
 test("collectOsvCandidates dedupes ids across packages and skips known aliases", () => {

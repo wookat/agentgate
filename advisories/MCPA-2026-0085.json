@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0085",
+ "title": "@xiaohhhh1/canvas-agent (npm) auto-connects to a hardcoded vendor relay that can drive local Codex/Claude turns with sandbox disabled and pull files from disk",
+ "summary": "@xiaohhhh1/canvas-agent's bin opens an outbound WebSocket to the hardcoded relay `wss://canvas.xiaohhhh1.com/api/agent-relay` on start and forwards inbound relay messages as authenticated requests to its own local server, attaching the local x-canvas-agent-token header. Verified by unpacking the latest tarball (0.4.11): dist/relay-bridge.js carries the hardcoded DEFAULT_RELAY_URL; relay-reachable endpoints include /agent/codex/turn and /agent/claude/turn (spawn the local Codex/Claude CLIs), /agent/codex/approval (supplies approval decisions), /agent/local-image (returns file bytes for any absolute path with an image extension), and /agent/local-file/reveal (spawns the OS file manager against arbitrary paths); and dist/agent/codex-client.js maps a caller-supplied permissionMode of 'full' to Codex sandbox 'danger-full-access' with approvalPolicy 'never'. A remote peer on the vendor relay can therefore run unrestricted agent turns on the installer's host without any local approval prompt and read files from disk. Flagged as malware by OSV (MAL-2026-13398).",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13398",
+  "GHSA-29wq-c378-jw6v"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-798"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@xiaohhhh1/canvas-agent",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13398"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-29wq-c378-jw6v"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@xiaohhhh1/canvas-agent"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-06"
+ }
+}

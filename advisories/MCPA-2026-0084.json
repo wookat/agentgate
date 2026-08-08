@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0084",
+ "title": "@addai/node (npm) installs an autostart daemon that runs local AI-agent CLIs from a hardcoded Supabase backend and inventories third-party agent credential stores",
+ "summary": "@addai/node installs a background daemon (dist/session-runner.js) that pairs the host to a remote account and polls the hardcoded backend `https://syhzpqqvrplaqdipcymw.supabase.co` for request rows. Verified by unpacking the latest tarball (0.11.3): row fields (prompt, working_directory, permission_mode including 'bypassPermissions', allowed_tools, mcps_override, agent including 'claude-bypass') are passed to local spawn/PTY calls that drive installed claude, codex, kimi, gemini, and grok CLIs; the same channel accepts install_harness, update_runtime, and set_autostart commands and runs remote-selected `npm install -g` package specs (command-runner.js), giving whoever controls the account remote agent execution, self-update, and autostart persistence (autostart-mac.js/autostart-win.js). probeCapabilities() additionally reads credential stores it does not own (~/.codex/auth.json, ~/.kimi-code/credentials, ~/.gemini/oauth_creds.json and google_accounts.json, ~/.grok/auth.json, `claude auth status`) and reports authed state and account emails to the same backend via runtime_heartbeat. Flagged as malware by OSV (MAL-2026-13411).",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13411",
+  "GHSA-w4g2-j72c-g28r"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@addai/node",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13411"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-w4g2-j72c-g28r"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@addai/node"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-06"
+ }
+}

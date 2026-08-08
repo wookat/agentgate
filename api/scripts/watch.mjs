@@ -6,13 +6,16 @@
 // Sources (no credentials required):
 //   - GitHub Advisory API: advisories published in the last $WATCH_DAYS days
 //     whose text mentions MCP / Model Context Protocol.
+//   - GitHub Advisory API malware feed: same window, filtered to affected
+//     npm/PyPI package names in the agent/MCP-client vocabulary (the OSV bulk
+//     export refreshes too rarely to diff reliably).
 //   - OSV.dev querybatch: new advisories affecting packages already tracked
 //     in advisories/*.json.
 
 import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
-import { buildContext, filterGhsa, collectOsvCandidates, filterOsvDetail, renderReport, draftFromGhsa } from "./watch-lib.mjs";
+import { buildContext, filterGhsa, filterMalware, collectOsvCandidates, filterOsvDetail, renderReport, draftFromGhsa } from "./watch-lib.mjs";
 
 const ROOT = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), "..", "..");
 const DAYS = Number(process.env.WATCH_DAYS ?? 8);
@@ -66,6 +69,22 @@ async function ghsaSweep() {
   return { error: null, hits: filterGhsa(ctx, await res.json()) };
 }
 
+async function malwareSweep() {
+  const since = new Date(Date.now() - DAYS * 86400e3);
+  const range = `${iso(since)}..${iso(new Date())}`;
+  const headers = { accept: "application/vnd.github+json" };
+  if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const all = [];
+  let next = `https://api.github.com/advisories?type=malware&published=${range}&per_page=100`;
+  for (let page = 0; next && page < 30; page++) {
+    const res = await fetch(next, { headers });
+    if (!res.ok) return { error: `GitHub Advisory API (malware) ${res.status}`, hits: [] };
+    all.push(...(await res.json()));
+    next = res.headers.get("link")?.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+  }
+  return { error: null, hits: filterMalware(ctx, all) };
+}
+
 async function osvSweep() {
   const res = await fetch("https://api.osv.dev/v1/querybatch", {
     method: "POST",
@@ -91,9 +110,9 @@ async function osvSweep() {
   return { error: null, hits };
 }
 
-const [ghsa, osv] = await Promise.all([ghsaSweep(), osvSweep()]);
+const [ghsa, malware, osv] = await Promise.all([ghsaSweep(), malwareSweep(), osvSweep()]);
 
-const report = renderReport({ days: DAYS, ghsa, osv });
+const report = renderReport({ days: DAYS, ghsa, osv, malware });
 if (process.env.WATCH_REPORT) fs.writeFileSync(process.env.WATCH_REPORT, `${report}\n`);
 if (report) {
   console.log(report);
