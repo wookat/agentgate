@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import YAML from "yaml";
 import { convert, ADAPTERS } from "../src/index.js";
 import { CLIENT_IDS, ConfigParseError } from "../src/model.js";
 
@@ -161,6 +162,48 @@ describe("convert", () => {
     expect(out.mcp.filesystem.type).toBeUndefined();
     expect(out.mcp.github.type).toBe("http");
     expect(out.mcp.github.disabled).toBe(true);
+  });
+
+  it("goose parses the extensions map (MCP types only) and renders it back", () => {
+    const gs = [
+      "extensions:",
+      "  developer:",
+      "    type: builtin",
+      "    name: developer",
+      "    enabled: true",
+      "    bundled: true",
+      "    timeout: 300",
+      "  filesystem:",
+      "    type: stdio",
+      "    name: filesystem",
+      "    enabled: true",
+      "    cmd: npx",
+      '    args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]',
+      "    envs: { NODE_ENV: production }",
+      "    timeout: 300",
+      "  remote-tools:",
+      "    type: streamable_http",
+      "    name: remote-tools",
+      "    enabled: false",
+      '    uri: "https://example.com/mcp"',
+      "    headers: { Authorization: Bearer T }",
+      "",
+    ].join("\n");
+    const { config, warnings } = ADAPTERS.goose.parse(gs);
+    expect(config.servers.map((s) => s.name).sort()).toEqual(["filesystem", "remote-tools"]);
+    expect(config.servers.find((s) => s.name === "filesystem")?.command).toBe("npx");
+    expect(config.servers.find((s) => s.name === "remote-tools")?.transport).toBe("http");
+    expect(config.servers.find((s) => s.name === "remote-tools")?.enabled).toBe(false);
+    expect(warnings.some((w) => w.includes("builtin extension is not an MCP server"))).toBe(true);
+    expect(warnings.some((w) => w.includes("timeout"))).toBe(true);
+    const rendered = ADAPTERS.goose.render(config);
+    const out = YAML.parse(rendered.content).extensions;
+    expect(out.filesystem.type).toBe("stdio");
+    expect(out.filesystem.cmd).toBe("npx");
+    expect(out.filesystem.envs).toEqual({ NODE_ENV: "production" });
+    expect(out["remote-tools"].type).toBe("streamable_http");
+    expect(out["remote-tools"].uri).toBe("https://example.com/mcp");
+    expect(out["remote-tools"].enabled).toBe(false);
   });
 
   it("gemini-cli distinguishes sse url from streamable httpUrl", () => {

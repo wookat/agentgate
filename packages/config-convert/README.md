@@ -27,6 +27,7 @@ Supported clients:
 | `amazonq` | standard `mcpServers` | `.amazonq/mcp.json` (project; also `~/.aws/amazonq/mcp.json`) |
 | `antigravity` | `mcpServers`; remote servers use `serverUrl` | `.agents/mcp_config.json` (workspace) / `~/.gemini/config/mcp_config.json` |
 | `crush` | `mcp` map (`type`: stdio/http/sse, `disabled`) | `.crush.json` / `crush.json` (project; also `~/.config/crush/crush.json`) |
+| `goose` | YAML `extensions` map (`type`: stdio/streamable_http/sse; `cmd`/`envs`/`uri`) | `~/.config/goose/config.yaml` (`%APPDATA%\Block\goose\config\config.yaml` on Windows) |
 
 ## CLI
 
