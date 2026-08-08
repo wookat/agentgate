@@ -31,9 +31,10 @@ export function findHiddenInSource(content: string): { char: string; line: numbe
 export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
-  // "do not tell the user to <verb> ..." is phrasing guidance, and "do not show the user X until Y"
-  // is workflow gating (the artifact is shown eventually), not concealment.
-  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)(?![^.\n]*\buntil\b)/i, label: 'concealment instruction' },
+  // "do not tell the user to <verb> ..." is phrasing guidance, "do not show the user X until Y"
+  // is workflow gating (the artifact is shown eventually), a quoted object cites a phrase to
+  // avoid saying, and "do not show the user X; only Y" is selective presentation — not concealment.
+  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)(?!\s*["'\u201c])(?![^.\n]*\b(until|only)\b)/i, label: 'concealment instruction' },
   { re: /\bbefore\s+using\s+this\s+tool[^.]*\b(read|send|pass|include)\b/i, label: 'cross-tool coercion' },
   // Requires a sensitive target: "you must read/include the <reference|extension> file" is ordinary
   // skill-doc structure, while real exfiltration names keys, tokens, or credential paths.
