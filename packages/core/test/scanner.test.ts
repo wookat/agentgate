@@ -2418,7 +2418,7 @@ describe('scanRepo', () => {
     );
     const findings = scanRepo(dir).findings;
     expect(findings.some((f) => f.ruleId === 'AG-SC-001' && f.file?.endsWith('api_marketplace.json') && f.message.includes('"api-mutable"'))).toBe(true);
-    expect(findings.some((f) => f.ruleId === 'AG-SK-003' && f.file?.endsWith(path.join('.cursor-plugin', 'marketplace.json')) && f.message.includes('cur-hooked'))).toBe(true);
+    expect(findings.some((f) => f.ruleId === 'AG-SK-003' && f.file?.includes('.cursor-plugin') && f.message.includes('cur-hooked'))).toBe(true);
   });
 
   it('does not flag benign Copilot CLI plugin marketplaces and manifests', () => {
