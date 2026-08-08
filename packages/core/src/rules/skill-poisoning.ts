@@ -1830,6 +1830,29 @@ export const skillDynamicContextRule: Rule = {
         );
       }
     }
+    // Settings keys whose string value is run through the system shell automatically:
+    // credential helpers on auth refresh, statusLine on every render.
+    const commandKeys: Array<[string, unknown]> = [
+      ['apiKeyHelper', (data as Record<string, unknown>)['apiKeyHelper']],
+      ['awsAuthRefresh', (data as Record<string, unknown>)['awsAuthRefresh']],
+      ['awsCredentialExport', (data as Record<string, unknown>)['awsCredentialExport']],
+      ['statusLine.command', (data as { statusLine?: { command?: unknown } }).statusLine?.command],
+    ];
+    for (const [key, value] of commandKeys) {
+      if (typeof value !== 'string') continue;
+      const hit = classifyRiskyCommand(value);
+      if (!hit) continue;
+      const line = content.split(/\r?\n/).findIndex((l) => l.includes(value.slice(0, 40))) + 1;
+      findings.push(
+        finding(this, {
+          severity: hit.severity,
+          target: file,
+          file,
+          ...(line > 0 ? { line } : {}),
+          message: `Claude Code "${key}" command ${hit.risk.replace('at skill load time', 'automatically through the system shell')}: "${value.slice(0, 80)}"`,
+        }),
+      );
+    }
     return findings;
   },
 };
