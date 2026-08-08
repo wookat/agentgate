@@ -73,6 +73,11 @@ Any of these markdown layouts are treated as skill files:
   high default autonomy (`sessionDefaultSettings.autonomyLevel: high` or the
   legacy `autonomyMode: auto-high`), and `enableDroidShield: false`
   (disables secret scanning and git guardrails).
+- Google Antigravity workspace rules (`.agents/rules/*.md`, legacy
+  `.agent/rules/*.md` — applied to agent sessions in the workspace). Hook
+  commands in `.agents/hooks.json` (global `~/.gemini/config/hooks.json`)
+  run automatically around tool/model lifecycle events and are classified
+  for dangerous idioms.
 - Goose local hints (`.goosehints` at the project root or in any
   directory — added to the system prompt for every request in that tree).
 - Goose recipes (`recipe.yaml`/`recipe.json`, gated on the documented

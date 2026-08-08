@@ -8,7 +8,7 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */

@@ -135,6 +135,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('crush', path.join(homeDir, '.config', 'crush', 'crush.json'), 'crush-json');
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
+  // Google Antigravity — global MCP config shared by Antigravity 2.0/IDE/CLI
+  push('antigravity', path.join(homeDir, '.gemini', 'config', 'mcp_config.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
   // Zed — context_servers key inside settings.json (JSONC)
   if (platform === 'win32') {
@@ -171,6 +173,8 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'amazonq', path: path.join(projectDir, '.amazonq', 'default.json'), format: 'mcpServers-json' },
     ...amazonqAgentLocations(path.join(projectDir, '.amazonq', 'cli-agents')),
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
+    // Google Antigravity — workspace MCP config (`.agents/mcp_config.json`; remote servers use `serverUrl`)
+    { client: 'antigravity', path: path.join(projectDir, '.agents', 'mcp_config.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
     { client: 'crush', path: path.join(projectDir, '.crush.json'), format: 'crush-json' },

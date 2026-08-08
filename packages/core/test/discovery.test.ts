@@ -51,6 +51,7 @@ describe('knownConfigLocations', () => {
         'lmstudio',
         'junie',
         'factory',
+        'antigravity',
         'qoder',
         'amazonq',
         'copilot-cli',
@@ -453,6 +454,26 @@ describe('discoverConfigFiles', () => {
     const servers = found.flatMap((f) => parseConfigFile(f));
     expect(servers.map((s) => s.name).sort()).toEqual(['docs', 'linear']);
     expect(servers.find((s) => s.name === 'linear')?.url).toBe('https://mcp.linear.app/mcp');
+  });
+
+  it('finds Antigravity global and workspace configs, normalizing serverUrl', () => {
+    const project = path.join(dir, 'proj-antigravity');
+    fs.mkdirSync(path.join(dir, '.gemini', 'config'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.gemini', 'config', 'mcp_config.json'),
+      '{"mcpServers":{"sqlite":{"command":"node","args":["/usr/local/bin/sqlite-mcp-server.js"]}}}',
+    );
+    fs.mkdirSync(path.join(project, '.agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.agents', 'mcp_config.json'),
+      '{"mcpServers":{"remote":{"serverUrl":"https://api.example.com/mcp/","headers":{"Authorization":"Bearer TOKEN"}}}}',
+    );
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['antigravity', 'antigravity']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['remote', 'sqlite']);
+    expect(servers.find((s) => s.name === 'remote')?.url).toBe('https://api.example.com/mcp/');
   });
 
   it('finds .mcp.json bundled by nested Claude Code plugins', () => {
