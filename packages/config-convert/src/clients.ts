@@ -783,6 +783,84 @@ export const crush: ClientAdapter = {
   },
 };
 
+/** Goose (Block) — `~/.config/goose/config.yaml` (`%APPDATA%\Block\goose\config\config.yaml` on Windows); `extensions` maps name → { type: stdio|streamable_http|sse|builtin|..., cmd, args, envs, uri, headers, enabled }. Only the MCP types convert. */
+export const goose: ClientAdapter = {
+  id: "goose",
+  defaultPath: "~/.config/goose/config.yaml",
+  parse(content): ParseResult {
+    let data: unknown;
+    try {
+      data = YAML.parse(content);
+    } catch (e) {
+      throw new ConfigParseError("goose", `invalid YAML: ${(e as Error).message}`);
+    }
+    if (!isRecord(data)) throw new ConfigParseError("goose", "top level must be an object");
+    const warnings: string[] = [];
+    const extensions = data.extensions;
+    if (extensions !== undefined && !isRecord(extensions)) {
+      throw new ConfigParseError("goose", "extensions must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entryRaw] of Object.entries(extensions ?? {})) {
+      if (!isRecord(entryRaw)) {
+        warnings.push(`${name}: entry is not an object; dropped`);
+        continue;
+      }
+      const type = typeof entryRaw.type === "string" ? entryRaw.type : undefined;
+      if (type !== "stdio" && type !== "streamable_http" && type !== "sse") {
+        warnings.push(`${name}: goose ${type ?? "untyped"} extension is not an MCP server; skipped`);
+        continue;
+      }
+      const entry: Record<string, unknown> = {
+        ...entryRaw,
+        type: type === "streamable_http" ? "http" : type,
+        command: entryRaw.cmd,
+        env: entryRaw.envs,
+        url: entryRaw.uri,
+      };
+      const s = parseCommonEntry("goose", name, entry, warnings);
+      if (!s) continue;
+      if (entryRaw.enabled === false) s.enabled = false;
+      if (Array.isArray(entryRaw.available_tools) && entryRaw.available_tools.length) {
+        warnings.push(`${name}: goose available_tools filter cannot be represented in other clients; dropped`);
+      }
+      if (entryRaw.timeout !== undefined) {
+        warnings.push(`${name}: goose timeout cannot be represented in other clients; dropped`);
+      }
+      if (Array.isArray(entryRaw.env_keys) && entryRaw.env_keys.length) {
+        warnings.push(`${name}: goose env_keys (secret-store references) cannot be represented in other clients; dropped`);
+      }
+      servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const extensions: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.cwd) warnings.push(`${s.name}: goose does not support cwd; dropped`);
+      const entry: Record<string, unknown> = {
+        type: s.transport === "http" ? "streamable_http" : s.transport,
+        name: s.name,
+        enabled: s.enabled !== false,
+      };
+      if (s.transport === "sse") {
+        warnings.push(`${s.name}: goose keeps sse only for compatibility; consider a streamable_http endpoint`);
+      }
+      if (s.transport === "stdio") {
+        entry.cmd = s.command;
+        if (s.args?.length) entry.args = s.args;
+        if (s.env && Object.keys(s.env).length) entry.envs = s.env;
+      } else {
+        entry.uri = s.url;
+        if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
+      }
+      extensions[s.name] = entry;
+    }
+    return { content: YAML.stringify({ extensions }), warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -804,4 +882,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   amazonq,
   antigravity,
   crush,
+  goose,
 };
