@@ -1,5 +1,5 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
-import { COPILOT_EXTENSION_FILE, DEDICATED_COMMAND_SURFACE_FILE } from './skill-poisoning.js';
+import { COPILOT_EXTENSION_FILE, DEDICATED_COMMAND_SURFACE_FILE, parseGooseRecipeDoc } from './skill-poisoning.js';
 
 export { COPILOT_EXTENSION_FILE };
 
@@ -136,7 +136,12 @@ export const rceVectorsRule: Rule = {
       const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
-      const executable = (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file)) && !isCommented(m.index ?? 0);
+      // A goose-recipe-shaped YAML/JSON file carries prompt text, not commands a
+      // runner executes — a curl|sh string in its instructions is prose (the
+      // AG-SK rules cover the prompt surface), not a launch vector.
+      const isRecipeProse = /\.(ya?ml|json)$/i.test(file) && parseGooseRecipeDoc(file, rawContent) !== undefined;
+      const executable =
+        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file)) && !isRecipeProse && !isCommented(m.index ?? 0);
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
