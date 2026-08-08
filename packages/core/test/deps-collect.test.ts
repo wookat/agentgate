@@ -244,6 +244,36 @@ describe('collectDependencies remote specs', () => {
     expect(remoteSpecs.find((s) => s.name === 'yc-bench')!.context).toBe('project.optional-dependencies.bench');
   });
 
+  it('records Poetry table-form git/url dependencies as remoteSpecs', () => {
+    fs.writeFileSync(
+      path.join(dir, 'pyproject.toml'),
+      [
+        '[tool.poetry.dependencies]',
+        'python = "^3.11"',
+        'requests = "^2.0"',
+        'karateclub = { git = "https://github.com/acme/karateclub.git", branch = "master" }',
+        'pinned = { git = "https://github.com/acme/pinned.git", rev = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }',
+        'tagged = { git = "https://github.com/acme/tagged.git", tag = "v0.9.0" }',
+        'torch = { url = "https://download.example.org/whl/torch-1.12.1-cp310-linux_x86_64.whl" }',
+        'local = { path = "../local" }',
+        '',
+        '[tool.poetry.group.dev.dependencies]',
+        'pearl = { git = "https://github.com/acme/pearl.git" }',
+        'pytest = "^8.0"',
+      ].join('\n'),
+    );
+    const { refs, remoteSpecs } = collectDependencies(dir, { includeImports: false });
+    expect(refs.map((r) => r.name).sort()).toEqual(['local', 'pytest', 'requests']);
+    expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
+      'karateclub:git+https://github.com/acme/karateclub.git@master',
+      'pearl:git+https://github.com/acme/pearl.git',
+      'pinned:git+https://github.com/acme/pinned.git@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'tagged:git+https://github.com/acme/tagged.git@v0.9.0',
+      'torch:https://download.example.org/whl/torch-1.12.1-cp310-linux_x86_64.whl',
+    ]);
+    expect(remoteSpecs.find((s) => s.name === 'pearl')!.context).toBe('tool.poetry.group.dev.dependencies');
+  });
+
   it('handles extras, editable/egg, and bare-URL requirement forms', () => {
     fs.writeFileSync(
       path.join(dir, 'requirements.txt'),

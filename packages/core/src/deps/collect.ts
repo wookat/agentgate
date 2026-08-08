@@ -252,11 +252,34 @@ function refsFromPyproject(file: string, content: string, warnings: string[], re
   }
   const tool = data['tool'] as Record<string, unknown> | undefined;
   const poetry = tool?.['poetry'] as Record<string, unknown> | undefined;
+  const pushPoetryDep = (name: string, value: unknown, context: string): void => {
+    const remote = poetryRemoteSpec(value);
+    if (remote) remoteSpecs.push({ name, ecosystem: 'pypi', spec: remote, file, context });
+    else push(name, context);
+  };
   for (const section of ['dependencies', 'dev-dependencies'] as const) {
     const deps = poetry?.[section] as Record<string, unknown> | undefined;
-    for (const name of Object.keys(deps ?? {})) push(name, `tool.poetry.${section}`);
+    for (const [name, value] of Object.entries(deps ?? {})) pushPoetryDep(name, value, `tool.poetry.${section}`);
+  }
+  const poetryGroups = poetry?.['group'] as Record<string, unknown> | undefined;
+  for (const [group, table] of Object.entries(poetryGroups ?? {})) {
+    const deps = (table as Record<string, unknown> | null)?.['dependencies'] as Record<string, unknown> | undefined;
+    for (const [name, value] of Object.entries(deps ?? {})) {
+      pushPoetryDep(name, value, `tool.poetry.group.${group}.dependencies`);
+    }
   }
   return refs;
+}
+
+/** Poetry table-form remote source (`{ git = …, branch/tag/rev }` or `{ url = … }`) as a pip-style spec. */
+function poetryRemoteSpec(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const dep = value as Record<string, unknown>;
+  if (typeof dep['git'] === 'string') {
+    const ref = [dep['rev'], dep['tag'], dep['branch']].find((r): r is string => typeof r === 'string');
+    return `git+${dep['git']}${ref ? `@${ref}` : ''}`;
+  }
+  return typeof dep['url'] === 'string' ? dep['url'] : undefined;
 }
 
 /**
