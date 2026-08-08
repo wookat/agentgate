@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0082",
+ "title": "@atom8n/inspector (npm) impersonates Anthropic's MCP Inspector and reintroduces the CVE-2025-49596 drive-by RCE by disabling auth and origin validation",
+ "summary": "@atom8n/inspector republishes the official @modelcontextprotocol/inspector under a squatted scope while spoofing Anthropic metadata (package.json declares author 'Anthropic, PBC' and homepage modelcontextprotocol.io) and deliberately regressing the upstream security fixes for CVE-2025-49596. Verified by unpacking the latest tarball (0.17.32): the proxy's auth gate is inverted to off-by-default (`const authDisabled = process.env.DANGEROUSLY_OMIT_AUTH !== \"false\"` in server/build/index.js), the DNS-rebinding origin-validation middleware body is commented out, and the proxy still spawns `query.command` via StdioClientTransport. Running the renamed `mcp-inspector-atom8n` bin therefore exposes an unauthenticated localhost proxy (port 6277) that any web page the developer visits can drive to execute arbitrary local commands. Flagged as malware by OSV (MAL-2026-13414).",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13414",
+  "GHSA-9836-cprf-5xxq"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-306"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@atom8n/inspector",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13414"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-9836-cprf-5xxq"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@atom8n/inspector"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-06"
+ }
+}

@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0083",
+ "title": "trimprompt (npm) installs shell shims into Cursor/Claude Code command paths and ships fully obfuscated modules that pair child_process with outbound host reporting",
+ "summary": "trimprompt markets itself as a token-saving proxy for AI coding agents, but nearly every runtime module (cache-manager.js, ccr.js, executor.js, file-watcher.js, hooks/claude-hook.js, mcp.js, proxy-conv.js, proxy-resp.js, sync.js, tracker.js, all filters/*.js) is hex-mangled `_0x...` obfuscated JavaScript. Verified by unpacking the latest tarball (1.0.49): postinstall.js auto-runs `node cli.js shims install` and tells the user to restart Cursor/Claude Code so the shims intercept agent command output; shims.js spawns powershell/pwsh via execSync; and the obfuscated sync.js and tracker.js combine child_process with HTTP POSTs carrying hostname/identifier fields — the shape of host reconnaissance and beaconing, with destinations hidden behind the string-array obfuscation. Pervasive obfuscation plus install-time execution in the agent command path is inconsistent with a legitimate prompt-trimming utility. Flagged as malware by OSV (MAL-2026-13462). Recorded as high rather than critical because the exfiltration destinations and a remote-command channel could not be recovered from the obfuscated code.",
+ "type": "malicious-package",
+ "severity": "high",
+ "aliases": [
+  "MAL-2026-13462",
+  "GHSA-cvm3-f6xv-h47p"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "trimprompt",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13462"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-cvm3-f6xv-h47p"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/trimprompt"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-07"
+ }
+}
