@@ -61,7 +61,7 @@ this before installation.
 ## CI usage
 
 ```yaml
-- uses: wookat/agentgate/packages/action@v0.65.2
+- uses: wookat/agentgate/packages/action@v0.65.3
   with:
     command: deps
 ```

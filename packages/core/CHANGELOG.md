@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.65.3
+
+### Patch Changes
+
+- 319a411: Extend the round-277 duplicate suppression to Claude Code settings: `.claude/settings.json` / `settings.local.json` hook and command keys are named AG-SK-003 surfaces, so the generic AG-RC-001 curl|sh text warning there only duplicated the dedicated finding (observed in the wild: a settings hook installing deno via `curl | sh` reported twice).
+
 ## 0.65.2
 
 ### Patch Changes
