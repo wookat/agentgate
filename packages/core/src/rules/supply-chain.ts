@@ -69,8 +69,8 @@ function isPinned(spec: string): boolean {
   return /^\d+\.\d+\.\d+([-+][\w.]+)?$/.test(version);
 }
 
-/** OpenCode config files; npm packages in their `plugin` array are auto-installed by Bun and executed at startup. */
-export const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+/** OpenCode config files (plus Kilo CLI's `kilo.json(c)` — same schema); npm packages in their `plugin` array are auto-installed by Bun and executed at startup. */
+export const OPENCODE_CONFIG_FILE = /(^|\/)(opencode|kilo)\.jsonc?$/i;
 
 /** The npm plugin specs in an OpenCode config's `plugin` array (local file paths and git-URL specs excluded). */
 function opencodeNpmPluginSpecs(content: string): string[] {
@@ -92,7 +92,7 @@ export function opencodePluginRefs(file: string, content: string): (DependencyRe
   if (!OPENCODE_CONFIG_FILE.test(file)) return [];
   return opencodeNpmPluginSpecs(content).map((spec) => {
     const { name, version } = splitSpec(spec);
-    return { name, version, ecosystem: 'npm', origin: 'manifest', file, context: `OpenCode plugin "${spec}"` };
+    return { name, version, ecosystem: 'npm', origin: 'manifest', file, context: `${/(^|\/)kilo\.jsonc?$/i.test(file) ? 'Kilo CLI' : 'OpenCode'} plugin "${spec}"` };
   });
 }
 
@@ -306,6 +306,7 @@ export const supplyChainRule: Rule = {
     if (FACTORY_SETTINGS_FILE.test(file)) return checkClaudeMarketplaces(this, file, content, 'Factory Droid');
     if (MARKETPLACE_CATALOG_FILE.test(file)) return checkMarketplaceCatalog(this, file, content);
     if (!OPENCODE_CONFIG_FILE.test(file)) return [];
+    const engine = /(^|\/)kilo\.jsonc?$/i.test(file) ? 'Kilo CLI' : 'OpenCode';
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const plugins = (data as { plugin?: unknown }).plugin;
@@ -320,7 +321,7 @@ export const supplyChainRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `OpenCode instruction "${entry.slice(0, 100)}" is fetched from a remote URL and injected into the system prompt on every session — the host can change the content at any time (remote prompt injection / rug-pull). Vendor the file into the repo instead`,
+          message: `${engine} instruction "${entry.slice(0, 100)}" is fetched from a remote URL and injected into the system prompt on every session — the host can change the content at any time (remote prompt injection / rug-pull). Vendor the file into the repo instead`,
         }),
       );
     }
@@ -338,7 +339,7 @@ export const supplyChainRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `OpenCode plugin "${spec.slice(0, 100)}" is fetched from a git URL and executed at startup without a commit pin — every launch fetches whatever the branch points at (rug-pull / compromised-release exposure). Pin a commit (e.g. …#<sha>)`,
+            message: `${engine} plugin "${spec.slice(0, 100)}" is fetched from a git URL and executed at startup without a commit pin — every launch fetches whatever the branch points at (rug-pull / compromised-release exposure). Pin a commit (e.g. …#<sha>)`,
           }),
         );
         continue;
@@ -350,7 +351,7 @@ export const supplyChainRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `OpenCode plugin "${spec}" is auto-installed from npm and executed at startup without a pinned version — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${spec}@1.2.3)`,
+          message: `${engine} plugin "${spec}" is auto-installed from npm and executed at startup without a pinned version — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${spec}@1.2.3)`,
         }),
       );
     }
