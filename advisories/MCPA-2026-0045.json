@@ -1,0 +1,44 @@
+{
+  "id": "MCPA-2026-0045",
+  "title": "Serena unauthenticated dashboard DNS rebinding to memory poisoning and RCE (CVE-2026-49471)",
+  "summary": "Serena's built-in web dashboard exposes an unauthenticated Flask API on a fixed, predictable port (TCP 24282) with no authentication, CSRF protection, or Host header validation. A DNS rebinding attack lets any webpage the operator visits reach the API, write arbitrary content to the agent's persistent memory store (poisoning future agent sessions), and escalate to code execution. Affects the serena-agent PyPI package; fixed in 1.5.2.",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-49471",
+    "GHSA-37h2-6p4f-mp3q"
+  ],
+  "cwe": [
+    "CWE-306",
+    "CWE-352"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "serena-agent",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "1.5.2"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-37h2-6p4f-mp3q"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/oraios/serena/security/advisories/GHSA-37h2-6p4f-mp3q"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-49471"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-08"
+  }
+}

@@ -1271,5 +1271,294 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0045",
+    "title": "Serena unauthenticated dashboard DNS rebinding to memory poisoning and RCE (CVE-2026-49471)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-08",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "serena-agent",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.5.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0046",
+    "title": "Prompty TypeScript loader executes JavaScript frontmatter in .prompty files (CVE-2026-53597)",
+    "type": "rce-vectors",
+    "severity": "high",
+    "published": "2026-07-17",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@prompty/core",
+        "ranges": [
+          {
+            "introduced": "2.0.0-alpha.1",
+            "fixed": "2.0.0-beta.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0047",
+    "title": "Prompty file-reference expansion allows arbitrary file read (CVE-2026-53598)",
+    "type": "path-traversal",
+    "severity": "high",
+    "published": "2026-07-17",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "prompty",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.0.0b2"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "@prompty/core",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.0.0-beta.2"
+          }
+        ]
+      },
+      {
+        "ecosystem": "nuget",
+        "name": "Prompty.Core",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.0.0-beta.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0048",
+    "title": "Flowise unauthenticated OAuth2 token refresh endpoint leaks access tokens (CVE-2026-70478)",
+    "type": "credential-leak",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0049",
+    "title": "Flowise CSV Agent prompt-injection remote code execution (CVE-2026-70477)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0050",
+    "title": "Flowise Pyodide validator Unicode homoglyph bypass leads to RCE (CVE-2026-70470)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0051",
+    "title": "Flowise RCE via SQLite Record Manager node (CVE-2026-69259)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0052",
+    "title": "Flowise RCE via TypeORM DataSource configuration (CVE-2026-69251)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0053",
+    "title": "Flowise CSVAgent remote code execution (CVE-2026-69256)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0054",
+    "title": "Flowise RCE via NodeVM sandbox escape through nodeVMOptions override (CVE-2026-69254)",
+    "type": "rce-vectors",
+    "severity": "critical",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "flowise-components",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0055",
+    "title": "Flowise unauthenticated text-to-speech endpoint abuses private chatflow TTS credentials (GHSA-8gj2-2cvc-6xx7)",
+    "type": "auth-missing",
+    "severity": "medium",
+    "published": "2026-08-04",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "3.1.4"
+          }
+        ]
+      }
+    ]
   }
 ];

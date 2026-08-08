@@ -1,0 +1,43 @@
+{
+  "id": "MCPA-2026-0046",
+  "title": "Prompty TypeScript loader executes JavaScript frontmatter in .prompty files (CVE-2026-53597)",
+  "summary": "The TypeScript Prompty loader (@prompty/core) used gray-matter without disabling executable frontmatter engines, so a .prompty file with a ---js frontmatter block executes arbitrary JavaScript during prompt loading. Any application loading attacker-controlled prompt assets is exposed. Affects the @prompty/core npm 2.0 prerelease line (>= 2.0.0-alpha.1); fixed in 2.0.0-beta.3.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-53597",
+    "GHSA-c4gh-rv8h-q9vw"
+  ],
+  "cwe": [
+    "CWE-94"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@prompty/core",
+      "ranges": [
+        {
+          "introduced": "2.0.0-alpha.1",
+          "fixed": "2.0.0-beta.3"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-c4gh-rv8h-q9vw"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/microsoft/prompty/security/advisories/GHSA-c4gh-rv8h-q9vw"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53597"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-17"
+  }
+}

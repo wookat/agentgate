@@ -1,0 +1,64 @@
+{
+  "id": "MCPA-2026-0047",
+  "title": "Prompty file-reference expansion allows arbitrary file read (CVE-2026-53598)",
+  "summary": "Prompty loaders expanded ${file:...} references in .prompty frontmatter without confining the resolved path, so an attacker-controlled prompt file can use path traversal or absolute paths to read any file accessible to the host process. Affects PyPI prompty (<= 2.0.0b1, fixed 2.0.0b2), npm @prompty/core (<= 2.0.0-beta.1, fixed 2.0.0-beta.2), and NuGet Prompty.Core (<= 2.0.0-beta.1, fixed 2.0.0-beta.2); a Rust crate is also affected (outside this database's ecosystems).",
+  "type": "path-traversal",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-53598",
+    "GHSA-wxhm-2mq7-7697"
+  ],
+  "cwe": [
+    "CWE-22",
+    "CWE-200"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "prompty",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.0.0b2"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@prompty/core",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.0.0-beta.2"
+        }
+      ]
+    },
+    {
+      "ecosystem": "nuget",
+      "name": "Prompty.Core",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.0.0-beta.2"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-wxhm-2mq7-7697"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/microsoft/prompty/security/advisories/GHSA-wxhm-2mq7-7697"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53598"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-17"
+  }
+}
