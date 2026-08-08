@@ -135,6 +135,28 @@ describe('agentgate scan', () => {
     expect(clean).not.toContain('…');
   });
 
+  it('shows the source config file for server-scoped findings in the table', async () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-src-'));
+    const server = { command: 'npx', args: ['-y', 'unpinned-server@latest'] };
+    for (const rel of ['.roo/mcp.json', '.kilocode/mcp.json']) {
+      const file = path.join(repo, rel);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ mcpServers: { dup: server } }));
+    }
+    const res = await run(['scan', repo, '--fail-on', 'never']);
+    const clean = res.stdout
+      .split(String.fromCharCode(27))
+      .map((s, i) => (i === 0 ? s : s.replace(/^\[[0-9;]*m/, '')))
+      .join('');
+    const targetColumn = clean
+      .split('\n')
+      .map((l) => l.split('│')[4] ?? '')
+      .join('')
+      .replace(/\s/g, '');
+    expect(targetColumn).toContain('.roo/mcp.json');
+    expect(targetColumn).toContain('.kilocode/mcp.json');
+  });
+
   it('locks and gates skill files with --skills (lockfile v2)', async () => {
     const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'ag-skills-'));
     const skill = path.join(repo, '.claude', 'skills', 'deploy');
