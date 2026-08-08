@@ -1,5 +1,14 @@
 # mcp-agentgate-core
 
+## 0.54.0
+
+### Minor Changes
+
+- 474dfec: Goose subrecipe coverage: recipe scanning (AG-SK-001 injection/hidden Unicode, AG-SK-003 inline_python classification, AG-SC-002/003 inline_python dependency advisory checks) now gates on the documented recipe shape (title + description + instructions|prompt) for any YAML/JSON file, not just files named `recipe.yaml`/`recipe.json` — covering subrecipes referenced from a main recipe's `sub_recipes[].path` under arbitrary names (e.g. `subrecipes/security-analysis.yaml`).
+- bc658b2: Goose subrecipe extension discovery: `sub_recipes[].path` references in the project-root recipe are now followed (resolved relative to the recipe's directory, per goose's own resolution; references outside the project or missing files are skipped), and the referenced subrecipes' `stdio`/`streamable_http`/`sse` extensions join the discovered server inventory for the full config rule set and advisory checks.
+- 978dcc5: Goose recipe-library discovery: nested `recipe.yaml`/`recipe.json` files (any directory up to depth 4, skipping node_modules/dot-dirs) now get extension discovery like the project-root recipe, and each recipe's `sub_recipes[].path` references resolve relative to that recipe's own directory (goose's documented resolution) into subrecipe extension discovery.
+- e6263a1: Crush (Charm) client support: discover MCP servers in the legacy JSON config (`~/.config/crush/crush.json`, project `.crush.json`/`crush.json` — JSONC `mcp` map with stdio/http/sse entries) and run the full config rule set plus advisory cross-checks on them; classify dangerous `hooks` event commands (AG-SK-003); flag risky `permissions.allowed_tools` pre-approvals (`bash` high, `edit`/`write` medium) (AG-SK-002).
+
 ## 0.53.0
 
 ### Minor Changes
