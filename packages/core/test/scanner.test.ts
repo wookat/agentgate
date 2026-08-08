@@ -85,6 +85,22 @@ describe('scanRepo', () => {
     expect(hits.some((f) => f.file.includes('tour'))).toBe(false);
   });
 
+  it('does not treat quoted-phrase or selective-presentation "do not tell/show the user" as concealment (AG-SK-001)', () => {
+    fs.mkdirSync(path.join(dir, '.claude', 'skills', 'phrase'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'skills', 'phrase', 'SKILL.md'),
+      '# Reload\n\nChanges apply immediately. Do not tell the user "restart to apply."\n',
+    );
+    fs.mkdirSync(path.join(dir, '.claude', 'skills', 'summary'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.claude', 'skills', 'summary', 'SKILL.md'),
+      '# Trends\n\nDo not show the user the helper JSON output; only the human-readable trend line.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-001' && f.message.includes('concealment'));
+    expect(hits.some((f) => f.file.includes('phrase'))).toBe(false);
+    expect(hits.some((f) => f.file.includes('summary'))).toBe(false);
+  });
+
   it('downgrades injection phrases quoted as defensive examples in double quotes (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'guard'), { recursive: true });
     fs.writeFileSync(
