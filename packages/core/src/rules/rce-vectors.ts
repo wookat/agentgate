@@ -1,5 +1,7 @@
 import { Rule, finding, toolText, verbAlt } from './rule.js';
-import { DEDICATED_COMMAND_SURFACE_FILE } from './skill-poisoning.js';
+import { COPILOT_EXTENSION_FILE, DEDICATED_COMMAND_SURFACE_FILE } from './skill-poisoning.js';
+
+export { COPILOT_EXTENSION_FILE };
 
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
 // The span may only cross a newline via a backslash continuation, so a pipe in a
@@ -34,14 +36,6 @@ const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpSer
  * not.
  */
 const STARTUP_PLUGIN_FILE = /(^|\/)\.(opencode|kilo(code)?)\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
-
-/**
- * Copilot CLI project extensions: each `.github/extensions/<name>/extension.{mjs,cjs,js}`
- * is forked as a Node child process on session start and registers tools/hooks
- * with the agent. Plugins ship extensions the same way under a
- * `com.github.copilot/extensions/` directory.
- */
-export const COPILOT_EXTENSION_FILE = /(^|\/)(\.github|com\.github\.copilot)\/extensions\/[^/]+\/extension\.(mjs|cjs|js)$/i;
 
 /** Surface label for an auto-executed plugin/extension path, for finding messages. */
 function startupSurfaceLabel(file: string): string {
