@@ -1137,6 +1137,39 @@ export function extractAmazonqHookCommands(hooks: unknown): string[] {
  */
 export const GOOSE_RECIPE_FILE = /(^|\/)recipe\.(ya?ml|json)$/i;
 
+/**
+ * Any YAML/JSON file can be a Goose recipe: subrecipes are referenced from a
+ * main recipe's `sub_recipes[].path` under arbitrary names (e.g.
+ * `subrecipes/security-analysis.yaml`), so gate on the documented recipe shape
+ * (title + description + instructions|prompt) instead of the filename.
+ */
+export const GOOSE_RECIPE_CANDIDATE = /\.(ya?ml|json)$/i;
+
+export interface GooseRecipeDoc {
+  title: string;
+  description: string;
+  instructions?: unknown;
+  prompt?: unknown;
+  activities?: unknown;
+  extensions?: unknown;
+}
+
+/** Parse a file as a Goose recipe; undefined when it is not shaped like one. */
+export function parseGooseRecipeDoc(file: string, content: string): GooseRecipeDoc | undefined {
+  if (!GOOSE_RECIPE_CANDIDATE.test(file)) return undefined;
+  let doc: unknown;
+  try {
+    doc = parseYaml(content);
+  } catch {
+    return undefined;
+  }
+  if (typeof doc !== 'object' || doc === null) return undefined;
+  const recipe = doc as Record<string, unknown>;
+  if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return undefined;
+  if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return undefined;
+  return recipe as unknown as GooseRecipeDoc;
+}
+
 /** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
 const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
 
@@ -1178,17 +1211,8 @@ export const skillDynamicContextRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    if (GOOSE_RECIPE_FILE.test(file)) {
-      let doc: unknown;
-      try {
-        doc = parseYaml(content);
-      } catch {
-        return [];
-      }
-      if (typeof doc !== 'object' || doc === null) return [];
-      const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; extensions?: unknown };
-      if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
-      if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+    const recipe = parseGooseRecipeDoc(file, content);
+    if (recipe) {
       const findings = [];
       for (const entryRaw of Array.isArray(recipe.extensions) ? recipe.extensions : []) {
         if (typeof entryRaw !== 'object' || entryRaw === null) continue;
@@ -1618,17 +1642,8 @@ export const skillPoisoningRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    if (GOOSE_RECIPE_FILE.test(file)) {
-      let doc: unknown;
-      try {
-        doc = parseYaml(content);
-      } catch {
-        return [];
-      }
-      if (typeof doc !== 'object' || doc === null) return [];
-      const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; activities?: unknown };
-      if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
-      if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+    const recipe = parseGooseRecipeDoc(file, content);
+    if (recipe) {
       const texts: Array<{ field: string; text: string }> = [];
       if (typeof recipe.instructions === 'string') texts.push({ field: 'instructions', text: recipe.instructions });
       if (typeof recipe.prompt === 'string') texts.push({ field: 'prompt', text: recipe.prompt });

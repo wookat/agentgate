@@ -6,7 +6,7 @@ import {
   Severity,
   checkIncludeToolsCoverage,
   fetchLiveMcpaAdvisories,
-  GOOSE_RECIPE_FILE,
+  GOOSE_RECIPE_CANDIDATE,
   gooseRecipeDependencyRefs,
   matchMcpaAdvisories,
   MARKETPLACE_CATALOG_FILE,
@@ -112,7 +112,7 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   }
   // Goose recipe inline_python dependencies are installed by uvx and imported
   // when the recipe runs, so they get the same known-malware advisory checks.
-  for (const file of scannedFiles.filter((f) => GOOSE_RECIPE_FILE.test(f.split(path.sep).join('/')))) {
+  for (const file of scannedFiles.filter((f) => GOOSE_RECIPE_CANDIDATE.test(f.split(path.sep).join('/')))) {
     try {
       const rel = path.relative(projectDir, file).split(path.sep).join('/');
       pkgRefs.push(...gooseRecipeDependencyRefs(rel, fs.readFileSync(file, 'utf8')));

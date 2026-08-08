@@ -1,8 +1,7 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
-import { parse as parseYaml } from 'yaml';
-import { COPILOT_SETTINGS_FILE, GOOSE_RECIPE_FILE, parseJsonc } from './skill-poisoning.js';
+import { COPILOT_SETTINGS_FILE, parseGooseRecipeDoc, parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
 const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
@@ -104,17 +103,8 @@ export function opencodePluginRefs(file: string, content: string): (DependencyRe
  * on the documented recipe shape since the filename is generic.
  */
 export function gooseRecipeDependencyRefs(file: string, content: string): (DependencyRef & { version?: string })[] {
-  if (!GOOSE_RECIPE_FILE.test(file)) return [];
-  let doc: unknown;
-  try {
-    doc = parseYaml(content);
-  } catch {
-    return [];
-  }
-  if (typeof doc !== 'object' || doc === null) return [];
-  const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; extensions?: unknown };
-  if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
-  if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+  const recipe = parseGooseRecipeDoc(file, content);
+  if (!recipe) return [];
   const refs: (DependencyRef & { version?: string })[] = [];
   for (const entryRaw of Array.isArray(recipe.extensions) ? recipe.extensions : []) {
     if (typeof entryRaw !== 'object' || entryRaw === null) continue;
