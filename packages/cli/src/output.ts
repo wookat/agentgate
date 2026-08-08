@@ -72,39 +72,63 @@ function escapeAnnotationProp(s: string): string {
   return escapeAnnotation(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
 }
 
+/** GitHub renders at most this many annotations per level (error/warning/notice) per step; extras are dropped silently. */
+const ANNOTATIONS_PER_LEVEL = 10;
+
 /**
  * GitHub Actions workflow-command annotations (`::error file=…,line=…::msg`),
- * one per finding, so findings surface inline on the PR diff. Emitted only
- * when running under GitHub Actions.
+ * so findings surface inline on the PR diff. Emitted only when running under
+ * GitHub Actions. Capped at 10 per level (GitHub's per-step display limit) in
+ * severity order, with a summary annotation when findings were left out.
  */
 export function renderGitHubAnnotations(findings: Finding[]): string {
-  return sortFindings(findings)
-    .map((f) => {
-      const level = ANNOTATION_LEVEL[f.severity];
-      const props = [
-        ...(f.file ? [`file=${escapeAnnotationProp(f.file)}`] : []),
-        ...(f.line ? [`line=${f.line}`] : []),
-        `title=${escapeAnnotationProp(`agentgate ${f.ruleId} (${f.severity})`)}`,
-      ].join(',');
-      return `::${level} ${props}::${escapeAnnotation(`${f.target}: ${f.message}`)}`;
-    })
-    .join('\n');
+  const perLevel: Record<'error' | 'warning' | 'notice', number> = { error: 0, warning: 0, notice: 0 };
+  const lines: string[] = [];
+  let dropped = 0;
+  for (const f of sortFindings(findings)) {
+    const level = ANNOTATION_LEVEL[f.severity];
+    if (perLevel[level] >= ANNOTATIONS_PER_LEVEL) {
+      dropped += 1;
+      continue;
+    }
+    perLevel[level] += 1;
+    const props = [
+      ...(f.file ? [`file=${escapeAnnotationProp(f.file)}`] : []),
+      ...(f.line ? [`line=${f.line}`] : []),
+      `title=${escapeAnnotationProp(`agentgate ${f.ruleId} (${f.severity})`)}`,
+    ].join(',');
+    lines.push(`::${level} ${props}::${escapeAnnotation(`${f.target}: ${f.message}`)}`);
+  }
+  if (dropped > 0) {
+    const level = (['notice', 'warning', 'error'] as const).find((l) => perLevel[l] < ANNOTATIONS_PER_LEVEL) ?? 'notice';
+    lines.push(
+      `::${level} title=${escapeAnnotationProp('agentgate')}::${escapeAnnotation(`${dropped} more finding(s) not annotated (GitHub shows at most ${ANNOTATIONS_PER_LEVEL} annotations per level per step); see the step log or a report file for the full list`)}`,
+    );
+  }
+  return lines.join('\n');
 }
 
 /**
  * GitHub Actions annotations for lockfile drift entries, one `::error` per
  * entry. Skill drift entries carry the file path so they land on the PR diff.
+ * Capped like findings annotations; extras are summarized.
  */
 export function renderDriftAnnotations(entries: DriftEntry[]): string {
-  return entries
+  const lines = entries
+    .slice(0, ANNOTATIONS_PER_LEVEL)
     .map((e) => {
       const props = [
         ...(e.file ? [`file=${escapeAnnotationProp(e.file)}`] : []),
         `title=${escapeAnnotationProp(`agentgate drift (${e.kind})`)}`,
       ].join(',');
       return `::error ${props}::${escapeAnnotation(e.detail)}`;
-    })
-    .join('\n');
+    });
+  if (entries.length > ANNOTATIONS_PER_LEVEL) {
+    lines.push(
+      `::notice title=${escapeAnnotationProp('agentgate')}::${escapeAnnotation(`${entries.length - ANNOTATIONS_PER_LEVEL} more drift entries not annotated (GitHub shows at most ${ANNOTATIONS_PER_LEVEL} annotations per level per step); see the step log for the full list`)}`,
+    );
+  }
+  return lines.join('\n');
 }
 
 export function isGitHubActions(env = process.env): boolean {
