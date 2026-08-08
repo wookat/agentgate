@@ -261,6 +261,12 @@ describe('supply-chain', () => {
   it('flags unpinned docker images', () => {
     const findings = supplyChainRule.checkServer!(server({ command: 'docker', args: ['run', '-i', 'ghcr.io/x/mcp:latest'] }));
     expect(findings).toHaveLength(1);
+    expect(supplyChainRule.checkServer!(server({ command: 'docker', args: ['container', 'run', 'mcp/playwright'] }))).toHaveLength(1);
+  });
+
+  it('does not treat docker CLI plugin subcommands as image runs', () => {
+    expect(supplyChainRule.checkServer!(server({ command: 'docker', args: ['mcp', 'gateway', 'run', '--servers=context7'] }))).toHaveLength(0);
+    expect(supplyChainRule.checkServer!(server({ command: 'docker', args: ['compose', 'run', 'svc'] }))).toHaveLength(0);
   });
 
   it('serverPackageRef extracts the launched registry package', () => {

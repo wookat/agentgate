@@ -281,9 +281,13 @@ export const supplyChainRule: Rule = {
     }
     // docker without digest pinning
     const base = (server.command ?? '').split(/[\\/]/).pop() ?? '';
-    if (base === 'docker' && args.includes('run')) {
-      const image = args.filter((a) => !a.startsWith('-')).at(-1);
-      if (image && !image.includes('@sha256:') && (image.endsWith(':latest') || !image.includes(':'))) {
+    const positional = args.filter((a) => !a.startsWith('-'));
+    // Only the `docker run` / `docker container run` forms take an image; CLI
+    // plugins like `docker mcp gateway run` don't (their last word is not an image).
+    const isDockerRun = positional[0] === 'run' || (positional[0] === 'container' && positional[1] === 'run');
+    if (base === 'docker' && isDockerRun) {
+      const image = positional.at(-1);
+      if (image && image !== 'run' && !image.includes('@sha256:') && (image.endsWith(':latest') || !image.includes(':'))) {
         findings.push(
           finding(this, {
             severity: 'medium',
