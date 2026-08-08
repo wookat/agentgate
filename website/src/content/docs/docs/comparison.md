@@ -9,7 +9,7 @@ when a claim is stale or we can't verify something, we say so.
 
 *Last verified: 2026-08-08 against snyk-agent-scan 0.5.16 (formerly
 mcp-scan), thynkQ mcp-scan 2.0.2 (npm), socket CLI 1.1.155, osv-scanner
-v2.5.0.*
+v2.5.0, mcp-observatory 1.36.4.*
 
 ## Where AgentGate is different
 
@@ -41,6 +41,29 @@ Honesty cuts both ways:
   npm/PyPI manifests.
 - **snyk-agent-scan** ships runtime guardrails (`guard` hooks) that
   intercept agent traffic live; AgentGate is scan-time only.
+- **mcp-observatory** does live server health monitoring — scoring, trend
+  history, cassette replay, `watch` alerts — that AgentGate has no
+  equivalent for. If you operate MCP servers, it is a useful ops companion.
+
+## A note on @kryptosai/mcp-observatory
+
+`@kryptosai/mcp-observatory` (v1.36.4, verified by real run 2026-08-08) is
+the closest npm-native overlap we have found: it discovers agent configs
+across ten clients, records tool-schema lock files, and diffs runs for
+schema drift. The differences we measured on our shared fixture:
+
+- Its `scan` **starts every configured server by default** (a live stdio
+  session per server); AgentGate is static by default and `--live` is
+  opt-in with consent. On our fixture it launched `mcp-echarts@0.8.1` — a
+  version publicly known to be compromised (Mini Shai-Hulud,
+  [MCPA-2026-0066](/advisories/mcpa-2026-0066/)) — with **no malware or
+  advisory warning**; its checks are runtime-profile and schema-quality
+  focused. AgentGate flags that exact version critical offline.
+- No skill/instruction-file scanning: a poisoned `SKILL.md` next to the
+  config is never read.
+- Its lock/drift covers live tool schemas only; config files themselves are
+  not pinned, and its `audit` requires a proprietary
+  `mcp-observatory.target.json` rather than reading agent configs.
 
 ## A note on the npm `mcp-scan` (thynkQ)
 
