@@ -1887,6 +1887,23 @@ describe('scanRepo', () => {
     expect(hits[1]?.message).toContain('@my-org/custom-plugin');
   });
 
+  it('flags remote-URL OpenCode instructions (AG-SC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'opencode.json'),
+      JSON.stringify(
+        {
+          $schema: 'https://opencode.ai/config.json',
+          instructions: ['https://example.com/team-standards.md', 'docs/style.md', '.cursor/rules/*.md'],
+        },
+        null,
+        2,
+      ),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
+    expect(hits.map((f) => f.severity)).toEqual(['high']);
+    expect(hits[0]?.message).toContain('https://example.com/team-standards.md');
+  });
+
   it('flags Claude Code plugins auto-enabled from mutable marketplaces (AG-SC-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude'), { recursive: true });
     fs.writeFileSync(
