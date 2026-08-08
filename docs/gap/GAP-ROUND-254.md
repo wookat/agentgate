@@ -52,6 +52,16 @@ real `tools: bash|write|edit: true` grant that was previously invisible:
 Non-risky tool grants (`read`, `grep`, `glob`, MCP tool names outside the
 risky set) and `false` values stay quiet — 0 false positives observed.
 
+## opencode.json coverage (same normalization)
+
+`v1/config/config.ts`/`migrate.ts` apply the identical `tools` → permission
+normalization to opencode.json, both top-level and per-agent
+(`normalizeAction` folds `write`/`patch` into `edit`). The config-side
+AG-SK-002 check now runs the same normalization. Corpus: the only wild
+opencode.json `tools` maps found (d-o-hub/rust-self-learning-memory) grant
+scoped MCP tool names (`memory-mcp_*`), not risky built-ins — correctly
+quiet, 0 corpus delta from this part.
+
 ## State
 
-Tests 428 → 430 (core 358). Self-scan 21 findings unchanged.
+Tests 428 → 431 (core 359). Self-scan 21 findings unchanged.

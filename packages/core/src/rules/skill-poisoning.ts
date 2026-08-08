@@ -160,12 +160,12 @@ function normalizeOpencodeAgentPermission(data: unknown): unknown {
 
 /** Collect the permission blocks in an OpenCode config: top-level and per-agent. */
 function opencodePermissionBlocks(data: object): { scope: string; permission: unknown }[] {
-  const out: { scope: string; permission: unknown }[] = [{ scope: 'permission', permission: (data as { permission?: unknown }).permission }];
+  const out: { scope: string; permission: unknown }[] = [{ scope: 'permission', permission: normalizeOpencodeAgentPermission(data) }];
   const agents = (data as { agent?: unknown }).agent;
   if (typeof agents === 'object' && agents !== null) {
     for (const [name, agent] of Object.entries(agents)) {
-      if (typeof agent === 'object' && agent !== null && 'permission' in agent) {
-        out.push({ scope: `agent.${name}.permission`, permission: (agent as { permission?: unknown }).permission });
+      if (typeof agent === 'object' && agent !== null && ('permission' in agent || 'tools' in agent)) {
+        out.push({ scope: `agent.${name}.permission`, permission: normalizeOpencodeAgentPermission(agent) });
       }
     }
   }
