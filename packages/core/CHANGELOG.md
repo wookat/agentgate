@@ -1,5 +1,13 @@
 # mcp-agentgate-core
 
+## 0.67.2
+
+### Patch Changes
+
+- c59e1d9: `agentgate deps` AG-DP-007 precision (wild-corpus sweep): also recognizes extras (`name[extra] @ url`), editable (`-e …#egg=name`), and bare-URL requirement lines (name from `#egg=` or the repo/archive path); commit-addressed forge archives (`…/archive/<40-char-sha>.zip`) are now exempt like SHA-pinned git specs.
+- 2b225bf: `agentgate deps` extends AG-DP-007 to Poetry table-form dependencies: `{ git = "…", branch/tag/rev = "…" }` entries in `[tool.poetry.dependencies]`, `[tool.poetry.dev-dependencies]`, and `[tool.poetry.group.<g>.dependencies]` are classified like other remote specifiers (unpinned git ref medium, full-SHA `rev` exempt), `{ url = "…" }` entries are flagged as non-registry archive URLs (high, now including direct `.whl` wheel URLs), and git-only dependency names are no longer sent to PyPI registry lookup.
+- e942cd4: `agentgate deps` extends AG-DP-007 to uv source overrides: `[tool.uv.sources]` entries that redirect a declared dependency to a git or URL source are now classified like other remote specifiers (unpinned/branch/tag git ref medium, full-SHA `rev` exempt, non-registry archive/wheel URL high), and redirected names are no longer sent to PyPI registry lookup.
+
 ## 0.67.1
 
 ### Patch Changes
