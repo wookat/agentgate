@@ -1051,7 +1051,7 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 /** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin)\/plugin\.json$/i;
-const PLUGIN_LSP_FILE = /(^|\/)\.lsp\.json$/i;
+const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
 const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin)\/marketplace\.json$/i;
 
@@ -1061,15 +1061,19 @@ export function extractMonitorCommands(monitors: unknown): string[] {
   return monitors.map((m) => (m as { command?: unknown })?.command).filter((c): c is string => typeof c === 'string');
 }
 
-/** Flatten `{ name: { command, args } }` LSP server maps into full command lines. */
+/** Flatten `{ name: { command, args } }` LSP server maps into full command lines (Copilot's Open Plugin Spec variant launches via `bash`/`powershell` scripts instead of `command`). */
 export function extractLspCommands(servers: unknown): string[] {
   if (typeof servers !== 'object' || servers === null || Array.isArray(servers)) return [];
   const out: string[] = [];
   for (const server of Object.values(servers)) {
-    const s = server as { command?: unknown; args?: unknown };
-    if (typeof s?.command !== 'string') continue;
-    const args = Array.isArray(s.args) ? s.args.filter((a): a is string => typeof a === 'string') : [];
-    out.push([s.command, ...args].join(' '));
+    const s = server as { command?: unknown; args?: unknown; bash?: unknown; powershell?: unknown };
+    if (typeof s?.command === 'string') {
+      const args = Array.isArray(s.args) ? s.args.filter((a): a is string => typeof a === 'string') : [];
+      out.push([s.command, ...args].join(' '));
+    }
+    // A dangerous command can hide in either platform's launch script.
+    if (typeof s?.bash === 'string') out.push(s.bash);
+    if (typeof s?.powershell === 'string') out.push(s.powershell);
   }
   return out;
 }
@@ -1371,7 +1375,8 @@ export const skillDynamicContextRule: Rule = {
     }
     if (isPluginLsp || isPluginManifest) {
       // LSP server commands run automatically after workspace trust whenever matching files are edited.
-      const servers = isPluginLsp ? data : (data as { lspServers?: unknown }).lspServers;
+      // `lsp-config/servers.json` wraps the map in a top-level `lspServers` key; `.lsp.json` is the bare map.
+      const servers = isPluginLsp ? ((data as { lspServers?: unknown }).lspServers ?? data) : (data as { lspServers?: unknown }).lspServers;
       for (const command of extractLspCommands(servers)) {
         const hit = classifyRiskyCommand(command);
         if (!hit) continue;

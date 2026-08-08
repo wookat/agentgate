@@ -109,12 +109,15 @@ both get the same classification, and marketplace plugin `source` entries
 without a `sha` or release-style `ref` report under supply-chain like
 their Claude counterparts.
 
-Plugin LSP servers get the same treatment: `.lsp.json` (or inline
-`lspServers` in the manifest) declares commands that run automatically
-after workspace trust whenever matching files are edited. The command plus
-its args go through the shared classification, so an LSP entry wrapping a
-remote-script pipe or credential read is flagged while real language
-servers (`gopls serve`, `typescript-language-server --stdio`) stay clean.
+Plugin LSP servers get the same treatment: `.lsp.json`, the Open Plugin
+Spec's `lsp-config/servers.json`, or inline `lspServers` in the manifest
+declares commands that run automatically after workspace trust whenever
+matching files are edited. The command plus its args — and the
+cross-platform `bash`/`powershell` launch-script variants, where a
+dangerous command can hide in either platform's key — go through the
+shared classification, so an LSP entry wrapping a remote-script pipe or
+credential read is flagged while real language servers (`gopls serve`,
+`typescript-language-server --stdio`) stay clean.
 
 So do plugin monitors: `monitors/monitors.json` (or inline in the manifest)
 declares shell commands Claude Code starts automatically as persistent
