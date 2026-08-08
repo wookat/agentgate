@@ -35,10 +35,19 @@ const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpSer
  */
 const STARTUP_PLUGIN_FILE = /(^|\/)\.(opencode|kilo(code)?)\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
 
-/** Client name for a startup-plugin path, for finding messages. */
-function startupPluginClient(file: string): string {
-  if (/(^|\/)\.cline\//i.test(file)) return 'Cline';
-  return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI' : 'OpenCode';
+/**
+ * Copilot CLI project extensions: each `.github/extensions/<name>/extension.{mjs,cjs,js}`
+ * is forked as a Node child process on session start and registers tools/hooks
+ * with the agent. Plugins ship extensions the same way under a
+ * `com.github.copilot/extensions/` directory.
+ */
+export const COPILOT_EXTENSION_FILE = /(^|\/)(\.github|com\.github\.copilot)\/extensions\/[^/]+\/extension\.(mjs|cjs|js)$/i;
+
+/** Surface label for an auto-executed plugin/extension path, for finding messages. */
+function startupSurfaceLabel(file: string): string {
+  if (COPILOT_EXTENSION_FILE.test(file)) return 'Copilot CLI extension';
+  if (/(^|\/)\.cline\//i.test(file)) return 'Cline plugin';
+  return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI plugin' : 'OpenCode plugin';
 }
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
@@ -133,7 +142,7 @@ export const rceVectorsRule: Rule = {
       const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
-      const executable = (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file)) && !isCommented(m.index ?? 0);
+      const executable = (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file)) && !isCommented(m.index ?? 0);
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
@@ -151,9 +160,9 @@ export const rceVectorsRule: Rule = {
         }),
       );
     }
-    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || STARTUP_PLUGIN_FILE.test(file))) {
+    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file))) {
       const m = content.match(EVAL_RE)!;
-      const startupPlugin = STARTUP_PLUGIN_FILE.test(file);
+      const startupPlugin = STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file);
       findings.push(
         finding(this, {
           severity: 'medium',
@@ -161,7 +170,7 @@ export const rceVectorsRule: Rule = {
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
           message: startupPlugin
-            ? `${startupPluginClient(file)} plugin (auto-executed at startup) uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
+            ? `${startupSurfaceLabel(file)} (auto-executed at startup) uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
             : `Source uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review how inputs reach it`,
         }),
       );
