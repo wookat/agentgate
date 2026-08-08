@@ -1,5 +1,18 @@
 # mcp-agentgate-core
 
+## 0.55.0
+
+### Minor Changes
+
+- 7fd8474: Crush `crushrc` coverage: repo scans now include `crushrc`/`.crushrc` files (a Bash program Crush executes with shell privileges at startup) — source rules apply with executable-file severity (a piped remote download is critical, AG-RC-001), and risky `permissions allow` command lines (`bash` high, `edit`/`write` medium) are flagged (AG-SK-002).
+- 5acac21: AG-SK-002 Crush allowed*tools classification covers scoped `tool:action` keys (e.g. `bash:execute` now reports as bash) and `mcp*<server>\_<tool>`MCP tool names whose tool part suggests shell execution, data mutation, or exfiltration (medium) — both in`crush.json` `permissions.allowed_tools`and crushrc`permissions allow` lines.
+
+### Patch Changes
+
+- a23207a: Advisory database: add MCPA-2026-0021 — HKUDS nanobot (PyPI `nanobot-ai`) < 0.2.1 SSRF in the `web_fetch` tool via 3xx redirects (CVE-2026-49138 / GHSA-434r-7c99-hwf3).
+- 5fd9192: AG-SC-001 docker check only fires on the `docker run` / `docker container run` forms — CLI plugin subcommands like `docker mcp gateway run` no longer misreport their last word as an unpinned image.
+- d44d0ca: Advisory database: 6 new entries — Dynatrace MCP Server unauthenticated HTTP tool invocation / workflow template injection / DQL injection (MCPA-2026-0022..0024, npm @dynatrace-oss/dynatrace-mcp-server, fixed 2.0.0/2.1.1) and Flowise sandbox escape RCE / CSV Agent Pyodide RCE / IPv4-mapped-IPv6 SSRF bypass (MCPA-2026-0025..0027, npm flowise + flowise-components, fixed 3.1.3).
+
 ## 0.54.0
 
 ### Minor Changes
