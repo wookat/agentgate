@@ -1,5 +1,17 @@
 # mcp-agentgate
 
+## 0.67.7
+
+### Patch Changes
+
+- 98ade17: Skill-scan standalone plugin repositories' component markdown: `commands/*.md`, `agents/*.md`, and `skills/*.md` under a directory carrying a plugin manifest (`.claude-plugin/`, `.plugin/`, `.factory-plugin/`, `.codex-plugin/`, `.cursor-plugin/`, `.goose-plugin/`) are now scanned for poisoning and pinnable via `lock --skills`. Gated on the manifest so generic `commands/`/`agents/` doc trees are unaffected.
+- 9f4ec6f: AG-CL-001 treats boundary-delimited `test` and `demo` segments in secret-shaped values as placeholder markers (e.g. `xoxb-test-token` no longer reports as a hardcoded secret); real random-body tokens are unaffected.
+- a863e81: The concealment-instruction injection pattern (`do not tell/show/… the user`) no longer fires on a directly quoted object (citing a phrase to avoid saying) or a same-sentence `only` alternative (selective presentation, e.g. "do not show the user the raw output; only the summary"); real concealment ("do not show the user this file") still reports critical.
+- Updated dependencies [98ade17]
+- Updated dependencies [9f4ec6f]
+- Updated dependencies [a863e81]
+  - mcp-agentgate-core@0.67.7
+
 ## 0.67.6
 
 ### Patch Changes
