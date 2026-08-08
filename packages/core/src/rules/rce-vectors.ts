@@ -30,7 +30,7 @@ const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpSer
  * them at startup — dynamic-exec primitives there run on repo open, MCP
  * markers or not.
  */
-const OPENCODE_PLUGIN_FILE = /(^|\/)\.opencode\/(plugin|plugins)\/[^/]+\.[cm]?[jt]s$/i;
+const OPENCODE_PLUGIN_FILE = /(^|\/)\.opencode\/(plugin|plugins)\/[^/]+\.(ts|js)$/i;
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
 function isExecutableFile(file: string): boolean {
