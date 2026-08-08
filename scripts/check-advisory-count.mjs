@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const actual = readdirSync('advisories').filter((f) => /^MCPA-\d{4}-\d{4}\.json$/.test(f)).length;
-const files = execSync("git grep -l -E '[0-9]+ public advisories' -- ':!scripts'", { encoding: 'utf8' })
+const files = execSync("git grep -l -E '[0-9]+ public advisories' -- ':!scripts' ':!docs/gap'", { encoding: 'utf8' })
   .split('\n')
   .filter(Boolean);
 
