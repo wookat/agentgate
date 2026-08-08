@@ -948,5 +948,138 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0028",
+    "title": "mcp-atlassian unauthenticated SSRF via X-Atlassian-*-Url headers (CVE-2026-27826)",
+    "type": "ssrf",
+    "severity": "high",
+    "published": "2026-03-10",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-atlassian",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.17.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0029",
+    "title": "mcp-atlassian DNS-rebinding TOCTOU bypass of the SSRF fix",
+    "type": "ssrf",
+    "severity": "medium",
+    "published": "2026-07-10",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-atlassian",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.22.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0030",
+    "title": "mcp-atlassian arbitrary server-side file read via Jira attachment upload",
+    "type": "path-traversal",
+    "severity": "high",
+    "published": "2026-07-10",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-atlassian",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.22.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0031",
+    "title": "mcp-atlassian arbitrary file read via confluence_upload_attachment path",
+    "type": "path-traversal",
+    "severity": "high",
+    "published": "2026-07-10",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-atlassian",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.22.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0032",
+    "title": "MCP Python SDK experimental task handlers expose other clients’ tasks (CVE-2026-52870)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-16",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp",
+        "ranges": [
+          {
+            "introduced": "1.23.0",
+            "fixed": "1.27.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0033",
+    "title": "MCP Python SDK HTTP transports serve session requests without verifying the authenticated principal (CVE-2026-52869)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-16",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.27.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0034",
+    "title": "MCP Python SDK WebSocket server transport lacks Host/Origin validation (CVE-2026-59950)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-16",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.28.1"
+          }
+        ]
+      }
+    ]
   }
 ];

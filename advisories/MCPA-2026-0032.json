@@ -1,0 +1,51 @@
+{
+  "id": "MCPA-2026-0032",
+  "title": "MCP Python SDK experimental task handlers expose other clients\u2019 tasks (CVE-2026-52870)",
+  "summary": "The MCP Python SDK (PyPI: mcp) 1.23.0 through 1.27.1: the default request handlers installed by the experimental tasks feature (server.experimental.enable_tasks()) did not check which session created a task before acting on it. On a server with more than one connected client, any client could observe, read results from, and cancel tasks belonging to other clients. Fixed in 1.27.2.",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-52870",
+    "GHSA-hvrp-rf83-w775"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:L",
+    "score": 7.6
+  },
+  "cwe": [
+    "CWE-862"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp",
+      "ranges": [
+        {
+          "introduced": "1.23.0",
+          "fixed": "1.27.2"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-hvrp-rf83-w775"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-52870"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2720"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/releases/tag/v1.27.2"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-16"
+  }
+}
