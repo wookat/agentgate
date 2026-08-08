@@ -126,10 +126,15 @@ level as hooks. Their commands get the same classification; benign watchers
 like `tail -F ./logs/error.log` stay clean.
 
 Because manifests can point hook and monitor config at arbitrary relative
-paths, any JSON file whose structure matches the hook schema (nested
-`type: "command"` entries) or the monitor schema (array of
+paths, any JSON file whose structure matches the hook schema (nested or
+flat-event `type: "command"` entries) or the monitor schema (array of
 `{ name, command, description }`) also gets its commands classified —
-a dangerous config can't escape by living at a custom path.
+a dangerous config can't escape by living at a custom path. That shape
+detection also covers the Open Plugin Spec's first lookup location — a
+bare `plugin.json` at the plugin root — whose inline hooks and
+`mcpServers` (inline or path-referenced) are handled like the
+dot-directory manifests, while `plugin.json` files from unrelated
+ecosystems (Grafana, Obsidian) carry neither shape and stay quiet.
 
 ## Why it matters
 

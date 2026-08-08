@@ -178,6 +178,13 @@ const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin']);
 function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocation[] {
   if (depth > 4) return [];
   const out: ClientConfigLocation[] = [];
+  // The Open Plugin Spec's first lookup is a bare plugin.json at the plugin root (the
+  // project root or a marketplace's plugins/<name>/ dir). The filename is too generic to
+  // treat as a plugin root outright, so only its own mcpServers declaration is acted on.
+  if (depth === 0) {
+    const bare = path.join(projectDir, 'plugin.json');
+    if (fs.existsSync(bare)) out.push(...pluginManifestServerLocations(projectDir, bare));
+  }
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(projectDir, { withFileTypes: true });
@@ -200,6 +207,14 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
       }
       out.push(...pluginManifestServerLocations(projectDir, path.join(dir, 'plugin.json')));
       continue;
+    }
+    const bare = path.join(dir, 'plugin.json');
+    if (fs.existsSync(bare)) {
+      const locs = pluginManifestServerLocations(dir, bare);
+      if (locs.length > 0) {
+        out.push(...locs);
+        continue;
+      }
     }
     out.push(...pluginServerLocations(dir, depth + 1));
   }
