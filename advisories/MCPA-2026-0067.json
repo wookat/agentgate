@@ -1,0 +1,21 @@
+{
+  "id": "MCPA-2026-0067",
+  "title": "brave-search-mcp-server (npm) — malicious squat of the official Brave Search MCP server name",
+  "summary": "The unscoped npm package brave-search-mcp-server 1.0.0 squats the name of the official Brave Search MCP server (published as @brave/brave-search-mcp-server). OpenSSF Package Analysis flagged the package as malicious: it communicates with a domain associated with malicious activity and executes commands associated with malicious behavior. MCP client configs commonly launch search servers via `npx <name>`, and the unscoped name is the obvious guess for Brave's server, so a config referencing the unscoped name executed the payload. npm has removed the package (replaced with a 0.0.1-security placeholder); every real version is recorded as affected.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": ["GHSA-56pv-xqqh-57cf", "MAL-2026-5182"],
+  "cwe": ["CWE-506"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "brave-search-mcp-server",
+      "ranges": [{ "introduced": "0" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-56pv-xqqh-57cf" },
+    { "type": "advisory", "url": "https://osv.dev/vulnerability/MAL-2026-5182" }
+  ],
+  "timeline": { "published": "2026-07-27" }
+}
