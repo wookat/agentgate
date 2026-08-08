@@ -1,5 +1,14 @@
 # mcp-agentgate-core
 
+## 0.67.3
+
+### Patch Changes
+
+- 505a144: `agentgate deps` extends AG-DP-007 to npm override tables: `overrides` (including nested forms), `resolutions`, and `pnpm.overrides` entries that redirect a package to a git or URL source are now classified like other remote specifiers (unpinned git ref medium, non-registry archive URL high; full-SHA pins and registry tarball hosts exempt).
+- 522b6fa: `agentgate deps` extends AG-DP-007 to lockfile-resolved remote sources: `package-lock.json` and `yarn.lock` entries whose `resolved` field points at a git remote or branch tarball (including `codeload.github.com` ref tarballs) are flagged when no manifest declares that remote source — the lockfile-poisoning shape. Commit-pinned refs, default registry hosts, and version-addressed registry-path tarballs on mirror/private registries stay silent.
+- 9c7d70d: `agentgate deps` extends the lockfile-resolved AG-DP-007 check to `pnpm-lock.yaml` (v5/v6/v9): remote tarball and git-URL resolutions undeclared in any manifest are flagged like other remote sources. cnpm-style mirror tarball paths (`/name/download/[@scope/]name-version.tgz`) are recognized as version-addressed registry artifacts and stay silent, alongside the standard `/-/` form.
+- 1ecc415: `agentgate deps` strips nested peer suffixes from pnpm-lock snapshot keys, so commit-pinned tarball resolutions are exempted correctly instead of reporting a false AG-DP-007 medium.
+
 ## 0.67.2
 
 ### Patch Changes
