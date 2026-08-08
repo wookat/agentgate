@@ -58,7 +58,10 @@ function* walk(dir: string, rootReal?: string, seenDirs?: Set<string>): Generato
     }
     seenDirs = new Set([rootReal]);
   }
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  // Sort entries so scan order — and which alias path a realpath-deduped
+  // symlink tree is reported under — is deterministic across filesystems.
+  const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  for (const entry of entries) {
     const full = path.join(dir, entry.name);
     let isDir = entry.isDirectory();
     let isFile = entry.isFile();
