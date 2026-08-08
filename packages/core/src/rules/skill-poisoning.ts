@@ -17,7 +17,9 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * plus the older `.trae/project_rules.md` / `.trae/user_rules.md`); Kiro
  * steering files (`.kiro/steering/*.md`, auto-loaded into every session);
  * Roo Code rules (`.roo/rules/` and mode-specific `.roo/rules-<mode>/`
- * directories, plus the single-file `.roorules` / `.roorules-<mode>`);
+ * directories, plus the single-file `.roorules` / `.roorules-<mode>`) and
+ * project slash commands (`.roo/commands/*.md`, the filename becomes the
+ * /command name);
  * root instruction files read verbatim by many agents — the agents.md
  * standard (`AGENTS.md`/`AGENT.md`, nested files apply to subtrees),
  * `CLAUDE.md`, `GEMINI.md`, Zed's `.rules`, and GitHub Copilot's
@@ -42,12 +44,13 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * roleDefinition/customInstructions text is placed in the system prompt);
  * Kilo Code project trees (`.kilocode/` plus the newer `.kilo/`): rules
  * (`rules/`, mode-specific `rules-<mode>/`, legacy `.kilocoderules`),
- * workflows (`workflows/*.md`, run as /slash commands), custom modes
+ * workflows (`workflows/*.md`, run as /slash commands; the newer extension
+ * stores project slash commands in `.kilo/commands/*.md`), custom modes
  * (`.kilocodemodes`, YAML or JSON), and full system-prompt overrides
  * (`system-prompt-<mode-slug>`, no extension).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo\/commands\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {

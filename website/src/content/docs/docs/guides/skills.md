@@ -49,11 +49,13 @@ Any of these markdown layouts are treated as skill files:
 - Kiro steering files (`.kiro/steering/*.md`) — auto-loaded into every
   chat session in the workspace.
 - Roo Code rules (`.roo/rules/` and mode-specific `.roo/rules-<mode>/`
-  directories, plus single-file `.roorules` / `.roorules-<mode>`).
+  directories, plus single-file `.roorules` / `.roorules-<mode>`) and
+  project slash commands (`.roo/commands/*.md`).
 - Kilo Code project trees (`.kilocode/` plus the newer `.kilo/`): rules
   (`rules/`, mode-specific `rules-<mode>/`, legacy `.kilocoderules` /
   `.kilocoderules-<mode>`), workflows (`workflows/*.md`, run as slash
-  commands), custom modes (`.kilocodemodes`, YAML or JSON), and full
+  commands; the newer extension stores project slash commands in
+  `.kilo/commands/*.md`), custom modes (`.kilocodemodes`, YAML or JSON), and full
   system-prompt overrides (`.kilocode/system-prompt-<mode-slug>`).
 - Root instruction files read verbatim by many agents: the
   [agents.md](https://agents.md/) standard (`AGENTS.md` / `AGENT.md`,
