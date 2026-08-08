@@ -1,0 +1,50 @@
+{
+  "id": "MCPA-2026-0023",
+  "title": "Dynatrace MCP Server workflow template injection via create_workflow_for_notification (GHSA-xrmj-5g4g-8987)",
+  "summary": "@dynatrace-oss/dynatrace-mcp-server before 2.0.0 interpolates three caller-supplied parameters (teamName, problemType, channel) of the create_workflow_for_notification tool directly into a Dynatrace Workflow definition. Dynatrace Workflows evaluate Jinja2 {{ ... }} expressions in action inputs at runtime, so injected expressions (e.g. {{ event() }}) can exfiltrate event data to attacker-controlled destinations through a workflow that persists in the tenant after the MCP session ends. Fixed in 2.0.0 (PR #547).",
+  "type": "rce-vectors",
+  "severity": "medium",
+  "aliases": [
+    "GHSA-xrmj-5g4g-8987"
+  ],
+  "cvss": {
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:N/VI:L/VA:N/SC:N/SI:L/SA:N",
+    "score": 4.2
+  },
+  "cwe": [
+    "CWE-1336"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@dynatrace-oss/dynatrace-mcp-server",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.0.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-xrmj-5g4g-8987"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/security/advisories/GHSA-xrmj-5g4g-8987"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/pull/547"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/commit/64dfcb1095823d0fb43013635446288a6ff60e29"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-31"
+  }
+}

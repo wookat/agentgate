@@ -1,0 +1,50 @@
+{
+  "id": "MCPA-2026-0024",
+  "title": "Dynatrace MCP Server DQL injection via parameters not documented as DQL (GHSA-pqh8-p93p-2rx7)",
+  "summary": "@dynatrace-oss/dynatrace-mcp-server before 2.1.1 interpolates caller-supplied parameters typed as identifiers or constrained shorthand (timeframes, Kubernetes UIDs) directly into DQL query strings in several read tools. Injected DQL pipeline stages and // comments bypass the tools' documented field-scope, time-window, and display caps — including the readOnlyHint: true contract MCP clients may use for auto-approval. Fixed in 2.1.1 (PR #562).",
+  "type": "overprivileged",
+  "severity": "medium",
+  "aliases": [
+    "GHSA-pqh8-p93p-2rx7"
+  ],
+  "cvss": {
+    "vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:L/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+    "score": 4.3
+  },
+  "cwe": [
+    "CWE-89"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@dynatrace-oss/dynatrace-mcp-server",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.1.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-pqh8-p93p-2rx7"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/security/advisories/GHSA-pqh8-p93p-2rx7"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/pull/562"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/commit/15d3546c0618ffbaeaeca477337e08e92f2151bc"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-31"
+  }
+}

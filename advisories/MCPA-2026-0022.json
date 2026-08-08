@@ -1,0 +1,50 @@
+{
+  "id": "MCPA-2026-0022",
+  "title": "Dynatrace MCP Server unauthenticated HTTP MCP tool invocation (GHSA-p7w7-4929-vpj5)",
+  "summary": "@dynatrace-oss/dynatrace-mcp-server 1.8.7 and earlier, when run in HTTP mode, exposes the MCP endpoint without any authentication: anyone who can reach the port can invoke every MCP tool with the server's configured Dynatrace credentials (reading monitoring data, executing DQL, creating workflows). Fixed in 2.0.0, which adds required authentication for HTTP transport (PR #536).",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "GHSA-p7w7-4929-vpj5"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+    "score": 7.5
+  },
+  "cwe": [
+    "CWE-306"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@dynatrace-oss/dynatrace-mcp-server",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "2.0.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-p7w7-4929-vpj5"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/security/advisories/GHSA-p7w7-4929-vpj5"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/pull/536"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/dynatrace-oss/dynatrace-mcp/commit/8f12972481e9165e8bd24d63b0a9e71976f85a43"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-31"
+  }
+}
