@@ -273,8 +273,8 @@ function gooseRecipeLocations(projectDir: string): ClientConfigLocation[] {
 /** Directory names never descended into while looking for plugin roots. */
 const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 
-/** Plugin metadata dirs marking a plugin/marketplace root (Claude Code, Copilot CLI, and Factory Droid conventions). */
-const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin']);
+/** Plugin metadata dirs marking a plugin/marketplace root (Claude Code, Copilot CLI, Factory Droid, and Codex conventions). */
+const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin']);
 
 /**
  * MCP servers bundled by Claude Code / Copilot CLI plugins: a plugin root is any directory
@@ -300,10 +300,11 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
     return [];
   }
   for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
-    if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && !PLUGIN_META_DIRS.has(entry.name) && entry.name !== '.github')) continue;
-    const dir = entry.name === '.github' ? path.join(projectDir, entry.name, 'plugin') : path.join(projectDir, entry.name);
-    if (entry.name === '.github' && !fs.existsSync(dir)) continue;
-    const isPluginMeta = PLUGIN_META_DIRS.has(entry.name) || entry.name === '.github';
+    if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && !PLUGIN_META_DIRS.has(entry.name) && entry.name !== '.github' && entry.name !== '.agents')) continue;
+    // Copilot CLI nests its plugin metadata under `.github/plugin/`; Codex keeps its repo marketplace under `.agents/plugins/`.
+    const dir = entry.name === '.github' ? path.join(projectDir, entry.name, 'plugin') : entry.name === '.agents' ? path.join(projectDir, entry.name, 'plugins') : path.join(projectDir, entry.name);
+    if ((entry.name === '.github' || entry.name === '.agents') && !fs.existsSync(dir)) continue;
+    const isPluginMeta = PLUGIN_META_DIRS.has(entry.name) || entry.name === '.github' || entry.name === '.agents';
     if (isPluginMeta && fs.existsSync(path.join(dir, 'marketplace.json'))) {
       // Marketplace entries can define plugins entirely inline (strict: false), including mcpServers.
       out.push({ client: 'claude-plugin', path: path.join(dir, 'marketplace.json'), format: 'marketplace-json' });

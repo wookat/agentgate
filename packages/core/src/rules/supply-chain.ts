@@ -183,8 +183,8 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string, clie
   return findings;
 }
 
-/** In-repo plugin marketplace catalog (Claude Code `.claude-plugin/`, Copilot CLI `.github/plugin/`, Factory Droid `.factory-plugin/`); each entry's `source` tells installers where plugin code comes from. */
-export const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin)\/marketplace\.json$/i;
+/** In-repo plugin marketplace catalog (Claude Code `.claude-plugin/`, Copilot CLI `.github/plugin/`, Factory Droid `.factory-plugin/`, Codex `.agents/plugins/`); each entry's `source` tells installers where plugin code comes from. */
+export const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin|\.agents\/plugins)\/marketplace\.json$/i;
 
 /**
  * Registry package refs for the npm-distributed plugins in a marketplace

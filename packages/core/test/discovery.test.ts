@@ -617,6 +617,26 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['repo-api', 'tools']);
   });
 
+  it('finds mcpServers and marketplaces in Codex plugin layouts (.codex-plugin/, .agents/plugins/)', () => {
+    const project = path.join(dir, 'proj-codex-plugin');
+    fs.mkdirSync(path.join(project, 'plugins', 'codex-tools', '.codex-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'codex-tools', '.codex-plugin', 'plugin.json'),
+      '{"name":"codex-tools","mcpServers":{"tools":{"command":"npx","args":["-y","acme-tools-mcp"]}}}',
+    );
+    // Codex plugins also carry servers in a sibling .mcp.json at the plugin root.
+    fs.writeFileSync(path.join(project, 'plugins', 'codex-tools', '.mcp.json'), '{"mcpServers":{"sibling":{"command":"npx","args":["-y","sibling-mcp"]}}}');
+    fs.mkdirSync(path.join(project, '.agents', 'plugins'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.agents', 'plugins', 'marketplace.json'),
+      JSON.stringify({ name: 'repo-market', plugins: [{ name: 'inline', source: './plugins/codex-tools', mcpServers: { catalog: { command: 'npx', args: ['-y', 'catalog-mcp'] } } }] }),
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.some((f) => f.format === 'marketplace-json' && f.path.endsWith(path.join('.agents', 'plugins', 'marketplace.json')))).toBe(true);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['catalog', 'sibling', 'tools']);
+  });
+
   it('finds mcpServers declared by bare plugin.json manifests (Open Plugin Spec first lookup)', () => {
     const project = path.join(dir, 'proj12');
     // Repo-root manifest with a path-referenced mcp config (microsoft/azure-skills layout).
