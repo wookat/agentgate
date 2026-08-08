@@ -1331,9 +1331,11 @@ describe('scanRepo', () => {
         2,
       ),
     );
-    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-003');
+    const all = scanRepo(dir).findings;
+    const hits = all.filter((f) => f.ruleId === 'AG-SK-003');
     expect(hits.map((f) => f.severity).sort()).toEqual(['critical', 'high']);
     expect(hits.every((f) => f.file === '.claude/settings.json')).toBe(true);
+    expect(all.filter((f) => f.ruleId === 'AG-RC-001')).toHaveLength(0);
   });
 
   it('flags dangerous Claude Code credential-helper/statusLine commands (AG-SK-003)', () => {
