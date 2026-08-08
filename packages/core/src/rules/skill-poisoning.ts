@@ -1039,6 +1039,9 @@ export function extractCopilotHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/** Copilot CLI settings files (repo `.github/copilot/settings.json(.local)`, user `.copilot/settings.json`); their inline `hooks` key uses the `.github/hooks/*.json` schema. */
+export const COPILOT_SETTINGS_FILE = /(^|\/)(\.github\/copilot|\.copilot)\/settings(\.local)?\.json$/i;
+
 /** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
 const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 
@@ -1195,7 +1198,7 @@ export const skillDynamicContextRule: Rule = {
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
-    const isCopilotHooks = COPILOT_HOOKS_FILE.test(file);
+    const isCopilotHooks = COPILOT_HOOKS_FILE.test(file) || COPILOT_SETTINGS_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
     const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;

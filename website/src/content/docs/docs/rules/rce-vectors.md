@@ -75,6 +75,11 @@ lifecycle events (sessionStart, preToolUse, userPromptSubmitted, …) for
 anyone who opens the repository in Copilot CLI. Both the `bash` and
 `powershell` command keys are classified — a dangerous command can hide in
 either platform's variant — while local helper scripts stay clean.
+Copilot CLI settings files (repo-level `.github/copilot/settings.json` and
+`settings.local.json`, user-level `~/.copilot/settings.json`) can define the
+same hooks inline under a `hooks` key — the repository-level file applies to
+everyone who works in the repository and overrides user hooks for the same
+key, so inline hook commands get the same classification.
 
 Amazon Q CLI agent files (`.amazonq/cli-agents/*.json`) are covered too:
 their `hooks` field runs commands at lifecycle trigger points (agentSpawn,
