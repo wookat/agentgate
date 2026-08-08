@@ -861,6 +861,71 @@ export const goose: ClientAdapter = {
   },
 };
 
+/** Factory Droid — project `.factory/mcp.json` (also `~/.factory/mcp.json`), standard `mcpServers` notation. */
+export const factory = mcpServersAdapter("factory", ".factory/mcp.json", { withType: false });
+
+/** JetBrains Junie — project `.junie/mcp/mcp.json` (also `~/.junie/mcp/mcp.json`), standard `mcpServers` notation. */
+export const junie = mcpServersAdapter("junie", ".junie/mcp/mcp.json", { withType: false });
+
+/** Qoder — project `.qoder/settings.json` (also `~/.qoder/settings.json`), `mcpServers` key inside settings. */
+export const qoder = mcpServersAdapter("qoder", ".qoder/settings.json", { withType: false });
+
+/** Qwen Code — project `.qwen/settings.json` (also `~/.qwen/settings.json`), `mcpServers` key inside settings. */
+export const qwenCode = mcpServersAdapter("qwen-code", ".qwen/settings.json", { withType: false });
+
+/** GitHub Copilot CLI — `~/.copilot/mcp-config.json` (user) or `.github/mcp.json`/`.mcp.json` (project); `mcpServers` map (project files may use a bare top-level map) with `type: local|stdio|http|sse` and a `tools` allowlist. */
+export const copilotCli: ClientAdapter = {
+  id: "copilot-cli",
+  defaultPath: "~/.copilot/mcp-config.json",
+  parse(content): ParseResult {
+    const data = parseJson("copilot-cli", content);
+    const warnings: string[] = [];
+    let serversObj: Record<string, unknown>;
+    if (data.mcpServers !== undefined) {
+      if (!isRecord(data.mcpServers)) throw new ConfigParseError("copilot-cli", "mcpServers must be an object");
+      serversObj = data.mcpServers;
+    } else {
+      serversObj = {};
+      for (const [name, entry] of Object.entries(data)) {
+        if (isRecord(entry) && ("command" in entry || "url" in entry || "type" in entry)) {
+          serversObj[name] = entry;
+        }
+      }
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entryRaw] of Object.entries(serversObj)) {
+      if (isRecord(entryRaw) && entryRaw.type === "local") {
+        entryRaw.type = "stdio";
+      }
+      const s = parseCommonEntry("copilot-cli", name, entryRaw, warnings);
+      if (!s) continue;
+      if (isRecord(entryRaw)) {
+        const tools = entryRaw.tools;
+        if (Array.isArray(tools) && tools.length && !(tools.length === 1 && tools[0] === "*")) {
+          warnings.push(`${name}: copilot-cli tools allowlist cannot be represented in other clients; dropped`);
+        }
+        if (entryRaw.timeout !== undefined) {
+          warnings.push(`${name}: copilot-cli timeout cannot be represented in other clients; dropped`);
+        }
+      }
+      servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: copilot-cli has no disabled flag; server emitted as enabled`);
+      }
+      if (s.cwd) warnings.push(`${s.name}: copilot-cli does not support cwd; dropped`);
+      mcpServers[s.name] = renderCommonEntry(s, true);
+    }
+    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -883,4 +948,9 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   antigravity,
   crush,
   goose,
+  factory,
+  junie,
+  qoder,
+  "qwen-code": qwenCode,
+  "copilot-cli": copilotCli,
 };

@@ -28,6 +28,11 @@ Supported clients:
 | `antigravity` | `mcpServers`; remote servers use `serverUrl` | `.agents/mcp_config.json` (workspace) / `~/.gemini/config/mcp_config.json` |
 | `crush` | `mcp` map (`type`: stdio/http/sse, `disabled`) | `.crush.json` / `crush.json` (project; also `~/.config/crush/crush.json`) |
 | `goose` | YAML `extensions` map (`type`: stdio/streamable_http/sse; `cmd`/`envs`/`uri`) | `~/.config/goose/config.yaml` (`%APPDATA%\Block\goose\config\config.yaml` on Windows) |
+| `factory` | standard `mcpServers` | `.factory/mcp.json` (project; also `~/.factory/mcp.json`) |
+| `junie` | standard `mcpServers` | `.junie/mcp/mcp.json` (project; also `~/.junie/mcp/mcp.json`) |
+| `qoder` | `mcpServers` key inside settings | `.qoder/settings.json` (project; also `~/.qoder/settings.json`) |
+| `qwen-code` | `mcpServers` key inside settings | `.qwen/settings.json` (project; also `~/.qwen/settings.json`) |
+| `copilot-cli` | `mcpServers` map or bare project map (`type`: local/stdio/http/sse, `tools` allowlist) | `~/.copilot/mcp-config.json` / `.github/mcp.json` |
 
 ## CLI
 
