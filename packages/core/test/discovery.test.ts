@@ -637,6 +637,25 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['catalog', 'sibling', 'tools']);
   });
 
+  it('finds mcpServers referenced by goose Open Plugin manifests (.goose-plugin/, component paths form)', () => {
+    const project = path.join(dir, 'proj-goose-plugin');
+    fs.mkdirSync(path.join(project, '.goose-plugin'), { recursive: true });
+    fs.mkdirSync(path.join(project, 'plugins', 'mem'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.goose-plugin', 'plugin.json'),
+      JSON.stringify({ name: 'mem', mcpServers: { paths: ['./plugins/mem/.goose-mcp.json'] } }),
+    );
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'mem', '.goose-mcp.json'),
+      '{"mcpServers":{"mem":{"command":"uvx","args":["--from","mem[mcp]==1.0.0","mem-mcp"]}}}',
+    );
+    // Non-exclusive component paths also read the plugin root's .mcp.json.
+    fs.writeFileSync(path.join(project, '.mcp.json'), '{"mcpServers":{"root-srv":{"command":"npx","args":["-y","root-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['mem', 'root-srv']);
+  });
+
   it('finds the other Codex marketplace manifests (.agents/plugins/api_marketplace.json, .cursor-plugin/marketplace.json)', () => {
     const project = path.join(dir, 'proj-codex-markets');
     fs.mkdirSync(path.join(project, '.agents', 'plugins'), { recursive: true });
