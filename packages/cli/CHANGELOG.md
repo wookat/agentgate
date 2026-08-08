@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.64.1
+
+### Patch Changes
+
+- 16b2afa: Advisories MCPA-2026-0064/0065: llm-interceptor (npm MCP-server implant that self-registers in ~/.cursor/mcp.json and Claude Code hooks and exfiltrates AI-coding session transcripts) and agenttunnels (npm MCP bridge whose author-controlled endpoint can toggle off approval and push arbitrary shell commands/file writes). Both still live on npm; latest tarballs verified. Database 77 → 79.
+- Updated dependencies [16b2afa]
+  - mcp-agentgate-core@0.64.1
+
 ## 0.64.0
 
 ### Minor Changes
