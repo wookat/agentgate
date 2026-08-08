@@ -78,6 +78,16 @@ const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 /** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
 const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
 
+/** Crush (Charm) legacy JSON config (project `.crush.json`/`crush.json`, user `.config/crush/crush.json`, JSONC). */
+export const CRUSH_CONFIG_FILE = /(^|\/)\.?crush\.json$/i;
+
+/** Crush built-in tools whose auto-approval is risky (`permissions.allowed_tools`). */
+const CRUSH_RISKY_TOOLS: Record<string, { severity: 'high' | 'medium'; risk: string }> = {
+  bash: { severity: 'high', risk: 'arbitrary shell commands run' },
+  edit: { severity: 'medium', risk: 'file edits apply' },
+  write: { severity: 'medium', risk: 'file writes apply' },
+};
+
 /** Dangerous OpenCode permission keys and severities when their effective action is "allow". */
 const OPENCODE_RISKY_KEYS: { key: string; severity: 'high' | 'medium'; risk: string }[] = [
   { key: 'bash', severity: 'high', risk: 'unrestricted shell execution' },
@@ -442,7 +452,8 @@ export const skillOverprivilegeRule: Rule = {
     const isCursorCli = CURSOR_CLI_FILE.test(file);
     const isKiroAgent = KIRO_AGENT_JSON.test(file);
     const isQwen = QWEN_SETTINGS_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent && !isQwen) return [];
+    const isCrush = CRUSH_CONFIG_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent && !isQwen && !isCrush) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -847,6 +858,26 @@ export const skillOverprivilegeRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: 'Gemini CLI settings set general.defaultApprovalMode to "auto_edit" — edit tools run without approval for anyone opening this project',
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isCrush) {
+      const findings = [];
+      const allowed = (data as { permissions?: { allowed_tools?: unknown } }).permissions?.allowed_tools;
+      for (const entry of Array.isArray(allowed) ? allowed : []) {
+        if (typeof entry !== 'string') continue;
+        const hit = CRUSH_RISKY_TOOLS[entry.toLowerCase()];
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Crush config pre-approves the "${entry}" tool via permissions.allowed_tools — ${hit.risk} without a permission prompt for anyone opening this project`,
           }),
         );
       }
@@ -1285,6 +1316,7 @@ export const skillDynamicContextRule: Rule = {
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
     const isCopilotHooks = COPILOT_HOOKS_FILE.test(file) || COPILOT_SETTINGS_FILE.test(file);
+    const isCrushConfig = CRUSH_CONFIG_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
     const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
@@ -1293,7 +1325,7 @@ export const skillDynamicContextRule: Rule = {
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
     const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
     const isQwenSettings = QWEN_SETTINGS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isCrushConfig || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1394,6 +1426,24 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isCrushConfig) {
+      // Same flat `{ event: [{ command }] }` shape as Amazon Q agent hooks.
+      for (const command of extractAmazonqHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Crush hook command ${hit.risk.replace('at skill load time', 'automatically on hook events (e.g. PreToolUse)')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
