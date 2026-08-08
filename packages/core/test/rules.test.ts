@@ -85,6 +85,12 @@ describe('credential-leak', () => {
       credentialLeakRule.checkServer!(server({ args: ['--token', 'xoxb-your-bot-token'] })),
     ).toHaveLength(0);
   });
+
+  it('skips underscore-delimited placeholder words in secret-shaped values', () => {
+    expect(
+      credentialLeakRule.checkSource!('sanitizer.ts', "const masked = 'sk-YOUR_OPENAI_KEY_HERE';\n"),
+    ).toHaveLength(0);
+  });
 });
 
 describe('overprivileged', () => {

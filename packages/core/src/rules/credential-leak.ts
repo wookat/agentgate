@@ -21,7 +21,7 @@ function isPlaceholder(value: string): boolean {
     /^\$\{?[A-Z0-9_]+\}?$/.test(value) || // ${ENV_VAR} / $ENV_VAR
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
-    /\b(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake)\b/i.test(value)
+    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake)(\b|_)/i.test(value)
   );
 }
 

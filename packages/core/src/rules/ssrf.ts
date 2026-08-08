@@ -92,7 +92,7 @@ export const ssrfRule: Rule = {
     // Guards often explain themselves in a comment block, so look at the
     // surrounding lines too, not just the one carrying the IP literal.
     const allLines = content.split(/\r?\n/);
-    const context = allLines.slice(Math.max(0, line - 3), line + 2).join('\n');
+    const context = allLines.slice(Math.max(0, line - 4), line + 3).join('\n');
     const defensive = /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*)\b/i.test(context);
     if (defensive && !testPath) {
       return [

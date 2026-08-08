@@ -79,13 +79,16 @@ export const toolPoisoningRule: Rule = {
     // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
     // zero-width space or BOM is usually editor noise, so it is reported quietly.
     const trojan = (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069) || cp >= 0xe0000;
+    // Test/fixture trees embed these characters as fixtures for the very
+    // defenses under test; still reported, but quietly.
+    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
     return [
       finding(this, {
-        severity: trojan ? 'high' : 'low',
+        severity: trojan && !testPath ? 'high' : 'low',
         target: file,
         file,
         line: hit.line,
-        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions`,
+        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}`,
       }),
     ];
   },
