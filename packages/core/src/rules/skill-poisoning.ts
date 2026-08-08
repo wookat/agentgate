@@ -1116,6 +1116,13 @@ export function extractAmazonqHookCommands(hooks: unknown): string[] {
   return out;
 }
 
+/**
+ * Goose recipe files (`recipe.yaml`/`recipe.json`, the documented generated/stored name);
+ * `instructions`/`prompt`/`activities` become the agent's instructions for everyone who
+ * runs the recipe. The parse gates on the documented recipe shape since the name is generic.
+ */
+const GOOSE_RECIPE_FILE = /(^|\/)recipe\.(ya?ml|json)$/i;
+
 /** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
 const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
 
@@ -1565,6 +1572,54 @@ export const skillPoisoningRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
+    if (GOOSE_RECIPE_FILE.test(file)) {
+      let doc: unknown;
+      try {
+        doc = parseYaml(content);
+      } catch {
+        return [];
+      }
+      if (typeof doc !== 'object' || doc === null) return [];
+      const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; activities?: unknown };
+      if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
+      if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+      const texts: Array<{ field: string; text: string }> = [];
+      if (typeof recipe.instructions === 'string') texts.push({ field: 'instructions', text: recipe.instructions });
+      if (typeof recipe.prompt === 'string') texts.push({ field: 'prompt', text: recipe.prompt });
+      for (const activity of Array.isArray(recipe.activities) ? recipe.activities : []) {
+        if (typeof activity === 'string') texts.push({ field: 'activity', text: activity });
+      }
+      const findings = [];
+      for (const { field, text } of texts) {
+        const hidden = findHiddenInSource(text);
+        if (hidden) {
+          const codepoint = `U+${hidden.char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+          findings.push(
+            finding(this, {
+              severity: 'critical',
+              target: file,
+              file,
+              message: `Goose recipe ${field} contains a hidden/invisible Unicode character (${codepoint}) — recipe text becomes the agent's instructions for everyone who runs it`,
+            }),
+          );
+        }
+        for (const { re, label } of INJECTION_PATTERNS) {
+          const m = text.match(re);
+          if (!m) continue;
+          const line = content.split(/\r?\n/).findIndex((l) => l.includes(m[0].slice(0, 40))) + 1;
+          findings.push(
+            finding(this, {
+              severity: 'critical',
+              target: file,
+              file,
+              ...(line > 0 ? { line } : {}),
+              message: `Goose recipe ${field} matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — recipe text becomes the agent's instructions for everyone who runs it`,
+            }),
+          );
+        }
+      }
+      return findings;
+    }
     if (!KIRO_AGENT_HOOK_FILE.test(file)) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];

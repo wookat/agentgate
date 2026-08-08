@@ -20,7 +20,8 @@ export interface ClientConfigLocation {
     | 'agent-frontmatter-yaml'
     | 'copilot-mcp-json'
     | 'marketplace-json'
-    | 'goose-yaml';
+    | 'goose-yaml'
+    | 'goose-recipe-yaml';
 }
 
 /**
@@ -165,6 +166,10 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
+    // Goose recipes generated into the project root (`goose recipe` / Desktop export);
+    // their `extensions` list starts for everyone who runs the recipe
+    { client: 'goose', path: path.join(projectDir, 'recipe.yaml'), format: 'goose-recipe-yaml' },
+    { client: 'goose', path: path.join(projectDir, 'recipe.json'), format: 'goose-recipe-yaml' },
     { client: 'copilot-cli', path: path.join(projectDir, '.github', 'mcp.json'), format: 'copilot-mcp-json' },
     ...copilotAgentServerLocations(path.join(projectDir, '.github', 'agents')),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
@@ -427,6 +432,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseCopilotMcpJson(raw, location);
     case 'goose-yaml':
       return parseGooseYaml(raw, location);
+    case 'goose-recipe-yaml':
+      return parseGooseRecipeYaml(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -555,6 +562,41 @@ export function parseGooseYaml(raw: string, location: ClientConfigLocation): Mcp
     if (type !== 'stdio' && type !== 'streamable_http' && type !== 'sse') continue;
     out.push({
       name,
+      command: typeof entry.cmd === 'string' ? entry.cmd : undefined,
+      args: Array.isArray(entry.args) ? entry.args.map(String) : undefined,
+      env: toStringRecord(entry.envs) ?? toStringRecord(entry.env),
+      url: typeof entry.uri === 'string' ? entry.uri : undefined,
+      headers: toStringRecord(entry.headers),
+      transport: type,
+      source: location.path,
+      client: location.client,
+    });
+  }
+  return out;
+}
+
+/**
+ * Goose recipe (`recipe.yaml`/`recipe.json`, YAML parses both): `extensions` is an
+ * array of the same `{ type, name, cmd, args, envs, uri, headers }` entries as
+ * config.yaml, started automatically for everyone who runs the recipe. Gated on
+ * the documented recipe shape (title + description + instructions|prompt) since
+ * the filename alone is generic.
+ */
+export function parseGooseRecipeYaml(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const doc = YAML.parse(raw) as Record<string, unknown> | null;
+  if (typeof doc !== 'object' || doc === null) return [];
+  if (typeof doc.title !== 'string' || typeof doc.description !== 'string') return [];
+  if (typeof doc.instructions !== 'string' && typeof doc.prompt !== 'string') return [];
+  if (!Array.isArray(doc.extensions)) return [];
+  const out: McpServerConfig[] = [];
+  for (const entryRaw of doc.extensions) {
+    if (typeof entryRaw !== 'object' || entryRaw === null) continue;
+    const entry = entryRaw as Record<string, unknown>;
+    const type = typeof entry.type === 'string' ? entry.type : undefined;
+    if (type !== 'stdio' && type !== 'streamable_http' && type !== 'sse') continue;
+    if (typeof entry.name !== 'string') continue;
+    out.push({
+      name: entry.name,
       command: typeof entry.cmd === 'string' ? entry.cmd : undefined,
       args: Array.isArray(entry.args) ? entry.args.map(String) : undefined,
       env: toStringRecord(entry.envs) ?? toStringRecord(entry.env),

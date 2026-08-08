@@ -63,6 +63,10 @@ Any of these markdown layouts are treated as skill files:
   automatically at session start, is covered by the source-scan rules.
 - Goose local hints (`.goosehints` at the project root or in any
   directory — added to the system prompt for every request in that tree).
+- Goose recipes (`recipe.yaml`/`recipe.json`, gated on the documented
+  recipe shape) — the `instructions`, `prompt`, and `activities` text
+  becomes the agent's instructions for everyone who runs the recipe, and
+  the recipe's `extensions` list is discovered as MCP servers.
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
