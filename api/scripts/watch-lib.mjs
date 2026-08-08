@@ -12,7 +12,17 @@ export function buildContext({ advisories, ignoreList }) {
         .map((p) => [`${p.ecosystem}:${p.name}`, { ecosystem: p.ecosystem, name: p.name }]),
     ).values(),
   ].filter((p) => p.ecosystem === "npm" || p.ecosystem === "pypi");
-  return { knownAliases, ignoredIds, ignoredPkgs, trackedPackages };
+  // Channels where some MCPA record covers the whole line (a range with
+  // neither `fixed` nor `last_affected`). Version-bounded records leave the
+  // channel open to new campaigns, so fresh malware ids on those channels
+  // must stay visible.
+  const openEndedTracked = new Set(
+    advisories
+      .flatMap((a) => a.packages ?? [])
+      .filter((p) => (p.ranges ?? []).some((r) => !r.fixed && !r.last_affected))
+      .map((p) => `${p.ecosystem}:${p.name}`),
+  );
+  return { knownAliases, ignoredIds, ignoredPkgs, trackedPackages, openEndedTracked };
 }
 
 export function isIgnored(ctx, id, pkgs = []) {
@@ -94,8 +104,10 @@ export function filterMalware(ctx, ghsaAdvisories) {
       if (ctx.knownAliases.has(a.ghsa_id) || (a.cve_id && ctx.knownAliases.has(a.cve_id))) return false;
       // Malware GHSA entries for packages the database already covers show up
       // under fresh ids when the campaign publishes new versions; the package
-      // channel, not the id, is the dedupe key that matters here.
-      return !pkgs.every((p) => ctx.trackedPackages.some((t) => t.ecosystem === p.ecosystem && t.name === p.name));
+      // channel, not the id, is the dedupe key that matters here. Only
+      // channels covered by an open-ended MCPA range are muted — a
+      // version-bounded record does not cover future versions.
+      return !pkgs.every((p) => ctx.openEndedTracked.has(`${p.ecosystem}:${p.name}`));
     });
 }
 

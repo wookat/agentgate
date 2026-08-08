@@ -15,7 +15,7 @@ const advisories = [
   {
     id: "MCPA-2026-0001",
     aliases: ["CVE-2026-1111", "GHSA-aaaa-aaaa-aaaa"],
-    packages: [{ ecosystem: "npm", name: "known-pkg" }],
+    packages: [{ ecosystem: "npm", name: "known-pkg", ranges: [{ introduced: "0" }] }],
   },
   {
     id: "MCPA-2026-0002",
@@ -23,6 +23,17 @@ const advisories = [
     packages: [
       { ecosystem: "pypi", name: "tracked-py" },
       { ecosystem: "nuget", name: "Tracked.Net" },
+    ],
+  },
+  {
+    id: "MCPA-2026-0003",
+    aliases: ["GHSA-bbbb-bbbb-bbbb"],
+    packages: [
+      {
+        ecosystem: "npm",
+        name: "bounded-agent",
+        ranges: [{ introduced: "0.1.0", last_affected: "0.2.0" }],
+      },
     ],
   },
 ];
@@ -39,8 +50,10 @@ test("buildContext collects aliases and registry-visible tracked packages", () =
   assert.ok(ctx.knownAliases.has("MAL-2026-2222"));
   assert.deepEqual(
     ctx.trackedPackages.map((p) => `${p.ecosystem}:${p.name}`).sort(),
-    ["npm:known-pkg", "pypi:tracked-py"],
+    ["npm:bounded-agent", "npm:known-pkg", "pypi:tracked-py"],
   );
+  assert.ok(ctx.openEndedTracked.has("npm:known-pkg"));
+  assert.ok(!ctx.openEndedTracked.has("npm:bounded-agent"));
 });
 
 test("isIgnored matches ids, and packages only when all hit the ignore list", () => {
@@ -101,10 +114,13 @@ test("filterMalware keeps only vocabulary-named npm/pypi packages not already co
     mk("GHSA-mal7-mal7-mal7", "evil-copilot", "rubygems"),
     { ghsa_id: "GHSA-mal8-mal8-mal8", cve_id: null, summary: "steals Model Context Protocol configs", description: "", vulnerabilities: [{ package: { ecosystem: "pip", name: "plainname" } }] },
     mk("GHSA-aaaa-aaaa-aaaa", "another-agent"),
+    // Tracked channel whose MCPA record is version-bounded: a fresh malware
+    // id on that channel may be a new campaign and must stay visible.
+    mk("GHSA-mal9-mal9-mal9", "bounded-agent"),
   ];
   assert.deepEqual(
     filterMalware(ctx, input).map((h) => h.advisory.ghsa_id),
-    ["GHSA-mal1-mal1-mal1", "GHSA-mal2-mal2-mal2", "GHSA-mal8-mal8-mal8"],
+    ["GHSA-mal1-mal1-mal1", "GHSA-mal2-mal2-mal2", "GHSA-mal8-mal8-mal8", "GHSA-mal9-mal9-mal9"],
   );
   const pypiHit = filterMalware(ctx, input).find((h) => h.advisory.ghsa_id === "GHSA-mal8-mal8-mal8");
   assert.deepEqual(pypiHit.pkgs, [{ ecosystem: "pypi", name: "plainname" }]);
