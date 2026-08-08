@@ -21,7 +21,8 @@ export interface ClientConfigLocation {
     | 'copilot-mcp-json'
     | 'marketplace-json'
     | 'goose-yaml'
-    | 'goose-recipe-yaml';
+    | 'goose-recipe-yaml'
+    | 'crush-json';
 }
 
 /**
@@ -127,6 +128,9 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   } else {
     push('goose', path.join(homeDir, '.config', 'goose', 'config.yaml'), 'goose-yaml');
   }
+  // Crush (Charm) — legacy JSON config with an `mcp` server map (crushrc is the
+  // Bash-based successor and is not parsed here); ~/.config/crush on every OS
+  push('crush', path.join(homeDir, '.config', 'crush', 'crush.json'), 'crush-json');
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -166,6 +170,8 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'agents', path: path.join(projectDir, '.agents', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'unknown', path: path.join(projectDir, 'mcp.json'), format: 'mcpServers-json' },
     ...continueWorkspaceLocations(projectDir),
+    { client: 'crush', path: path.join(projectDir, '.crush.json'), format: 'crush-json' },
+    { client: 'crush', path: path.join(projectDir, 'crush.json'), format: 'crush-json' },
     // Goose recipes generated into the project root (`goose recipe` / Desktop export);
     // their `extensions` list starts for everyone who runs the recipe
     ...gooseRecipeLocations(projectDir),
@@ -497,6 +503,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseGooseYaml(raw, location);
     case 'goose-recipe-yaml':
       return parseGooseRecipeYaml(raw, location);
+    case 'crush-json':
+      return parseCrushJson(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -705,6 +713,12 @@ export function parseAgentFrontmatter(raw: string, location: ClientConfigLocatio
 export function parseZedSettingsJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
   const json = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
   return collectServers(json.context_servers, location);
+}
+
+/** Crush (Charm) legacy JSON config (`crush.json` / `.crush.json`, JSONC): `mcp` maps name → { type, command, args, env, url, headers }. */
+export function parseCrushJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const json = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
+  return collectServers(json.mcp, location);
 }
 
 /** Remove `//` and `/* *\/` comments plus trailing commas (outside strings) so JSONC settings parse. */

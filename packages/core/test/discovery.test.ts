@@ -13,6 +13,7 @@ import {
   parseContinueYaml,
   parseGooseYaml,
   parseGooseRecipeYaml,
+  parseCrushJson,
   projectConfigLocations,
   parseZedSettingsJson,
   parseAmpSettingsJson,
@@ -20,7 +21,7 @@ import {
   parseSkillFrontmatter,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml' | 'goose-yaml' | 'goose-recipe-yaml') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml' | 'goose-yaml' | 'goose-recipe-yaml' | 'crush-json') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -53,6 +54,7 @@ describe('knownConfigLocations', () => {
         'amazonq',
         'copilot-cli',
         'goose',
+        'crush',
         'agents',
       ]),
     );
@@ -397,6 +399,18 @@ describe('discoverConfigFiles', () => {
     expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['settings.json', 'settings.local.json']);
   });
 
+  it('finds crush project-level configs', () => {
+    const project = path.join(dir, 'projCrush');
+    fs.mkdirSync(project, { recursive: true });
+    fs.writeFileSync(path.join(project, '.crush.json'), '{"mcp":{}}');
+    fs.writeFileSync(path.join(project, 'crush.json'), '{"mcp":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const crush = found.filter((f) => f.client === 'crush');
+    expect(crush.map((f) => path.basename(f.path)).sort()).toEqual(['.crush.json', 'crush.json']);
+    expect(crush.every((f) => f.format === 'crush-json')).toBe(true);
+  });
+
   it('finds the trae project-level config', () => {
     const project = path.join(dir, 'proj4');
     fs.mkdirSync(path.join(project, '.trae'), { recursive: true });
@@ -719,6 +733,27 @@ extensions:
       fs.rmSync(project, { recursive: true, force: true });
       fs.rmSync(path.join(path.dirname(project), 'outside.yaml'), { force: true });
     }
+  });
+});
+
+describe('parseCrushJson', () => {
+  it('parses stdio and remote entries from the mcp map (with JSONC comments)', () => {
+    const raw = `{
+  // legacy JSON config
+  "mcp": {
+    "fs": { "type": "stdio", "command": "npx", "args": ["-y", "server-fs"], "env": { "KEY": "v" } },
+    "gh": { "type": "http", "url": "https://api.githubcopilot.com/mcp/", "headers": { "Authorization": "Bearer x" } },
+  },
+}`;
+    const servers = parseCrushJson(raw, loc('crush', 'crush-json'));
+    expect(servers).toMatchObject([
+      { name: 'fs', command: 'npx', args: ['-y', 'server-fs'], env: { KEY: 'v' }, transport: 'stdio' },
+      { name: 'gh', url: 'https://api.githubcopilot.com/mcp/', headers: { Authorization: 'Bearer x' }, transport: 'http' },
+    ]);
+  });
+
+  it('returns nothing without an mcp map', () => {
+    expect(parseCrushJson('{"permissions":{"allowed_tools":["view"]}}', loc('crush', 'crush-json'))).toEqual([]);
   });
 });
 
