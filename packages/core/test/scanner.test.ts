@@ -612,6 +612,24 @@ describe('scanRepo', () => {
     expect(hits[0]!.severity).toBe('high');
   });
 
+  it('covers the singular .opencode/agent and mode directories (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.opencode', 'agent'), { recursive: true });
+    fs.mkdirSync(path.join(dir, '.opencode', 'mode'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agent', 'ops.md'),
+      '---\ndescription: Ops helper\npermission:\n  bash: allow\n---\n\nYou run operational tasks.\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'mode', 'yolo.md'),
+      '---\ndescription: Unrestricted\npermission:\n  "*": allow\n---\n\nDo anything.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.file, f.severity]).sort()).toEqual([
+      ['.opencode/agent/ops.md', 'high'],
+      ['.opencode/mode/yolo.md', 'high'],
+    ]);
+  });
+
   it('flags "allow" rules in per-agent OpenCode permission blocks (AG-SK-002)', () => {
     fs.writeFileSync(
       path.join(dir, 'opencode.json'),
