@@ -61,6 +61,8 @@ Any of these markdown layouts are treated as skill files:
   legacy `.openhands/microagents/**.md` — auto-loaded as agent context,
   always or on keyword triggers). `.openhands/setup.sh`, which OpenHands runs
   automatically at session start, is covered by the source-scan rules.
+- Goose local hints (`.goosehints` at the project root or in any
+  directory — added to the system prompt for every request in that tree).
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under

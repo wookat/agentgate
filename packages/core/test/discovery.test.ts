@@ -11,13 +11,14 @@ import {
   parseOpenCodeJson,
   parseVsCodeJson,
   parseContinueYaml,
+  parseGooseYaml,
   parseZedSettingsJson,
   parseAmpSettingsJson,
   parseSkillMcpJson,
   parseSkillFrontmatter,
 } from '../src/discovery.js';
 
-const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml') => ({
+const loc = (client: string, format: 'mcpServers-json' | 'vscode-mcp-json' | 'codex-toml' | 'opencode-json' | 'zed-settings-json' | 'continue-yaml' | 'amp-settings-json' | 'skill-mcp-json' | 'skill-frontmatter-yaml' | 'goose-yaml') => ({
   client,
   path: `/tmp/${client}`,
   format,
@@ -49,6 +50,7 @@ describe('knownConfigLocations', () => {
         'qoder',
         'amazonq',
         'copilot-cli',
+        'goose',
         'agents',
       ]),
     );
@@ -103,6 +105,16 @@ describe('knownConfigLocations', () => {
     expect(lm[0]!.format).toBe('mcpServers-json');
     const win = knownConfigLocations('C:\\Users\\u', 'win32').filter((l) => l.client === 'lmstudio');
     expect(win).toHaveLength(2);
+  });
+
+  it('locates the goose config.yaml', () => {
+    const linux = knownConfigLocations('/home/u', 'linux');
+    const goose = linux.filter((l) => l.client === 'goose');
+    expect(goose.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/home/u/.config/goose/config.yaml']);
+    expect(goose[0]!.format).toBe('goose-yaml');
+    const win = knownConfigLocations('C:\\Users\\u', 'win32').filter((l) => l.client === 'goose');
+    expect(win).toHaveLength(1);
+    expect(win[0]!.path.split(path.sep).join('/')).toContain('Block/goose/config/config.yaml');
   });
 
   it('locates the continue.dev global config', () => {
@@ -533,6 +545,49 @@ describe('discoverConfigFiles', () => {
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => path.basename(f.path)).sort()).toEqual(['a.yaml', 'b.yml']);
     expect(found.every((f) => f.client === 'continue' && f.format === 'continue-yaml')).toBe(true);
+  });
+});
+
+describe('parseGooseYaml', () => {
+  it('parses stdio and remote extensions, skipping goose-internal types', () => {
+    const raw = `extensions:
+  developer:
+    type: builtin
+    name: developer
+    enabled: true
+  filesystem:
+    type: stdio
+    name: filesystem
+    enabled: true
+    cmd: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+    envs: { API_KEY: abc }
+  remote-tools:
+    type: streamable_http
+    name: remote-tools
+    enabled: true
+    uri: "https://example.com/mcp"
+    headers: { Authorization: Bearer x }
+  ui:
+    type: frontend
+    name: ui
+`;
+    const servers = parseGooseYaml(raw, loc('goose', 'goose-yaml'));
+    expect(servers.map((s) => s.name).sort()).toEqual(['filesystem', 'remote-tools']);
+    expect(servers[0]).toMatchObject({
+      name: 'filesystem',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
+      env: { API_KEY: 'abc' },
+      transport: 'stdio',
+      client: 'goose',
+    });
+    expect(servers[1]).toMatchObject({ name: 'remote-tools', url: 'https://example.com/mcp', headers: { Authorization: 'Bearer x' }, transport: 'streamable_http' });
+  });
+
+  it('returns no servers for configs without extensions', () => {
+    expect(parseGooseYaml('GOOSE_MODE: auto\n', loc('goose', 'goose-yaml'))).toEqual([]);
+    expect(parseGooseYaml('', loc('goose', 'goose-yaml'))).toEqual([]);
   });
 });
 
