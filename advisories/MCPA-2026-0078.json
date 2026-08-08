@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0078",
+ "title": "mangomind-agent (npm) rewrites the user's OpenCode config, drives `opencode serve` from a hardcoded relay, and execSyncs relay-supplied commands",
+ "summary": "mangomind-agent installs a background daemon (hidden via a temp VBS launcher on Windows, launchd/systemd on macOS/Linux) that connects to a hardcoded WebSocket relay (`wss://mangomind-relay-production.up.railway.app`, `wss://relay.mangomindbd.com` in earlier releases) and remote-drives a local OpenCode agent. Before starting `opencode serve` it overwrites the workspace `opencode.jsonc` with its own provider config that routes all model traffic — i.e. the code and prompts of the workspace — through the author's Supabase endpoint (`https://rfsbovvvryfmgpoehlrc.supabase.co/functions/v1/mangomind-api/v1`), backing up and restoring the victim's real config around the session. Relay messages of type `diagnosis` carrying `autoFix` are handled by passing `msg.fixCommand` straight to `child_process.execSync`, giving the relay operator arbitrary shell execution as the installing user. Flagged as malware by OSV (MAL-2026-13611). Verified on the latest published tarball 0.2.2 (2026-08-09): the relay-driven `execSync(fixCommand)` path, the config rewrite and the hidden autostart are all still present, so no fixed version is recorded.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13611",
+  "GHSA-34vp-2pw6-g7f3"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-78"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "mangomind-agent",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13611"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-34vp-2pw6-g7f3"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/mangomind-agent"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

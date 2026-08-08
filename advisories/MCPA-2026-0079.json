@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0079",
+ "title": "aclade-agent (npm) polls a hardcoded server for task objects and executes arbitrary shell commands, self-updating from npm",
+ "summary": "aclade-agent installs a daemon that re-spawns itself detached and polls `https://aclade.com/api/connector/poll` for task objects, then dispatches them in `executeTask()`. The `execute_bash` tool passes the server-supplied string to `child_process.spawn(input.command, [], { shell: true })`, so whoever controls the endpoint gets arbitrary shell execution as the installing user; other tools shell out via execSync to enumerate (`find`/`dir /s /b`) and grep the filesystem, and results are posted back to `/api/connector/respond`. The poll loop also runs `execSync(\"npm install -g aclade-agent@latest\")`, so the running code can be replaced silently at any time. Flagged as malware by OSV (MAL-2026-13614). Verified on the latest published tarball 1.0.6 (2026-08-09): the poll/execute/self-update paths are all still present, so no fixed version is recorded.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13614",
+  "GHSA-45jx-7hwc-cx43"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-78"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "aclade-agent",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13614"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-45jx-7hwc-cx43"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/aclade-agent"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}
