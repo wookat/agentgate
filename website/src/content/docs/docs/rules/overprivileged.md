@@ -72,6 +72,11 @@ and auto-approved tools with destructive-looking names (`execute_sql`,
 `apply_migration`, shell/write/delete-style tools) are `medium`.
 Auto-approving clearly read-only tools is not flagged.
 
+Kilo Code project MCP configs (`.kilocode/mcp.json` and the newer
+`.kilo/mcp.json`) get the same `alwaysAllow`/`autoApprove` classification —
+Kilo Code is a Roo Code fork and shares the per-server approval-list
+semantics.
+
 VS Code workspace settings (`.vscode/settings.json`) are checked for
 `chat.tools.global.autoApprove: true` (or the legacy
 `chat.tools.autoApprove`) — `high`, since it bypasses every chat tool
