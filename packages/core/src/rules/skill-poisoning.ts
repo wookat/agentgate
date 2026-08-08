@@ -1350,7 +1350,7 @@ const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin)\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
-const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin|\.factory-plugin|\.agents\/plugins)\/marketplace\.json$/i;
+const MARKETPLACE_CATALOG_FILE = /(^|\/)((\.claude-plugin|\.github\/plugin|\.factory-plugin|\.cursor-plugin|\.agents\/plugins)\/marketplace\.json|\.agents\/plugins\/api_marketplace\.json)$/i;
 
 /** Flatten a monitors array (`[{ name, command, description }]`) into its command strings. */
 export function extractMonitorCommands(monitors: unknown): string[] {
