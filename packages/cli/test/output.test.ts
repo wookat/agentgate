@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DriftEntry, Finding } from 'mcp-agentgate-core';
 
-import { renderDriftAnnotations, renderGitHubAnnotations } from '../src/output.js';
+import { renderDriftAnnotations, renderFindingsTable, renderGitHubAnnotations } from '../src/output.js';
 
 function finding(i: number, severity: Finding['severity']): Finding {
   return {
@@ -66,5 +66,22 @@ describe('renderDriftAnnotations', () => {
     const out = renderDriftAnnotations(entries);
     expect(out.split('\n')).toHaveLength(1);
     expect(out).not.toContain('::notice');
+  });
+});
+
+describe('renderFindingsTable', () => {
+  const url = 'https://codeload.github.com/distubejs/prism-media/tar.gz/main#workaround.tar.gz';
+
+  it('wraps over-wide message tokens mid-word instead of truncating', () => {
+    const f = { ...finding(1, 'medium'), message: `installed from a git source ("${url}") — pin a commit SHA` };
+    const out = renderFindingsTable([f]).replace(/│|\s|\n/g, '');
+    expect(out).not.toContain('…');
+    expect(out).toContain('workaround.tar.gz');
+  });
+
+  it('keeps word-boundary wrapping for ordinary messages', () => {
+    const f = { ...finding(1, 'low'), message: 'a perfectly ordinary message with short words only' };
+    const out = renderFindingsTable([f]);
+    expect(out).toContain('a perfectly ordinary message with short words only');
   });
 });
