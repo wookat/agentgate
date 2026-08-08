@@ -44,7 +44,14 @@ function splitSpec(spec: string): { name: string; version?: string } {
  */
 export function serverPackageRef(server: McpServerConfig): (DependencyRef & { version?: string }) | undefined {
   const spec = extractPackageSpec(server.command, server.args ?? []);
-  if (spec === undefined || spec.startsWith('.') || spec.includes('://') || /^[A-Za-z]:[\\/]/.test(spec) || spec.includes('\\')) {
+  if (
+    spec === undefined ||
+    spec.startsWith('.') ||
+    spec.includes('://') ||
+    /^(github|gitlab|bitbucket):/i.test(spec) ||
+    /^[A-Za-z]:[\\/]/.test(spec) ||
+    spec.includes('\\')
+  ) {
     return undefined;
   }
   const base = (server.command ?? '').split(/[\\/]/).pop() ?? '';
@@ -57,6 +64,34 @@ export function serverPackageRef(server: McpServerConfig): (DependencyRef & { ve
     file: server.source ?? server.name,
     context: `server "${server.name}"`,
   };
+}
+
+/** Hosts that serve immutable, version-addressed artifacts for their ecosystem. */
+const REGISTRY_TARBALL_HOST = /^https?:\/\/(registry\.npmjs\.org|registry\.yarnpkg\.com|files\.pythonhosted\.org)\//i;
+const REMOTE_SOURCE_SPEC = /^(https?:\/\/|git\+|git:\/\/|ssh:\/\/|github:|gitlab:|bitbucket:)/i;
+const COMMIT_PIN = /[#@][0-9a-f]{40}$/i;
+
+/**
+ * A launch spec that fetches the server from somewhere other than a package
+ * registry — a git remote, a VCS shorthand, or a plain archive URL. These need
+ * different advice (and, for archive URLs, a different severity) from an
+ * unpinned registry version: the artifact behind the URL can be swapped in
+ * place, with no version to pin and no registry metadata or provenance.
+ */
+function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host: string } | undefined {
+  if (!REMOTE_SOURCE_SPEC.test(spec)) return undefined;
+  const shorthand = spec.match(/^(github|gitlab|bitbucket):/i);
+  if (shorthand?.[1] !== undefined) return { kind: 'git', host: `${shorthand[1].toLowerCase()}.com` };
+  const url = spec.replace(/^git\+/i, '');
+  let host: string;
+  try {
+    host = new URL(url).host;
+  } catch {
+    return undefined;
+  }
+  if (/^git[+:]/i.test(spec) || /\.git(@|#|$)/i.test(url)) return { kind: 'git', host };
+  if (/\.(tgz|tar\.gz|zip)(\?|#|$)/i.test(url)) return { kind: 'archive', host };
+  return undefined;
 }
 
 function isPinned(spec: string): boolean {
@@ -254,7 +289,22 @@ export const supplyChainRule: Rule = {
     const args = server.args ?? [];
     const spec = extractPackageSpec(server.command, args);
     if (spec !== undefined) {
-      if (!isPinned(spec)) {
+      const remote = remoteSourceSpec(spec);
+      if (remote !== undefined) {
+        if (!COMMIT_PIN.test(spec) && !REGISTRY_TARBALL_HOST.test(spec)) {
+          findings.push(
+            finding(this, {
+              severity: remote.kind === 'archive' ? 'high' : 'medium',
+              target: server.name,
+              file: server.source,
+              message:
+                remote.kind === 'archive'
+                  ? `Server "${server.name}" is installed from the archive "${spec.slice(0, 120)}" instead of a package registry — ${remote.host} can replace the contents behind that URL at any time, and there is no version, registry metadata, or provenance to check. Vendor the server into the repo or install it from a registry with a pinned version`
+                  : `Server "${server.name}" is installed from the git source "${spec.slice(0, 120)}" without a commit pin — every launch fetches whatever that branch or tag points at now (tags can be moved). Pin a full commit SHA (e.g. ${spec.split('#')[0]}#<40-char sha>)`,
+            }),
+          );
+        }
+      } else if (!isPinned(spec)) {
         const bareName = splitSpec(spec.split('@latest')[0] ?? spec).name.split(/[><=!~]/)[0] ?? spec;
         const pinExample = PYPI_RUNNERS.has((server.command ?? '').split(/[\\/]/).pop() ?? '')
           ? `${bareName}==1.2.3`
@@ -268,7 +318,8 @@ export const supplyChainRule: Rule = {
           }),
         );
       }
-      if (args.some((a) => a === '-y' || a === '--yes')) {
+      const pinnedSpec = remote !== undefined ? COMMIT_PIN.test(spec) || REGISTRY_TARBALL_HOST.test(spec) : isPinned(spec);
+      if (!pinnedSpec && args.some((a) => a === '-y' || a === '--yes')) {
         findings.push(
           finding(this, {
             severity: 'low',

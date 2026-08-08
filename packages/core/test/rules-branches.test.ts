@@ -62,6 +62,37 @@ describe('rule branch coverage', () => {
     expect(dlx.some((f) => f.category === 'supply-chain')).toBe(true);
   });
 
+  it('supply-chain: remote-source launch specs (git URL, VCS shorthand, archive URL)', () => {
+    const git = scanServers([server({ command: 'uvx', args: ['--from', 'git+https://github.com/oraios/serena', 'serena-mcp-server'] })]);
+    expect(git.filter((f) => f.ruleId === 'AG-SC-001' && f.severity === 'medium' && /git source/.test(f.message))).toHaveLength(1);
+
+    // A git tag is not a commit pin — tags can be moved.
+    const tag = scanServers([server({ command: 'uvx', args: ['--from', 'git+https://github.com/oraios/serena@v0.1.4', 's'] })]);
+    expect(tag.filter((f) => f.ruleId === 'AG-SC-001' && /commit pin/.test(f.message))).toHaveLength(1);
+
+    const short = scanServers([server({ command: 'npx', args: ['github:acme/mcp-server'] })]);
+    expect(short.filter((f) => f.ruleId === 'AG-SC-001' && /git source/.test(f.message))).toHaveLength(1);
+
+    const sha = scanServers([server({ command: 'npx', args: ['git+https://github.com/acme/srv.git#0123456789abcdef0123456789abcdef01234567'] })]);
+    expect(sha.filter((f) => f.ruleId === 'AG-SC-001')).toHaveLength(0);
+
+    const archive = scanServers([server({ command: 'npx', args: ['-y', 'https://gitcode.com/api/v5/repos/x/y/raw/pkg.tgz?ref=main'] })]);
+    const archiveHits = archive.filter((f) => f.ruleId === 'AG-SC-001' && f.severity === 'high' && /archive/.test(f.message));
+    expect(archiveHits).toHaveLength(1);
+    expect(archiveHits[0]?.message).toContain('gitcode.com');
+
+    // Version-addressed registry tarballs are immutable — not flagged.
+    const registryTar = scanServers([server({ command: 'npx', args: ['https://registry.npmjs.org/mcp-x/-/mcp-x-1.2.3.tgz'] })]);
+    expect(registryTar.filter((f) => f.ruleId === 'AG-SC-001')).toHaveLength(0);
+  });
+
+  it('supply-chain: -y auto-confirm is only reported alongside an unpinned spec', () => {
+    const pinned = scanServers([server({ command: 'npx', args: ['-y', '@scope/server@1.2.3'] })]);
+    expect(pinned.filter((f) => /auto-confirms/.test(f.message))).toHaveLength(0);
+    const unpinned = scanServers([server({ command: 'npx', args: ['-y', 'some-server'] })]);
+    expect(unpinned.filter((f) => /auto-confirms/.test(f.message))).toHaveLength(1);
+  });
+
   it('rce-vectors: eval of dynamic content in MCP server source', () => {
     const findings = repoScan({
       'evil.js': 'import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";\nconst r = eval(userInput);\n',
