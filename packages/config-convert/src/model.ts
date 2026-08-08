@@ -28,6 +28,7 @@ export type ClientId =
   | "gemini-cli"
   | "kiro"
   | "roo-code"
+  | "kilocode"
   | "zed"
   | "continue"
   | "amp"
@@ -56,6 +57,7 @@ export const CLIENT_IDS: ClientId[] = [
   "gemini-cli",
   "kiro",
   "roo-code",
+  "kilocode",
   "zed",
   "continue",
   "amp",

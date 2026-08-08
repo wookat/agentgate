@@ -28,7 +28,7 @@ export interface ClientConfigLocation {
 /**
  * Well-known MCP client config locations, relative to a home directory.
  * Covers Claude (Desktop + Code), Cursor, VS Code, Codex, OpenCode,
- * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp,
+ * Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev, Amp,
  * Warp, LM Studio, Qoder, and Amazon Q Developer (plus the generic
  * `.agents/.mcp.json` convention); project-level discovery also covers
  * Trae (`.trae/mcp.json`), Qoder (`.qoder/settings.json`,
@@ -99,6 +99,16 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   } else {
     push('roo-code', path.join(homeDir, '.config', 'Code', 'User', rooRel));
   }
+  // Kilo Code (VS Code extension, own settings file under globalStorage)
+  const kiloRel = path.join('globalStorage', 'kilocode.kilo-code', 'settings', 'mcp_settings.json');
+  if (platform === 'darwin') {
+    push('kilocode', path.join(homeDir, 'Library', 'Application Support', 'Code', 'User', kiloRel));
+  } else if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    push('kilocode', path.join(appData, 'Code', 'User', kiloRel));
+  } else {
+    push('kilocode', path.join(homeDir, '.config', 'Code', 'User', kiloRel));
+  }
   // Continue.dev — mcpServers list inside config.yaml
   push('continue', path.join(homeDir, '.continue', 'config.yaml'), 'continue-yaml');
   // Amp (Sourcegraph) — `amp.mcpServers` key inside user settings
@@ -162,6 +172,9 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'qwen-extension', path: path.join(projectDir, 'qwen-extension.json'), format: 'mcpServers-json' },
     { client: 'kiro', path: path.join(projectDir, '.kiro', 'settings', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'roo-code', path: path.join(projectDir, '.roo', 'mcp.json'), format: 'mcpServers-json' },
+    // Kilo Code — project MCP config in `.kilocode/mcp.json` plus the newer `.kilo/mcp.json` (higher precedence)
+    { client: 'kilocode', path: path.join(projectDir, '.kilocode', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'kilocode', path: path.join(projectDir, '.kilo', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },

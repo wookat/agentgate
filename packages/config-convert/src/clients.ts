@@ -492,6 +492,13 @@ export const rooCode = mcpServersAdapter(
   { withType: false },
 );
 
+/** Kilo Code — `mcp_settings.json` under VS Code globalStorage (or project `.kilocode/mcp.json` / `.kilo/mcp.json`); standard `mcpServers`. */
+export const kilocode = mcpServersAdapter(
+  "kilocode",
+  "<vscode user dir>/globalStorage/kilocode.kilo-code/settings/mcp_settings.json",
+  { withType: false },
+);
+
 /** Remove `//` and `/* *\/` comments plus trailing commas (outside strings) so JSONC settings parse. */
 function stripJsonComments(raw: string): string {
   let out = "";
@@ -943,6 +950,7 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "gemini-cli": geminiCli,
   kiro,
   "roo-code": rooCode,
+  kilocode,
   zed,
   continue: continueDev,
   amp,

@@ -39,10 +39,15 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * workspace rules and workflows (`.agents/{rules,workflows}/*.md`, legacy
  * `.agent/{rules,workflows}/*.md`; workflows run as /slash commands);
  * Roo Code project custom modes (`.roomodes`, YAML or legacy JSON —
- * roleDefinition/customInstructions text is placed in the system prompt).
+ * roleDefinition/customInstructions text is placed in the system prompt);
+ * Kilo Code project trees (`.kilocode/` plus the newer `.kilo/`): rules
+ * (`rules/`, mode-specific `rules-<mode>/`, legacy `.kilocoderules`),
+ * workflows (`workflows/*.md`, run as /slash commands), custom modes
+ * (`.kilocodemodes`, YAML or JSON), and full system-prompt overrides
+ * (`system-prompt-<mode-slug>`, no extension).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -185,8 +190,8 @@ const GEMINI_RISKY_TOOLS: { re: RegExp; severity: 'high' | 'medium'; risk: strin
   { re: /^(web_fetch|google_web_search)$/i, severity: 'medium', risk: 'unrestricted network access (exfiltration channel)' },
 ];
 
-/** Roo Code project MCP config whose per-server `alwaysAllow`/`autoApprove` lists skip tool approval. */
-const ROO_MCP_FILE = /(^|\/)\.roo\/mcp\.json$/i;
+/** Roo Code / Kilo Code project MCP config whose per-server `alwaysAllow`/`autoApprove` lists skip tool approval. */
+const ROO_MCP_FILE = /(^|\/)\.(roo|kilo(code)?)\/mcp\.json$/i;
 
 /** Auto-approved tool names that suggest shell execution, data mutation, or exfiltration. */
 const DANGEROUS_TOOL_NAME = /exec|shell|command|terminal|run_|sql|migrat|write|delete|remove|drop|deploy|fetch_url/i;
@@ -575,6 +580,7 @@ export const skillOverprivilegeRule: Rule = {
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
+      const mcpClient = /(^|\/)\.roo\//i.test(file) ? 'Roo Code' : 'Kilo Code';
       const findings = [];
       const servers = (data as { mcpServers?: unknown }).mcpServers;
       if (typeof servers === 'object' && servers !== null) {
@@ -592,7 +598,7 @@ export const skillOverprivilegeRule: Rule = {
                 target: file,
                 file,
                 ...(line > 0 ? { line } : {}),
-                message: `Roo Code MCP config auto-approves every tool of server "${name}" ("*") — all its tool calls run without approval for anyone opening this project`,
+                message: `${mcpClient} MCP config auto-approves every tool of server "${name}" ("*") — all its tool calls run without approval for anyone opening this project`,
               }),
             );
             continue;
@@ -606,7 +612,7 @@ export const skillOverprivilegeRule: Rule = {
                 target: file,
                 file,
                 ...(line > 0 ? { line } : {}),
-                message: `Roo Code MCP config auto-approves destructive-looking tool(s) ${dangerous
+                message: `${mcpClient} MCP config auto-approves destructive-looking tool(s) ${dangerous
                   .slice(0, 4)
                   .map((t) => `"${t}"`)
                   .join(', ')} of server "${name}" — they run without approval for anyone opening this project`,

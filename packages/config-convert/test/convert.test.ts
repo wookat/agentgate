@@ -300,8 +300,8 @@ describe("convert", () => {
     expect(out.linear.url).toBe("https://mcp.linear.app/mcp");
   });
 
-  it("kiro and roo-code use standard mcpServers", () => {
-    for (const id of ["kiro", "roo-code"] as const) {
+  it("kiro, roo-code, and kilocode use standard mcpServers", () => {
+    for (const id of ["kiro", "roo-code", "kilocode"] as const) {
       const { content } = convert("cursor", id, CURSOR_CONFIG);
       const out = JSON.parse(content).mcpServers;
       expect(out.filesystem.command, id).toBe("npx");

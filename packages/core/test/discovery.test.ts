@@ -44,6 +44,7 @@ describe('knownConfigLocations', () => {
         'qwen-code',
         'kiro',
         'roo-code',
+        'kilocode',
         'zed',
         'continue',
         'amp',
@@ -81,6 +82,7 @@ describe('knownConfigLocations', () => {
         .map((l) => l.path.split(path.sep).join('/'));
     expect(p('kiro')).toEqual(['/home/u/.kiro/settings/mcp.json']);
     expect(p('roo-code')).toEqual(['/home/u/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json']);
+    expect(p('kilocode')).toEqual(['/home/u/.config/Code/User/globalStorage/kilocode.kilo-code/settings/mcp_settings.json']);
     expect(p('zed')).toEqual(['/home/u/.config/zed/settings.json']);
     expect(linux.find((l) => l.client === 'zed')!.format).toBe('zed-settings-json');
   });
@@ -264,6 +266,18 @@ describe('discoverConfigFiles', () => {
 
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
     expect(found.map((f) => f.client).sort()).toEqual(['kiro', 'roo-code']);
+  });
+
+  it('finds kilocode project-level configs (.kilocode/mcp.json + .kilo/mcp.json)', () => {
+    const project = path.join(dir, 'proj-kilo');
+    fs.mkdirSync(path.join(project, '.kilocode'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.kilocode', 'mcp.json'), '{"mcpServers":{}}');
+    fs.mkdirSync(path.join(project, '.kilo'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.kilo', 'mcp.json'), '{"mcpServers":{}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['kilocode', 'kilocode']);
+    expect(found.map((f) => path.basename(path.dirname(f.path))).sort()).toEqual(['.kilo', '.kilocode']);
   });
 
   it('locates the qoder user settings.json', () => {
