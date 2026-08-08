@@ -121,6 +121,8 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('copilot-cli', path.join(homeDir, '.copilot', 'mcp-config.json'));
   // JetBrains Junie — global MCP config shared by the IDE plugin and Junie CLI
   push('junie', path.join(homeDir, '.junie', 'mcp', 'mcp.json'));
+  // Factory Droid — user-level MCP servers (`droid mcp add` / registry writes here)
+  push('factory', path.join(homeDir, '.factory', 'mcp.json'));
   // Goose (Block) — stdio/remote MCP extensions inside the user config.yaml
   if (platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
@@ -162,6 +164,7 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'junie', path: path.join(projectDir, '.junie', 'mcp', 'mcp.json'), format: 'mcpServers-json' },
+    { client: 'factory', path: path.join(projectDir, '.factory', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.json'), format: 'mcpServers-json' },
     { client: 'qoder', path: path.join(projectDir, '.qoder', 'settings.local.json'), format: 'mcpServers-json' },
     { client: 'amazonq', path: path.join(projectDir, '.amazonq', 'mcp.json'), format: 'mcpServers-json' },

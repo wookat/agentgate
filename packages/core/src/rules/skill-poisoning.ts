@@ -32,10 +32,13 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * OpenHands repository customization (`.openhands/skills/**.md` and the legacy
  * `.openhands/microagents/**.md`, auto-loaded as agent context per trigger or always);
  * goose local hints (`.goosehints` at the project root or in any directory,
- * added to the system prompt for every request in that tree).
+ * added to the system prompt for every request in that tree); Factory Droid
+ * repository customization (`.factory/skills/**.md` skill trees,
+ * `.factory/commands/**.md` slash-command prompts, and `.factory/droids/*.md`
+ * custom-droid system prompts, all loaded from the repo).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -1138,6 +1141,9 @@ export function extractCopilotHookCommands(hooks: unknown): string[] {
 /** Copilot CLI settings files (repo `.github/copilot/settings.json(.local)`, user `.copilot/settings.json`); their inline `hooks` key uses the `.github/hooks/*.json` schema. */
 export const COPILOT_SETTINGS_FILE = /(^|\/)(\.github\/copilot|\.copilot)\/settings(\.local)?\.json$/i;
 
+/** Factory Droid hook files (project `.factory/hooks.json`, legacy `.factory/hooks/hooks.json`) plus the `hooks` key Droid reads from `.factory/settings.json` when hooks.json is absent; commands run at lifecycle events. */
+const FACTORY_HOOKS_FILE = /(^|\/)\.factory\/(hooks\.json|hooks\/hooks\.json|settings\.json)$/i;
+
 /** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
 const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
 
@@ -1364,6 +1370,7 @@ export const skillDynamicContextRule: Rule = {
     const isCopilotHooks = COPILOT_HOOKS_FILE.test(file) || COPILOT_SETTINGS_FILE.test(file);
     const isCrushConfig = CRUSH_CONFIG_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
+    const isFactoryHooks = FACTORY_HOOKS_FILE.test(file);
     const isPluginManifest = PLUGIN_MANIFEST_FILE.test(file);
     const isPluginHooks = PLUGIN_HOOKS_FILE.test(file) || isPluginManifest;
     const isPluginLsp = PLUGIN_LSP_FILE.test(file);
@@ -1371,7 +1378,7 @@ export const skillDynamicContextRule: Rule = {
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
     const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
     const isQwenSettings = QWEN_SETTINGS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isCrushConfig || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isFactoryHooks || isCrushConfig || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1525,6 +1532,24 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Codex hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, tool use, prompt submit)')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isFactoryHooks) {
+      // Same nested { Event: [{ matcher, hooks: [{ type: "command", command }] }] } shape as Claude Code settings hooks.
+      for (const command of extractHookCommands((data as { hooks?: unknown }).hooks)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Factory Droid hook command ${hit.risk.replace('at skill load time', 'automatically on Droid lifecycle events (session start, tool use, prompt submit)')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
