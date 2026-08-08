@@ -123,13 +123,14 @@ export function globToRegExp(glob: string): RegExp {
 
 /** Plugin metadata dir names whose `plugin.json` marks a plugin root. */
 const PLUGIN_META_NAMES = ['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin'];
-const PLUGIN_COMPONENT_MD = /(^|\/)(skills|commands|agents)\/.+\.md$/gi;
+const PLUGIN_COMPONENT_MD = /(^|\/)(skills|commands|agents|output-styles)\/.+\.md$/gi;
 
 /**
- * Markdown under a plugin root's `skills/`, `commands/`, or `agents/` component
- * dirs is installed as skill/command/agent content for everyone who installs
- * the plugin. Gated on a sibling plugin manifest so generic `commands/` or
- * `agents/` doc trees are not misread as agent instructions.
+ * Markdown under a plugin root's `skills/`, `commands/`, `agents/`, or
+ * `output-styles/` component dirs is installed as model-facing content for
+ * everyone who installs the plugin. Gated on a sibling plugin manifest so
+ * generic `commands/` or `agents/` doc trees are not misread as agent
+ * instructions.
  */
 function isPluginComponentSkill(scanRoot: string, relPosix: string, cache: Map<string, boolean>): boolean {
   PLUGIN_COMPONENT_MD.lastIndex = 0;
