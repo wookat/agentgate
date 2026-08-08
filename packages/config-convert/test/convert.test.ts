@@ -118,6 +118,23 @@ describe("convert", () => {
     expect(out.url).toBeUndefined();
   });
 
+  it("antigravity remote servers use serverUrl in both directions", () => {
+    const ag = JSON.stringify({
+      mcpServers: {
+        sqlite: { command: "node", args: ["/usr/local/bin/sqlite-mcp-server.js"], env: { DB: "/var/data/app.db" } },
+        remote: { serverUrl: "https://api.example.com/mcp/", headers: { Authorization: "Bearer T" } },
+      },
+    });
+    const { config } = ADAPTERS.antigravity.parse(ag);
+    expect(config.servers.find((s) => s.name === "remote")?.url).toBe("https://api.example.com/mcp/");
+    expect(config.servers.find((s) => s.name === "sqlite")?.command).toBe("node");
+    const rendered = ADAPTERS.antigravity.render(config);
+    const out = JSON.parse(rendered.content).mcpServers;
+    expect(out.remote.serverUrl).toBe("https://api.example.com/mcp/");
+    expect(out.remote.url).toBeUndefined();
+    expect(out.sqlite.command).toBe("node");
+  });
+
   it("gemini-cli distinguishes sse url from streamable httpUrl", () => {
     const gm = JSON.stringify({
       mcpServers: {

@@ -25,6 +25,7 @@ Supported clients:
 | `lmstudio` | standard `mcpServers` (Cursor notation) | `~/.lmstudio/mcp.json` |
 | `trae` | standard `mcpServers` | `.trae/mcp.json` (project) |
 | `amazonq` | standard `mcpServers` | `.amazonq/mcp.json` (project; also `~/.aws/amazonq/mcp.json`) |
+| `antigravity` | `mcpServers`; remote servers use `serverUrl` | `.agents/mcp_config.json` (workspace) / `~/.gemini/config/mcp_config.json` |
 
 ## CLI
 
