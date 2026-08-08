@@ -56,6 +56,49 @@ export function filterOsvDetail(ctx, candidate, detail, since) {
   return { ...candidate, published: detail.published?.slice(0, 10) };
 }
 
+// Package-name vocabulary for the malware sweep: the GHSA malware feed is
+// dominated by generic trojans and dependency-confusion beacons, so only
+// entries whose affected package names touch the agent/MCP-client ecosystem
+// are worth manual triage. Word-edge match ("claude-cup", "@scope/mcp-x",
+// "aclade-agent") to avoid substring noise ("useragent" stays quiet because
+// hyphen/dot/slash/scope boundaries are the edges that matter in npm names).
+export const MALWARE_NAME_VOCAB =
+  /(^|[^a-z0-9])(mcp|claude|anthropic|copilot|cursor|codex|gemini|opencode|goose|cline|kilo|qwen|windsurf|aider|agent|llm)(s?)([^a-z0-9]|$)/i;
+
+export function filterMalware(ctx, ghsaAdvisories) {
+  return ghsaAdvisories
+    .map((a) => ({
+      advisory: a,
+      pkgs: [
+        ...new Map(
+          (a.vulnerabilities ?? [])
+            .map((v) => ({
+              ecosystem: (v.package?.ecosystem ?? "").toLowerCase().replace("pip", "pypi"),
+              name: v.package?.name ?? "",
+            }))
+            .filter((p) => p.ecosystem === "npm" || p.ecosystem === "pypi")
+            .map((p) => [`${p.ecosystem}:${p.name}`, p]),
+        ).values(),
+      ],
+    }))
+    .filter(({ advisory: a, pkgs }) => {
+      if (pkgs.length === 0) return false;
+      const text = `${a.summary ?? ""} ${a.description ?? ""}`.toLowerCase();
+      if (
+        !pkgs.some((p) => MALWARE_NAME_VOCAB.test(p.name)) &&
+        !/\bmcp|mcp\b|model context protocol/.test(text)
+      ) {
+        return false;
+      }
+      if (isIgnored(ctx, a.ghsa_id, pkgs) || (a.cve_id && ctx.ignoredIds.has(a.cve_id))) return false;
+      if (ctx.knownAliases.has(a.ghsa_id) || (a.cve_id && ctx.knownAliases.has(a.cve_id))) return false;
+      // Malware GHSA entries for packages the database already covers show up
+      // under fresh ids when the campaign publishes new versions; the package
+      // channel, not the id, is the dedupe key that matters here.
+      return !pkgs.every((p) => ctx.trackedPackages.some((t) => t.ecosystem === p.ecosystem && t.name === p.name));
+    });
+}
+
 const GHSA_TYPE_HINTS = [
   [/command injection|code execution|rce\b/i, "rce-vectors"],
   [/path traversal|directory traversal/i, "path-traversal"],
@@ -101,7 +144,7 @@ export function draftFromGhsa(detail, nextId) {
   };
 }
 
-export function renderReport({ days, ghsa, osv }) {
+export function renderReport({ days, ghsa, osv, malware = { error: null, hits: [] } }) {
   const lines = [];
   if (ghsa.hits.length > 0) {
     lines.push(`### GHSA advisories mentioning MCP (last ${days} days, not in MCPA database)`, "");
@@ -109,6 +152,14 @@ export function renderReport({ days, ghsa, osv }) {
       lines.push(
         `- [\`${a.ghsa_id}\`](https://github.com/advisories/${a.ghsa_id}) (${a.severity}${a.cve_id ? `, ${a.cve_id}` : ""}): ${a.summary}`,
       );
+    }
+    lines.push("");
+  }
+  if (malware.hits.length > 0) {
+    lines.push(`### GHSA malware advisories in the agent/MCP name vocabulary (last ${days} days, packages not in MCPA database)`, "");
+    for (const { advisory: a, pkgs } of malware.hits) {
+      const names = pkgs.map((p) => `\`${p.ecosystem}:${p.name}\``).join(", ");
+      lines.push(`- [\`${a.ghsa_id}\`](https://github.com/advisories/${a.ghsa_id}): ${names} — ${a.summary}`);
     }
     lines.push("");
   }
@@ -120,11 +171,15 @@ export function renderReport({ days, ghsa, osv }) {
     }
     lines.push("");
   }
-  for (const e of [ghsa.error, osv.error].filter(Boolean)) {
+  for (const e of [ghsa.error, malware.error, osv.error].filter(Boolean)) {
     lines.push(`> warning: ${e}`);
   }
   // npm/PyPI OSV ids are usually GHSA mirrors, so the same --draft flow applies.
-  const draftIds = [...ghsa.hits.map((a) => a.ghsa_id), ...osv.hits.map((h) => h.id).filter((id) => /^GHSA-/.test(id))];
+  const draftIds = [
+    ...ghsa.hits.map((a) => a.ghsa_id),
+    ...malware.hits.map((h) => h.advisory.ghsa_id),
+    ...osv.hits.map((h) => h.id).filter((id) => /^GHSA-/.test(id)),
+  ];
   if (draftIds.length > 0) {
     lines.push(
       "",

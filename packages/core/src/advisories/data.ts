@@ -2058,5 +2058,77 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0082",
+    "title": "@atom8n/inspector (npm) impersonates Anthropic's MCP Inspector and reintroduces the CVE-2025-49596 drive-by RCE by disabling auth and origin validation",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@atom8n/inspector",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0083",
+    "title": "trimprompt (npm) installs shell shims into Cursor/Claude Code command paths and ships fully obfuscated modules that pair child_process with outbound host reporting",
+    "type": "malicious-package",
+    "severity": "high",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "trimprompt",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0084",
+    "title": "@addai/node (npm) installs an autostart daemon that runs local AI-agent CLIs from a hardcoded Supabase backend and inventories third-party agent credential stores",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@addai/node",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0085",
+    "title": "@xiaohhhh1/canvas-agent (npm) auto-connects to a hardcoded vendor relay that can drive local Codex/Claude turns with sandbox disabled and pull files from disk",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@xiaohhhh1/canvas-agent",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
