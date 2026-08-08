@@ -9,7 +9,7 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.cursor', '.codex', '.opencode', '.windsurf', '.cline', '.clinerules', '.kilocode', '.kilo', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.codex-plugin', '.cursor-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.cursor', '.codex', '.goose', '.opencode', '.windsurf', '.cline', '.clinerules', '.kilocode', '.kilo', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.codex-plugin', '.cursor-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
@@ -49,16 +49,55 @@ export function scanConfiguration(surfaces: Record<string, ToolSurface[]>, rules
   return findings;
 }
 
-function* walk(dir: string): Generator<string> {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith('.') && entry.name !== '.mcp.json') {
-      if (entry.isDirectory() && !AGENT_DOT_DIRS.has(entry.name)) continue;
+function* walk(dir: string, rootReal?: string, seenDirs?: Set<string>): Generator<string> {
+  if (rootReal === undefined) {
+    try {
+      rootReal = fs.realpathSync(dir);
+    } catch {
+      return;
     }
+    seenDirs = new Set([rootReal]);
+  }
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
+    let isDir = entry.isDirectory();
+    let isFile = entry.isFile();
+    if (entry.isSymbolicLink()) {
+      // Repos alias shared skill/config trees with committed symlinks; follow
+      // them, but only inside the scan root, and never into a directory cycle.
+      let real;
+      try {
+        real = fs.realpathSync(full);
+      } catch {
+        continue;
+      }
+      if (real !== rootReal && !real.startsWith(rootReal + path.sep)) continue;
+      let stat;
+      try {
+        stat = fs.statSync(full);
+      } catch {
+        continue;
+      }
+      isDir = stat.isDirectory();
+      isFile = stat.isFile();
+    }
+    if (entry.name.startsWith('.') && entry.name !== '.mcp.json') {
+      if (isDir && !AGENT_DOT_DIRS.has(entry.name)) continue;
+    }
+    if (isDir) {
       if (SKIP_DIRS.has(entry.name)) continue;
-      yield* walk(full);
-    } else if (entry.isFile()) {
+      // Dedupe directories by real path so symlink-aliased trees (repos that
+      // mirror one skills dir across many client dirs) are walked only once.
+      let real;
+      try {
+        real = fs.realpathSync(full);
+      } catch {
+        continue;
+      }
+      if (seenDirs!.has(real)) continue;
+      seenDirs!.add(real);
+      yield* walk(full, rootReal, seenDirs);
+    } else if (isFile) {
       yield full;
     }
   }
