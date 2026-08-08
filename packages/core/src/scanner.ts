@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALL_RULES, Rule } from './rules/index.js';
-import { KIRO_AGENT_HOOK_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
+import { COPILOT_HOOKS_FILE, KIRO_AGENT_HOOK_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
 import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
@@ -93,7 +93,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
     const isSkill = SKILL_FILE.test(relPosix);
     if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix)) continue;
-    if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!)) continue;
+    if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
       .split('/')
       .slice(0, -1)
