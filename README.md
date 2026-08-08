@@ -29,7 +29,7 @@ pnpm build
 alias agentgate="node $PWD/packages/cli/dist/index.js"
 ```
 
-Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed / Continue.dev / Amp / Warp / LM Studio / Trae / Qoder / Amazon Q Developer / Qwen Code / GitHub Copilot CLI / JetBrains Junie) are configured to use — config paths are discovered automatically:
+Scan every MCP server your clients (Claude Desktop / Claude Code / Cursor / VS Code / Codex / OpenCode / Windsurf / Cline / Gemini CLI / Kiro / Roo Code / Zed / Continue.dev / Amp / Warp / LM Studio / Trae / Qoder / Amazon Q Developer / Qwen Code / GitHub Copilot CLI / JetBrains Junie / Goose) are configured to use — config paths are discovered automatically:
 
 ```bash
 agentgate scan                 # static config analysis, terminal table
@@ -83,7 +83,7 @@ the whole loop in one tool:
 The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
 
 ```bash
-# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q, Qwen Code, Copilot CLI, Junie auto-discovered)
+# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q, Qwen Code, Copilot CLI, Junie, Goose auto-discovered)
 npx mcp-agentgate scan
 
 # Pin the current tool surface into agentgate.lock
@@ -140,7 +140,7 @@ three operating systems in CI. Client config discovery covers the
 platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
 OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Zed, Continue.dev,
 Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code,
-GitHub Copilot CLI, and JetBrains Junie on each OS.
+GitHub Copilot CLI, JetBrains Junie, and Goose on each OS.
 
 ## Config portability
 

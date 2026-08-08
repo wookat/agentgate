@@ -19,7 +19,8 @@ export interface ClientConfigLocation {
     | 'skill-frontmatter-yaml'
     | 'agent-frontmatter-yaml'
     | 'copilot-mcp-json'
-    | 'marketplace-json';
+    | 'marketplace-json'
+    | 'goose-yaml';
 }
 
 /**
@@ -118,6 +119,13 @@ export function knownConfigLocations(homeDir = os.homedir(), platform = process.
   push('copilot-cli', path.join(homeDir, '.copilot', 'mcp-config.json'));
   // JetBrains Junie — global MCP config shared by the IDE plugin and Junie CLI
   push('junie', path.join(homeDir, '.junie', 'mcp', 'mcp.json'));
+  // Goose (Block) — stdio/remote MCP extensions inside the user config.yaml
+  if (platform === 'win32') {
+    const appData = process.env.APPDATA ?? path.join(homeDir, 'AppData', 'Roaming');
+    push('goose', path.join(appData, 'Block', 'goose', 'config', 'config.yaml'), 'goose-yaml');
+  } else {
+    push('goose', path.join(homeDir, '.config', 'goose', 'config.yaml'), 'goose-yaml');
+  }
   // Generic "other agents" convention (read by Warp and others)
   push('agents', path.join(homeDir, '.agents', '.mcp.json'));
   locations.push(...skillServerLocations(path.join(homeDir, '.config', 'amp', 'skills'), 'amp-skill'));
@@ -417,6 +425,8 @@ export function parseConfigFile(location: ClientConfigLocation): McpServerConfig
       return parseAgentFrontmatter(raw, location);
     case 'copilot-mcp-json':
       return parseCopilotMcpJson(raw, location);
+    case 'goose-yaml':
+      return parseGooseYaml(raw, location);
     default:
       return parseMcpServersJson(raw, location);
   }
@@ -525,6 +535,35 @@ export function parseContinueYaml(raw: string, location: ClientConfigLocation): 
     const name = typeof entry.name === 'string' ? entry.name : undefined;
     if (!name) continue;
     out.push(normalizeEntry(name, entry, location));
+  }
+  return out;
+}
+
+/**
+ * Goose `config.yaml`: `extensions` is a map of `{ type, cmd, args, envs, uri, headers, enabled }`.
+ * Only `stdio` and remote (`streamable_http`/`sse`) extensions are MCP servers;
+ * `builtin`/`platform`/`frontend`/`inline_python` types are goose-internal and skipped.
+ */
+export function parseGooseYaml(raw: string, location: ClientConfigLocation): McpServerConfig[] {
+  const doc = YAML.parse(raw) as Record<string, unknown> | null;
+  if (typeof doc !== 'object' || doc === null || typeof doc.extensions !== 'object' || doc.extensions === null) return [];
+  const out: McpServerConfig[] = [];
+  for (const [name, entryRaw] of Object.entries(doc.extensions)) {
+    if (typeof entryRaw !== 'object' || entryRaw === null) continue;
+    const entry = entryRaw as Record<string, unknown>;
+    const type = typeof entry.type === 'string' ? entry.type : undefined;
+    if (type !== 'stdio' && type !== 'streamable_http' && type !== 'sse') continue;
+    out.push({
+      name,
+      command: typeof entry.cmd === 'string' ? entry.cmd : undefined,
+      args: Array.isArray(entry.args) ? entry.args.map(String) : undefined,
+      env: toStringRecord(entry.envs) ?? toStringRecord(entry.env),
+      url: typeof entry.uri === 'string' ? entry.uri : undefined,
+      headers: toStringRecord(entry.headers),
+      transport: type,
+      source: location.path,
+      client: location.client,
+    });
   }
   return out;
 }
