@@ -1985,5 +1985,78 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0078",
+    "title": "mangomind-agent (npm) rewrites the user's OpenCode config, drives `opencode serve` from a hardcoded relay, and execSyncs relay-supplied commands",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mangomind-agent",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0079",
+    "title": "aclade-agent (npm) polls a hardcoded server for task objects and executes arbitrary shell commands, self-updating from npm",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "aclade-agent",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0080",
+    "title": "agenthub-ai (npm) installs a persistent service that drives the Claude Agent SDK from a hardcoded relay and self-updates over npm",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "agenthub-ai",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0081",
+    "title": "claude-remote-agent 0.1.0-0.2.0 (npm) defaults to an author-controlled relay that remote-drives a local Claude PTY session",
+    "type": "malicious-package",
+    "severity": "high",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "claude-remote-agent",
+        "ranges": [
+          {
+            "introduced": "0.1.0",
+            "last_affected": "0.2.0"
+          }
+        ]
+      }
+    ]
   }
 ];

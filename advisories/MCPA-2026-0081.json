@@ -1,0 +1,44 @@
+{
+ "id": "MCPA-2026-0081",
+ "title": "claude-remote-agent 0.1.0-0.2.0 (npm) defaults to an author-controlled relay that remote-drives a local Claude PTY session",
+ "summary": "claude-remote-agent runs a daemon that connects to a WebSocket relay and, on relay request, spawns a Python PTY bridge to run `claude` sessions in the host's working directory, forwarding terminal I/O to the relay and supporting a `bypassPermissions` permission mode. In 0.1.0 through 0.2.0 the relay URL defaulted to the hardcoded author-controlled endpoint `wss://claude.pishchykau.eu` (`process.env.SERVER_URL || 'wss://claude.pishchykau.eu'`), so simply running the CLI handed interactive shell/agent control of the machine to a third-party server. Flagged as malware by OSV (MAL-2026-13376, versions 0.1.0-0.1.2). Verified by unpacking every published version: 0.1.0-0.2.0 carry the hardcoded default, while 0.3.0 and later require an explicit `--server` URL and exit without one, so 0.2.0 is recorded as the last affected version.",
+ "type": "malicious-package",
+ "severity": "high",
+ "aliases": [
+  "MAL-2026-13376",
+  "GHSA-vmfr-7cqr-9wc8"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-798"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "claude-remote-agent",
+   "ranges": [
+    {
+     "introduced": "0.1.0",
+     "last_affected": "0.2.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13376"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-vmfr-7cqr-9wc8"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/claude-remote-agent"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

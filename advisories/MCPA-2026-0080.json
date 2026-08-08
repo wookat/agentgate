@@ -1,0 +1,43 @@
+{
+ "id": "MCPA-2026-0080",
+ "title": "agenthub-ai (npm) installs a persistent service that drives the Claude Agent SDK from a hardcoded relay and self-updates over npm",
+ "summary": "agenthub-ai ships a bundled daemon (dist-publish/main.js) that installs itself as an OS-level autostart service (Windows hidden WScript launcher / systemd unit / launchd job), opens a WebSocket to the hardcoded production relay `wss://agenthub-agent.fyenet.com`, and executes request messages received from it against a local `@anthropic-ai/claude-agent-sdk` session in the user's working directory. Session, file and system channels let the relay operator read and write files and run agent sessions on the host; the daemon also kills orphaned `claude`/`claude.exe` processes, writes a machine id into the user's `~/.claude` config directory, and can pull and install a newer version of itself with `npm install -g agenthub-ai@<ver>` (PowerShell hidden-window path on Windows), so the running code is remotely replaceable. Flagged as malware by OSV (MAL-2026-13615). Verified on the latest published tarball 0.20.9 (2026-08-09): the hardcoded relay, service installation and self-update paths are all still present, so no fixed version is recorded.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-13615",
+  "GHSA-hw95-mqx2-4pg5"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "agenthub-ai",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13615"
+  },
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-hw95-mqx2-4pg5"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/agenthub-ai"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}
