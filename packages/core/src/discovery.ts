@@ -472,13 +472,19 @@ function continueWorkspaceLocations(projectDir: string): ClientConfigLocation[] 
     .map((f) => ({ client: 'continue', path: path.join(dir, f), format: 'continue-yaml' as const }));
 }
 
-/** Discover existing config files among the known locations. */
+/**
+ * Discover existing config files among the known locations. The same file can be
+ * reachable through several conventions (a project-root `.mcp.json` is both the
+ * claude-code location and a plugin manifest's path ref); only the first hit is
+ * kept so its servers are not scanned and reported twice.
+ */
 export function discoverConfigFiles(opts: { homeDir?: string; projectDir?: string; platform?: NodeJS.Platform } = {}): ClientConfigLocation[] {
   const candidates = [
     ...knownConfigLocations(opts.homeDir, opts.platform),
     ...(opts.projectDir ? projectConfigLocations(opts.projectDir) : []),
   ];
-  return candidates.filter((c) => fs.existsSync(c.path));
+  const seen = new Set<string>();
+  return candidates.filter((c) => fs.existsSync(c.path) && !seen.has(c.path) && seen.add(c.path));
 }
 
 /** Parse a client config file into normalized MCP server entries. */
