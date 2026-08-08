@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0060",
+ "title": "mcp-ui-probe journey storage path traversal (CVE-2026-19270)",
+ "summary": "mcp-ui-probe (npm) up to 0.2.0: the get_journey/delete_journey/analyze_journey/usage_stats functions in src/journey/JourneyStorage.ts pass the journeyId/filename arguments into filesystem paths without sanitization, allowing path traversal outside the journey storage directory. The project was informed through a public issue but has not responded and no fixed release exists, so the range is recorded as last_affected 0.2.0 per the public advisory.",
+ "type": "path-traversal",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19270",
+  "GHSA-h8jj-pqww-5m4w"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-22"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "mcp-ui-probe",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "0.2.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-h8jj-pqww-5m4w"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19270"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/Hulupeep/mcp-ui-probe/issues/1"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

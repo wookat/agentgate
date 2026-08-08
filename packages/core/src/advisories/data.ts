@@ -1636,5 +1636,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0060",
+    "title": "mcp-ui-probe journey storage path traversal (CVE-2026-19270)",
+    "type": "path-traversal",
+    "severity": "low",
+    "published": "2026-08-08",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-ui-probe",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "0.2.0"
+          }
+        ]
+      }
+    ]
   }
 ];
