@@ -693,6 +693,49 @@ export const warp: ClientAdapter = {
   },
 };
 
+/** Google Antigravity — `.agents/mcp_config.json` (workspace) or `~/.gemini/config/mcp_config.json` (global); remote servers use `serverUrl` (legacy `url`/`httpUrl` are not supported). */
+export const antigravity: ClientAdapter = {
+  id: "antigravity",
+  defaultPath: ".agents/mcp_config.json",
+  parse(content): ParseResult {
+    const data = parseJson("antigravity", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcpServers;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("antigravity", "mcpServers must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      if (isRecord(entry) && typeof entry.serverUrl === "string" && entry.url === undefined) {
+        entry.url = entry.serverUrl;
+      }
+      const s = parseCommonEntry("antigravity", name, entry, warnings);
+      if (s) servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.enabled === false) {
+        warnings.push(`${s.name}: antigravity has no disabled flag; server emitted as enabled`);
+      }
+      const entry = renderCommonEntry(s, false);
+      if (s.transport !== "stdio") {
+        if (s.transport === "sse") {
+          warnings.push(`${s.name}: antigravity remote servers use streamable HTTP; sse emitted as serverUrl`);
+        }
+        entry.serverUrl = entry.url;
+        delete entry.url;
+      }
+      if (s.cwd) warnings.push(`${s.name}: antigravity does not document cwd; dropped`);
+      mcpServers[s.name] = entry;
+    }
+    return { content: JSON.stringify({ mcpServers }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -712,4 +755,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   lmstudio,
   trae,
   amazonq,
+  antigravity,
 };
