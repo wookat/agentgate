@@ -28,7 +28,7 @@ export function renderFindingsTable(findings: Finding[]): string {
       f.category,
       // Paths have no spaces; wrap them mid-word instead of truncating with "…".
       { content: renderTarget(f), wordWrap: true, wrapOnWordBoundary: false },
-      f.message,
+      renderMessage(f.message),
     ]);
   }
   const counts = countBySeverity(findings);
@@ -43,6 +43,19 @@ export function renderFindingsTable(findings: Finding[]): string {
     .map(([id, url]) => pc.dim(`  ${id} ×${ruleCounts.get(id)} → ${url}`))
     .join('\n');
   return `${table.toString()}\n\n${findings.length} finding(s): ${summary}\n${docLinks}`;
+}
+
+/** Content width of the Message column (column width minus cell padding). */
+const MESSAGE_WIDTH = 58;
+
+/**
+ * Word-boundary wrapping truncates tokens wider than the column with "…",
+ * which cuts off source URLs and long package specs; those messages wrap
+ * mid-word instead so the full text stays visible.
+ */
+function renderMessage(message: string): string | { content: string; wordWrap: true; wrapOnWordBoundary: false } {
+  const hasOverwideToken = message.split(/\s+/).some((t) => t.length > MESSAGE_WIDTH);
+  return hasOverwideToken ? { content: message, wordWrap: true, wrapOnWordBoundary: false } : message;
 }
 
 /**
