@@ -26,11 +26,17 @@ const EXEC_TOOL_RE = new RegExp(
 const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpServer\b|mcpServers/i;
 
 /**
- * OpenCode auto-discovers `.opencode/{plugin,plugins}/*.{ts,js}` and executes
- * them at startup — dynamic-exec primitives there run on repo open, MCP
- * markers or not.
+ * OpenCode auto-discovers `.opencode/{plugin,plugins}/*.{ts,js}` and Cline
+ * auto-loads project plugins under `.cline/plugins/` — both execute at
+ * startup, so dynamic-exec primitives there run on repo open, MCP markers or
+ * not.
  */
-const OPENCODE_PLUGIN_FILE = /(^|\/)\.opencode\/(plugin|plugins)\/[^/]+\.(ts|js)$/i;
+const STARTUP_PLUGIN_FILE = /(^|\/)\.opencode\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
+
+/** Client name for a startup-plugin path, for finding messages. */
+function startupPluginClient(file: string): string {
+  return /(^|\/)\.cline\//i.test(file) ? 'Cline' : 'OpenCode';
+}
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
 function isExecutableFile(file: string): boolean {
@@ -112,7 +118,7 @@ export const rceVectorsRule: Rule = {
       const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
-      const executable = (isExecutableFile(file) || OPENCODE_PLUGIN_FILE.test(file)) && !isCommented(m.index ?? 0);
+      const executable = (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file)) && !isCommented(m.index ?? 0);
       findings.push(
         finding(this, {
           severity: executable ? 'critical' : 'medium',
@@ -125,9 +131,9 @@ export const rceVectorsRule: Rule = {
         }),
       );
     }
-    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || OPENCODE_PLUGIN_FILE.test(file))) {
+    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || STARTUP_PLUGIN_FILE.test(file))) {
       const m = content.match(EVAL_RE)!;
-      const startupPlugin = OPENCODE_PLUGIN_FILE.test(file);
+      const startupPlugin = STARTUP_PLUGIN_FILE.test(file);
       findings.push(
         finding(this, {
           severity: 'medium',
@@ -135,7 +141,7 @@ export const rceVectorsRule: Rule = {
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
           message: startupPlugin
-            ? `OpenCode plugin (auto-executed at startup) uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
+            ? `${startupPluginClient(file)} plugin (auto-executed at startup) uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
             : `Source uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review how inputs reach it`,
         }),
       );

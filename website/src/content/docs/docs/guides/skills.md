@@ -24,6 +24,9 @@ Any of these markdown layouts are treated as skill files:
   root `.windsurfrules`).
 - Cline rules (`.clinerules/` directory or single `.clinerules` file, and the
   auto-detected `.cursorrules`).
+- Cline project skills and plugins (`.cline/skills/**/SKILL.md`, and
+  `.cline/plugins/` files — project plugins are auto-loaded and executed at
+  startup, so they are also treated as startup exec surface by AG-RC-001).
 - Cursor rule files (`.cursor/rules/*.mdc`).
 - Gemini CLI custom commands (`.gemini/commands/**.toml`, plus extension-root
   `commands/**.toml` shipped by Gemini CLI extensions) — the prompt text
