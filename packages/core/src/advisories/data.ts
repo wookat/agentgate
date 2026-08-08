@@ -1081,5 +1081,195 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0035",
+    "title": "meta-ads-mcp SSRF in upload_ad_image via unrestricted image_url fetch (CVE-2026-54549)",
+    "type": "ssrf",
+    "severity": "high",
+    "published": "2026-07-17",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "meta-ads-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.0.115"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0036",
+    "title": "meta-ads-mcp X-Pipeboard-Token header auth bypass reuses the operator Meta token (CVE-2026-54547)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-17",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "meta-ads-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.0.115"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0037",
+    "title": "LangBot authenticated RCE via STDIO MCP server configuration (CVE-2026-54449)",
+    "type": "rce-vectors",
+    "severity": "high",
+    "published": "2026-07-15",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "langbot",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "4.10.5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0038",
+    "title": "NetLicensing-MCP HTTP mode uses the server-side NetLicensing API key for unauthenticated requests (CVE-2026-54446)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-14",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "netlicensing-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.1.6"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0039",
+    "title": "@andrea9293/mcp-documentation-server Web UI binds to all interfaces without authentication (CVE-2026-54504)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-07-15",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@andrea9293/mcp-documentation-server",
+        "ranges": [
+          {
+            "introduced": "1.13.0",
+            "fixed": "1.13.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0040",
+    "title": "mcp-memory-keeper arbitrary local file read in context_import via unvalidated filePath (CVE-2026-54561)",
+    "type": "path-traversal",
+    "severity": "medium",
+    "published": "2026-07-17",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-memory-keeper",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.13.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0041",
+    "title": "Gittensory MCP tool leaks miner financial data via missing contributor-scoped access control",
+    "type": "auth-missing",
+    "severity": "medium",
+    "published": "2026-07-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@jsonbored/gittensory-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "0.1.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0042",
+    "title": "Phantom arbitrary file write and decode-bomb DoS via unconfined MCP tool paths",
+    "type": "path-traversal",
+    "severity": "high",
+    "published": "2026-07-09",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "phantom-audio",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.3.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0043",
+    "title": "PraisonAI MCP HTTP-stream transport is unauthenticated by default (CVE-2026-61427)",
+    "type": "auth-missing",
+    "severity": "medium",
+    "published": "2026-07-15",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "praisonai",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "4.6.78"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0044",
+    "title": "@dynatrace-oss/dynatrace-mcp-server create_dynatrace_notebook lacks the human-approval gate",
+    "type": "overprivileged",
+    "severity": "low",
+    "published": "2026-07-29",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@dynatrace-oss/dynatrace-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.8.7"
+          }
+        ]
+      }
+    ]
   }
 ];

@@ -1,0 +1,42 @@
+{
+  "id": "MCPA-2026-0041",
+  "title": "Gittensory MCP tool leaks miner financial data via missing contributor-scoped access control",
+  "summary": "@jsonbored/gittensory-mcp (npm) through 0.1.0: the gittensory_get_contributor_profile MCP tool (and the matching GET /v1/contributors/:login/profile endpoint) skips the contributor-scoped access check enforced by every sibling endpoint \u2014 any authenticated session/API/MCP token holder can read any contributor's profile, exposing miner earnings data (alphaPerDay, taoPerDay, usdPerDay). Patched upstream (commit 811ef5f); no fixed npm release was available at publication.",
+  "type": "auth-missing",
+  "severity": "medium",
+  "aliases": [
+    "GHSA-382c-vx95-w3p5"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+    "score": 6.5
+  },
+  "cwe": [
+    "CWE-284"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@jsonbored/gittensory-mcp",
+      "ranges": [
+        {
+          "introduced": "0",
+          "last_affected": "0.1.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/JSONbored/gittensory/security/advisories/GHSA-382c-vx95-w3p5"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/JSONbored/gittensory/commit/811ef5fb9d748170011f8854d88c64627ad666a0"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-09"
+  }
+}

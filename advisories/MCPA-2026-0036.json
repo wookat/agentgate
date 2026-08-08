@@ -1,0 +1,43 @@
+{
+  "id": "MCPA-2026-0036",
+  "title": "meta-ads-mcp X-Pipeboard-Token header auth bypass reuses the operator Meta token (CVE-2026-54547)",
+  "summary": "meta-ads-mcp (PyPI) before 1.0.115: AuthInjectionMiddleware rejects HTTP MCP requests only when both auth_token and pipeboard_token are absent, and extract_token_from_headers() does not recognize the X-Pipeboard-Token header \u2014 an attacker sending that header with any value passes the auth gate and the server executes Meta Ads API calls with the operator's own Meta token. Fixed in 1.0.115.",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-54547",
+    "GHSA-2v2f-mvfg-ph56"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N",
+    "score": 7.4
+  },
+  "cwe": [
+    "CWE-287"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "meta-ads-mcp",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "1.0.115"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/pipeboard-co/meta-ads-mcp/security/advisories/GHSA-2v2f-mvfg-ph56"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/pipeboard-co/meta-ads-mcp/releases/tag/1.0.115"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-17"
+  }
+}
