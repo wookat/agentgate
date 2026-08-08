@@ -644,6 +644,27 @@ describe('scanRepo', () => {
     ]);
   });
 
+  it('normalizes the deprecated OpenCode `tools` boolean map into permissions (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.opencode', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'legacy.md'),
+      '---\ndescription: Legacy agent\ntools:\n  bash: true\n  write: true\n---\n\nYou run tasks.\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'override.md'),
+      '---\ndescription: Explicit permission wins\ntools:\n  bash: true\npermission:\n  bash: deny\n---\n\nYou review code.\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'agents', 'disabled.md'),
+      '---\ndescription: Tools disabled\ntools:\n  bash: false\n  edit: false\n---\n\nYou are read-only.\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => [f.file, f.severity]).sort()).toEqual([
+      ['.opencode/agents/legacy.md', 'high'],
+      ['.opencode/agents/legacy.md', 'medium'],
+    ]);
+  });
+
   it('flags "allow" rules in per-agent OpenCode permission blocks (AG-SK-002)', () => {
     fs.writeFileSync(
       path.join(dir, 'opencode.json'),
