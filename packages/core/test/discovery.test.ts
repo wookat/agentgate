@@ -636,6 +636,52 @@ ${extra}`;
     expect(goose.every((l) => l.client === 'goose')).toBe(true);
   });
 
+  it('discovers nested recipe-library recipes and resolves their sub_recipes relative to each recipe', () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-nested-'));
+    try {
+      fs.mkdirSync(path.join(project, 'recipes', 'analyzer', 'subrecipes'), { recursive: true });
+      fs.writeFileSync(
+        path.join(project, 'recipes', 'analyzer', 'recipe.yaml'),
+        `title: "Analyzer"
+description: "Analyze the project"
+instructions: "Run analysis."
+sub_recipes:
+  - name: security
+    path: "./subrecipes/security.yaml"
+extensions:
+  - type: stdio
+    name: main-tool
+    cmd: npx
+    args: ["-y", "main-tool"]
+`,
+      );
+      fs.writeFileSync(
+        path.join(project, 'recipes', 'analyzer', 'subrecipes', 'security.yaml'),
+        `title: "Security"
+description: "Scan"
+instructions: "Scan the code."
+extensions:
+  - type: stdio
+    name: sub-tool
+    cmd: uvx
+    args: ["sub-tool"]
+`,
+      );
+      // node_modules and dot-dirs are never walked
+      fs.mkdirSync(path.join(project, 'node_modules', 'x'), { recursive: true });
+      fs.writeFileSync(path.join(project, 'node_modules', 'x', 'recipe.yaml'), 'title: "n"\ndescription: "n"\ninstructions: "n"\n');
+      const found = discoverConfigFiles({ homeDir: project, projectDir: project, platform: 'linux' }).filter((l) => l.format === 'goose-recipe-yaml');
+      expect(found.map((l) => path.relative(project, l.path).split(path.sep).join('/'))).toEqual([
+        'recipes/analyzer/recipe.yaml',
+        'recipes/analyzer/subrecipes/security.yaml',
+      ]);
+      const servers = found.flatMap((f) => parseConfigFile(f));
+      expect(servers.map((s) => s.name)).toEqual(['main-tool', 'sub-tool']);
+    } finally {
+      fs.rmSync(project, { recursive: true, force: true });
+    }
+  });
+
   it('follows sub_recipes path references into subrecipe extension discovery', () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-subrec-'));
     try {
