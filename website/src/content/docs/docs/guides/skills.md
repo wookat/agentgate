@@ -73,8 +73,10 @@ Any of these markdown layouts are treated as skill files:
   high default autonomy (`sessionDefaultSettings.autonomyLevel: high` or the
   legacy `autonomyMode: auto-high`), and `enableDroidShield: false`
   (disables secret scanning and git guardrails).
-- Google Antigravity workspace rules (`.agents/rules/*.md`, legacy
-  `.agent/rules/*.md` — applied to agent sessions in the workspace). Hook
+- Google Antigravity workspace rules and workflows
+  (`.agents/{rules,workflows}/*.md`, legacy `.agent/{rules,workflows}/*.md` —
+  rules are applied to agent sessions in the workspace; workflows run as
+  `/slash` commands and feed step-by-step agent instructions). Hook
   commands in `.agents/hooks.json` (global `~/.gemini/config/hooks.json`)
   run automatically around tool/model lifecycle events and are classified
   for dangerous idioms.
