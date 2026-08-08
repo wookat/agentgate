@@ -1,5 +1,13 @@
 # mcp-agentgate-core
 
+## 0.67.4
+
+### Patch Changes
+
+- 1f1d957: Scan Copilot CLI extensions (`.github/extensions/<name>/extension.{mjs,cjs,js}` and plugin-shipped `com.github.copilot/extensions/`) as auto-executed startup surface: AG-RC-001 flags dynamic code-execution primitives and curl|sh launches in extension entrypoints, which run as forked Node processes on session start.
+- 66a0a66: Advisory database 91 → 95: four in-the-wild npm packages that hijack local coding agents — `mangomind-agent` (rewrites the workspace OpenCode config to route model traffic through the author's endpoint, executes relay-supplied commands), `aclade-agent` (polls a hardcoded server for shell tasks, self-updates), `agenthub-ai` (autostart service driving the Claude Agent SDK from a hardcoded relay), and `claude-remote-agent` 0.1.0–0.2.0 (hardcoded default relay remote-driving a local Claude PTY session).
+- ab678c3: Advisory database: add MCPA-2026-0082..0085 (@atom8n/inspector MCP Inspector impersonation reintroducing CVE-2025-49596, trimprompt obfuscated agent-shim beaconing, @addai/node remote agent-CLI harness with credential-store recon, @xiaohhhh1/canvas-agent hardcoded relay driving Codex/Claude with sandbox disabled) — 95 → 99 advisories.
+
 ## 0.67.3
 
 ### Patch Changes
