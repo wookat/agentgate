@@ -2103,17 +2103,39 @@ export const skillPoisoningRule: Rule = {
             }),
           );
         }
+        // Recipe instructions are Markdown-ish prose too: a pattern inside an
+        // inline code span, quotes, or a fenced block is a quoted example (e.g.
+        // a security recipe listing `ignore previous instructions` as a
+        // blocklist entry), not the recipe addressing the agent.
+        const textCodeLines = fencedCodeLines(text);
+        const quotedInText = (idx: number) => {
+          const lineNo = text.slice(0, idx).split('\n').length;
+          if (textCodeLines.has(lineNo)) return true;
+          const col = idx - (text.lastIndexOf('\n', idx - 1) + 1);
+          const lineText = text.split('\n')[lineNo - 1] ?? '';
+          for (const span of lineText.matchAll(/`[^`\n]*`|"[^"\n]*"|“[^“”\n]*”/g)) {
+            const s = span.index ?? 0;
+            if (col > s && col < s + span[0].length - 1) return true;
+          }
+          return false;
+        };
         for (const { re, label } of INJECTION_PATTERNS) {
-          const m = text.match(re);
-          if (!m) continue;
+          const all = [...text.matchAll(new RegExp(re.source, `${re.flags.replace('g', '')}g`))];
+          if (all.length === 0) continue;
+          // Prefer a non-quoted match so an early quoted example can't mask a
+          // real injection later in the text.
+          const m = all.find((c) => !quotedInText(c.index ?? 0)) ?? all[0]!;
+          const quoted = quotedInText(m.index ?? 0);
           const line = content.split(/\r?\n/).findIndex((l) => l.includes(m[0].slice(0, 40))) + 1;
           findings.push(
             finding(this, {
-              severity: 'critical',
+              severity: quoted ? 'low' : 'critical',
               target: file,
               file,
               ...(line > 0 ? { line } : {}),
-              message: `Goose recipe ${field} matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — recipe text becomes the agent's instructions for everyone who runs it`,
+              message: quoted
+                ? `Goose recipe ${field} matches prompt-injection pattern (${label}) inside a code span or quotes: "${m[0].slice(0, 80)}" — likely quoted example content, but review it`
+                : `Goose recipe ${field} matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — recipe text becomes the agent's instructions for everyone who runs it`,
             }),
           );
         }
