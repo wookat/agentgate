@@ -1,5 +1,17 @@
 # mcp-agentgate-core
 
+## 0.66.0
+
+### Minor Changes
+
+- 1499751: Skill scanning covers Roo Code project slash commands (`.roo/commands/*.md`) and Kilo Code's newer command location (`.kilo/commands/*.md`) — poisoning and load-time command checks (AG-SK-001/003) now run on both.
+- 4ef10a6: Cover the Kilo CLI (OpenCode fork) project tree: discover `kilo.json(c)` MCP configs (OpenCode schema, JSONC-tolerant) with AG-SK-002 permission checks and AG-SC-001/002/003 plugin checks; scan `.kilo`/`.kilocode` agent and mode markdown (frontmatter permissions + skill pipeline) and treat `.kilo`/`.kilocode` plugin files as startup-execution surface (AG-RC-001). Also downgrade curl|sh strings listed under deny/block-list keys to low (defensive control, not an execution vector).
+
+### Patch Changes
+
+- 4ef10a6: AG-SK-002 no longer flags `allowed-tools` frontmatter in Roo Code / Kilo Code command files (`.roo/commands`, `.kilo/commands`) — both hosts ignore that field (verified in upstream source), so a pasted grant is inert and was a false positive.
+- 777ba35: Advisory database: 4 new entries (83 → 87) — anthropic-setup Claude Code base-URL hijack (MCPA-2026-0070, critical), remote-claude-daemon relay-driven `--dangerously-skip-permissions` execution (MCPA-2026-0071, critical), claude-token-tracker-mcp credential harvester posing as an MCP server (MCPA-2026-0072, critical), @guangnao/claude-cli concealed default-on hub relaying jobs through the local API key (MCPA-2026-0073, high).
+
 ## 0.65.4
 
 ### Patch Changes

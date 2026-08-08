@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.14.0
+
+### Minor Changes
+
+- 206653d: `config convert` supports the Kilo CLI: new `kilo` client for `kilo.json(c)` (OpenCode schema); the `opencode` and `kilo` adapters are JSONC-tolerant; default-path auto-discovery splits the two Kilo surfaces by schema (`kilo` → `kilo.json(c)`, `kilocode` → mcp.json / mcp_settings.json).
+
 ## 0.13.0
 
 ### Minor Changes
