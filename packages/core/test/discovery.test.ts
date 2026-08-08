@@ -637,6 +637,23 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['catalog', 'sibling', 'tools']);
   });
 
+  it('finds the other Codex marketplace manifests (.agents/plugins/api_marketplace.json, .cursor-plugin/marketplace.json)', () => {
+    const project = path.join(dir, 'proj-codex-markets');
+    fs.mkdirSync(path.join(project, '.agents', 'plugins'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.agents', 'plugins', 'api_marketplace.json'),
+      JSON.stringify({ name: 'api-market', plugins: [{ name: 'api-inline', source: './plugins/a', mcpServers: { 'api-srv': { command: 'npx', args: ['-y', 'api-mcp'] } } }] }),
+    );
+    fs.mkdirSync(path.join(project, '.cursor-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.cursor-plugin', 'marketplace.json'),
+      JSON.stringify({ name: 'cursor-market', plugins: [{ name: 'cur-inline', source: './plugins/b', mcpServers: { 'cur-srv': { command: 'npx', args: ['-y', 'cur-mcp'] } } }] }),
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.filter((f) => f.format === 'marketplace-json').flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['api-srv', 'cur-srv']);
+  });
+
   it('finds mcpServers declared by bare plugin.json manifests (Open Plugin Spec first lookup)', () => {
     const project = path.join(dir, 'proj12');
     // Repo-root manifest with a path-referenced mcp config (microsoft/azure-skills layout).

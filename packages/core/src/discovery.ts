@@ -309,6 +309,10 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
       // Marketplace entries can define plugins entirely inline (strict: false), including mcpServers.
       out.push({ client: 'claude-plugin', path: path.join(dir, 'marketplace.json'), format: 'marketplace-json' });
     }
+    // Codex also reads an API-curated catalog next to the repo marketplace.
+    if (entry.name === '.agents' && fs.existsSync(path.join(dir, 'api_marketplace.json'))) {
+      out.push({ client: 'claude-plugin', path: path.join(dir, 'api_marketplace.json'), format: 'marketplace-json' });
+    }
     if (isPluginMeta && fs.existsSync(path.join(dir, 'plugin.json'))) {
       if (depth > 0) {
         const mcpJson = path.join(projectDir, '.mcp.json');
