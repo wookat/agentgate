@@ -1,3 +1,4 @@
+import path from 'node:path';
 import Table from 'cli-table3';
 import pc from 'picocolors';
 import { DriftEntry, Finding, Severity, ruleDocUrl, sortFindings } from 'mcp-agentgate-core';
@@ -26,7 +27,7 @@ export function renderFindingsTable(findings: Finding[]): string {
       f.ruleId,
       f.category,
       // Paths have no spaces; wrap them mid-word instead of truncating with "…".
-      { content: f.target, wordWrap: true, wrapOnWordBoundary: false },
+      { content: renderTarget(f), wordWrap: true, wrapOnWordBoundary: false },
       f.message,
     ]);
   }
@@ -42,6 +43,17 @@ export function renderFindingsTable(findings: Finding[]): string {
     .map(([id, url]) => pc.dim(`  ${id} ×${ruleCounts.get(id)} → ${url}`))
     .join('\n');
   return `${table.toString()}\n\n${findings.length} finding(s): ${summary}\n${docLinks}`;
+}
+
+/**
+ * Server-scoped findings carry the server name as target; when the same server
+ * is declared in several client configs the rows are otherwise identical, so
+ * show which config file each one came from.
+ */
+function renderTarget(f: Finding): string {
+  if (!f.file || f.file.endsWith(f.target)) return f.target;
+  const rel = path.relative(process.cwd(), f.file);
+  return `${f.target}\n${pc.dim(rel.startsWith('..') ? f.file : rel)}`;
 }
 
 const ANNOTATION_LEVEL: Record<Severity, 'error' | 'warning' | 'notice'> = {
