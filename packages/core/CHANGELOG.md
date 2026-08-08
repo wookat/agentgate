@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.59.1
+
+### Patch Changes
+
+- 6c6e5a9: AG-RC-001 now matches only `.opencode/{plugin,plugins}/*.{ts,js}` as auto-executed OpenCode plugins — `.mjs`/`.cjs`/`.mts`/`.cts` files are not loaded by OpenCode's plugin glob and no longer get the startup-exec classification.
+
 ## 0.59.0
 
 ### Minor Changes
