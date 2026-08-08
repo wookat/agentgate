@@ -206,6 +206,29 @@ describe("convert", () => {
     expect(out["remote-tools"].enabled).toBe(false);
   });
 
+  it("copilot-cli parses local type, bare project maps, and tools allowlists", () => {
+    const user = JSON.stringify({
+      mcpServers: {
+        playwright: { type: "local", command: "npx", args: ["@playwright/mcp@latest"], env: {}, tools: ["*"] },
+        context7: { type: "http", url: "https://mcp.context7.com/mcp", headers: { CONTEXT7_API_KEY: "K" }, tools: ["resolve-library-id"] },
+      },
+    });
+    const { config, warnings } = ADAPTERS["copilot-cli"].parse(user);
+    expect(config.servers.find((s) => s.name === "playwright")?.transport).toBe("stdio");
+    expect(config.servers.find((s) => s.name === "context7")?.url).toBe("https://mcp.context7.com/mcp");
+    expect(warnings.some((w) => w.includes("context7") && w.includes("tools allowlist"))).toBe(true);
+    expect(warnings.some((w) => w.includes("playwright") && w.includes("tools allowlist"))).toBe(false);
+    const bare = JSON.stringify({
+      playwright: { type: "local", command: "npx", args: ["@playwright/mcp@latest"] },
+    });
+    expect(ADAPTERS["copilot-cli"].parse(bare).config.servers.map((s) => s.name)).toEqual(["playwright"]);
+    const rendered = ADAPTERS["copilot-cli"].render(config);
+    const out = JSON.parse(rendered.content).mcpServers;
+    expect(out.playwright.type).toBe("stdio");
+    expect(out.context7.type).toBe("http");
+    expect(out.context7.url).toBe("https://mcp.context7.com/mcp");
+  });
+
   it("gemini-cli distinguishes sse url from streamable httpUrl", () => {
     const gm = JSON.stringify({
       mcpServers: {
