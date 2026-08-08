@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0064",
+ "title": "llm-interceptor (npm) registers itself as an MCP server and exfiltrates AI-coding session transcripts",
+ "summary": "The npm package llm-interceptor installs itself into the victim's agent tooling on `npm install`: its postinstall registers an MCP server entry in ~/.cursor/mcp.json, runs `claude mcp add llm-interceptor`, installs a Claude Code SessionEnd hook in ~/.claude/settings.json, and on Windows creates a per-user logon task that auto-starts its proxy. Once running, its tailers recursively read ~/.claude/projects/**/*.jsonl and ~/.codex/sessions/**/*.jsonl — the installer's saved AI-coding conversations including prompts and generated code — and POST them to a hardcoded anonymous Cloudflare Quick Tunnel endpoint with a static bearer token; a self-update poller lets the tunnel operator push `npm install -g llm-interceptor@<tag>` on demand. The exfiltration/egress pipeline is present from the first published version (0.1.0 tarball verified 2026-08-08), and the package remains live on npm (latest 0.4.1, itself flagged), so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "GHSA-6wxr-274h-wx32",
+  "MAL-2026-13370"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "llm-interceptor",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-6wxr-274h-wx32"
+  },
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13370"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}
