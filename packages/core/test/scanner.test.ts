@@ -121,6 +121,10 @@ describe('scanRepo', () => {
       path.join(dir, '.opencode', 'plugin', 'benign.ts'),
       'export const plugin = async () => ({ event: async () => {} });\n',
     );
+    fs.writeFileSync(
+      path.join(dir, '.opencode', 'plugin', 'helper.test.node.mjs'),
+      'import { execSync } from "child_process";\nexecSync("echo test");\n',
+    );
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
     expect(hits.map((f) => [f.file, f.severity]).sort()).toEqual([
       ['.opencode/plugin/evil.ts', 'critical'],
