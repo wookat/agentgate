@@ -473,6 +473,23 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['bundled']);
   });
 
+  it('does not report the same config file twice when reachable via multiple conventions', () => {
+    const project = path.join(dir, 'proj-dedupe');
+    // Project-root .mcp.json is the claude-code location AND the plugin manifest's path ref.
+    fs.mkdirSync(path.join(project, '.claude-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.claude-plugin', 'plugin.json'), '{"name":"summer","mcpServers":"./.mcp.json"}');
+    fs.writeFileSync(path.join(project, '.mcp.json'), '{"mcpServers":{"engine":{"command":"npx","args":["engine-mcp"]}}}');
+    // Bare project-root mcp.json is the generic location AND the Factory plugin sibling.
+    fs.mkdirSync(path.join(project, '.factory-plugin'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.factory-plugin', 'plugin.json'), '{"name":"droid"}');
+    fs.writeFileSync(path.join(project, 'mcp.json'), '{"mcpServers":{"bare":{"command":"npx","args":["bare-mcp"]}}}');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.path).sort()).toEqual([path.join(project, '.mcp.json'), path.join(project, 'mcp.json')]);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['bare', 'engine']);
+  });
+
   it('finds mcp.json bundled by Factory Droid plugins (.factory-plugin/)', () => {
     const project = path.join(dir, 'proj-factory-plugin');
     // Native Factory plugin: metadata in .factory-plugin/, servers in a bare mcp.json at the plugin root.
@@ -569,8 +586,8 @@ describe('discoverConfigFiles', () => {
     fs.mkdirSync(path.join(project, 'plugins', 'other-eco'), { recursive: true });
     fs.writeFileSync(path.join(project, 'plugins', 'other-eco', 'plugin.json'), '{"id":"other","main":"module.js"}');
     const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
-    const pluginLocs = found.filter((f) => f.client === 'claude-plugin');
-    const servers = pluginLocs.flatMap((f) => parseConfigFile(f));
+    // The root .mcp.json path ref dedupes against the claude-code location; each server appears once.
+    const servers = found.flatMap((f) => parseConfigFile(f));
     expect(servers.map((s) => s.name).sort()).toEqual(['azure', 'tools']);
   });
 
