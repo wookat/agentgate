@@ -28,6 +28,10 @@ Any of these markdown layouts are treated as skill files:
   `.cline/plugins/` files — project plugins are auto-loaded and executed at
   startup, so they are also treated as startup exec surface by AG-RC-001).
 - Cursor rule files (`.cursor/rules/*.mdc`).
+- Cursor cloud-agent environment configs (`.cursor/environment.json`) —
+  the `install` script runs when a cloud agent's Build is created and
+  `start` / `terminals[].command` run when an agent boots, all sourced
+  from the repo; the commands are classified for dangerous idioms.
 - Gemini CLI custom commands (`.gemini/commands/**.toml`, plus extension-root
   `commands/**.toml` shipped by Gemini CLI extensions) — the prompt text
   is checked, including `!{...}` shell-injection blocks that run when the
