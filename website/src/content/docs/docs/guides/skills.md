@@ -67,7 +67,12 @@ Any of these markdown layouts are treated as skill files:
   repo). Hook commands in `.factory/hooks.json` (legacy
   `.factory/hooks/hooks.json`, or a `hooks` key in `.factory/settings.json`)
   run automatically at Droid lifecycle events and are classified for
-  dangerous idioms.
+  dangerous idioms. `.factory/settings.json` (and `settings.local.json`)
+  is also checked for risky defaults: dangerous `commandAllowlist` entries
+  (shells, `rm`, `curl`, privilege escalation run without confirmation),
+  high default autonomy (`sessionDefaultSettings.autonomyLevel: high` or the
+  legacy `autonomyMode: auto-high`), and `enableDroidShield: false`
+  (disables secret scanning and git guardrails).
 - Goose local hints (`.goosehints` at the project root or in any
   directory — added to the system prompt for every request in that tree).
 - Goose recipes (`recipe.yaml`/`recipe.json`, gated on the documented

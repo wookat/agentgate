@@ -78,6 +78,9 @@ const RISKY_GRANTS: { re: RegExp; severity: 'high' | 'medium'; risk: string }[] 
 /** Claude Code settings files whose `permissions.allow` pre-approves tools for everyone using the project. */
 const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 
+/** Factory Droid settings (project `.factory/settings.json` plus `settings.local.json` overrides); `commandAllowlist` entries and high autonomy pre-authorize execution for anyone opening the project. */
+const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$/i;
+
 /** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
 const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
 
@@ -502,7 +505,8 @@ export const skillOverprivilegeRule: Rule = {
     const isKiroAgent = KIRO_AGENT_JSON.test(file);
     const isQwen = QWEN_SETTINGS_FILE.test(file);
     const isCrush = CRUSH_CONFIG_FILE.test(file);
-    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent && !isQwen && !isCrush) return [];
+    const isFactorySettings = FACTORY_SETTINGS_FILE.test(file);
+    if (!isClaude && !isOpencode && !isGemini && !isRooMcp && !isVscode && !isZed && !isAmazonqAgent && !isCursorCli && !isKiroAgent && !isQwen && !isCrush && !isFactorySettings) return [];
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     if (isRooMcp) {
@@ -965,6 +969,58 @@ export const skillOverprivilegeRule: Rule = {
       }
       return findings;
     }
+    if (isFactorySettings) {
+      const findings = [];
+      const s = data as {
+        commandAllowlist?: unknown;
+        enableDroidShield?: unknown;
+        autonomyLevel?: unknown;
+        autonomyMode?: unknown;
+        sessionDefaultSettings?: { autonomyLevel?: unknown; autonomyMode?: unknown };
+      };
+      const allowlist = Array.isArray(s.commandAllowlist) ? s.commandAllowlist.filter((e): e is string => typeof e === 'string') : [];
+      for (const entry of allowlist) {
+        const word = entry.trim().split(/\s+/)[0]!.toLowerCase();
+        if (!VSCODE_DANGEROUS_COMMANDS.has(word)) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${entry}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Factory Droid settings allowlist the command "${entry}" (commandAllowlist) — ${word} enables shell execution, deletion, or remote fetches without confirmation for anyone opening this project`,
+          }),
+        );
+      }
+      const autonomyValues = [s.sessionDefaultSettings?.autonomyLevel, s.sessionDefaultSettings?.autonomyMode, s.autonomyLevel, s.autonomyMode];
+      const highAutonomy = autonomyValues.find((v) => typeof v === 'string' && /(^|-)high$/i.test(v));
+      if (typeof highAutonomy === 'string') {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(`"${highAutonomy}"`)) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Factory Droid settings default sessions to autonomy "${highAutonomy}" — high-risk actions are pre-authorized without approval prompts for anyone opening this project`,
+          }),
+        );
+      }
+      if (s.enableDroidShield === false) {
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes('enableDroidShield')) + 1;
+        findings.push(
+          finding(this, {
+            severity: 'medium',
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: 'Factory Droid settings disable Droid Shield (enableDroidShield: false) — secret scanning and git guardrails are off for anyone opening this project',
+          }),
+        );
+      }
+      return findings;
+    }
     const findings = [];
     const settings = data as { permissions?: { allow?: unknown; defaultMode?: unknown } };
     const allow = Array.isArray(settings.permissions?.allow) ? settings.permissions.allow : [];
@@ -1142,7 +1198,7 @@ export function extractCopilotHookCommands(hooks: unknown): string[] {
 export const COPILOT_SETTINGS_FILE = /(^|\/)(\.github\/copilot|\.copilot)\/settings(\.local)?\.json$/i;
 
 /** Factory Droid hook files (project `.factory/hooks.json`, legacy `.factory/hooks/hooks.json`) plus the `hooks` key Droid reads from `.factory/settings.json` when hooks.json is absent; commands run at lifecycle events. */
-const FACTORY_HOOKS_FILE = /(^|\/)\.factory\/(hooks\.json|hooks\/hooks\.json|settings\.json)$/i;
+const FACTORY_HOOKS_FILE = /(^|\/)\.factory\/(hooks\.json|hooks\/hooks\.json|settings(\.local)?\.json)$/i;
 
 /** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
 const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;

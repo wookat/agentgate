@@ -2229,6 +2229,46 @@ describe('scanRepo', () => {
     expect(hits[0]!.message).toContain('Factory Droid hook command');
   });
 
+  it('checks Factory Droid settings for allowlisted dangerous commands, high autonomy, and disabled Droid Shield (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.factory'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.factory', 'settings.json'),
+      JSON.stringify({
+        commandAllowlist: ['npm test', 'ls', 'curl', 'rm -rf'],
+        sessionDefaultSettings: { autonomyLevel: 'high' },
+        enableDroidShield: false,
+      }),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.map((f) => f.severity).sort()).toEqual(['high', 'medium', 'medium', 'medium']);
+    expect(hits.some((f) => f.message.includes('"curl"'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('"rm -rf"'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('autonomy "high"'))).toBe(true);
+    expect(hits.some((f) => f.message.includes('Droid Shield'))).toBe(true);
+  });
+
+  it('flags legacy auto-high autonomyMode but not benign Factory settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.factory'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.factory', 'settings.json'),
+      '// Factory CLI Settings\n' +
+        JSON.stringify({ autonomyMode: 'auto-high', commandAllowlist: ['npm test', 'git status'], model: 'gpt-5-codex' }),
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('high');
+    expect(hits[0]!.message).toContain('auto-high');
+  });
+
+  it('does not flag medium autonomy or safe allowlists in Factory settings (AG-SK-002)', () => {
+    fs.mkdirSync(path.join(dir, '.factory'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, '.factory', 'settings.json'),
+      JSON.stringify({ autonomyLevel: 'auto-medium', commandAllowlist: ['npm test'], enableDroidShield: true }),
+    );
+    expect(scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002')).toHaveLength(0);
+  });
+
   it('classifies legacy Factory Droid hooks/hooks.json (AG-SK-003)', () => {
     fs.mkdirSync(path.join(dir, '.factory', 'hooks'), { recursive: true });
     fs.writeFileSync(
