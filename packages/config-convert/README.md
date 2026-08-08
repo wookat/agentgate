@@ -26,6 +26,7 @@ Supported clients:
 | `trae` | standard `mcpServers` | `.trae/mcp.json` (project) |
 | `amazonq` | standard `mcpServers` | `.amazonq/mcp.json` (project; also `~/.aws/amazonq/mcp.json`) |
 | `antigravity` | `mcpServers`; remote servers use `serverUrl` | `.agents/mcp_config.json` (workspace) / `~/.gemini/config/mcp_config.json` |
+| `crush` | `mcp` map (`type`: stdio/http/sse, `disabled`) | `.crush.json` / `crush.json` (project; also `~/.config/crush/crush.json`) |
 
 ## CLI
 

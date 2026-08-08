@@ -736,6 +736,53 @@ export const antigravity: ClientAdapter = {
   },
 };
 
+/** Crush (Charm) — `.crush.json` / `crush.json` (project) or `~/.config/crush/crush.json`; `mcp` maps name → { type: stdio|http|sse, command, args, env, url, headers, disabled }. */
+export const crush: ClientAdapter = {
+  id: "crush",
+  defaultPath: ".crush.json",
+  parse(content): ParseResult {
+    const data = parseJson("crush", content);
+    const warnings: string[] = [];
+    const serversObj = data.mcp;
+    if (serversObj !== undefined && !isRecord(serversObj)) {
+      throw new ConfigParseError("crush", "mcp must be an object");
+    }
+    const servers: CanonicalMcpServer[] = [];
+    for (const [name, entry] of Object.entries(serversObj ?? {})) {
+      const s = parseCommonEntry("crush", name, entry, warnings);
+      if (!s) continue;
+      if (isRecord(entry)) {
+        if (typeof entry.disabled === "boolean" && entry.disabled) s.enabled = false;
+        if (entry.oauth === true) {
+          warnings.push(`${name}: crush oauth flow cannot be represented in other clients; dropped`);
+        }
+        if (Array.isArray(entry.disabled_tools) && entry.disabled_tools.length) {
+          warnings.push(`${name}: crush disabled_tools list cannot be represented in other clients; dropped`);
+        }
+        if (Array.isArray(entry.enabled_tools) && entry.enabled_tools.length) {
+          warnings.push(`${name}: crush enabled_tools list cannot be represented in other clients; dropped`);
+        }
+        if (entry.timeout !== undefined) {
+          warnings.push(`${name}: crush timeout cannot be represented in other clients; dropped`);
+        }
+      }
+      servers.push(s);
+    }
+    return { config: { servers }, warnings };
+  },
+  render(config): RenderResult {
+    const warnings: string[] = [];
+    const mcp: Record<string, unknown> = {};
+    for (const s of config.servers) {
+      if (s.cwd) warnings.push(`${s.name}: crush does not support cwd; dropped`);
+      const entry = renderCommonEntry(s, s.transport !== "stdio");
+      if (s.enabled === false) entry.disabled = true;
+      mcp[s.name] = entry;
+    }
+    return { content: JSON.stringify({ $schema: "https://charm.land/crush.json", mcp }, null, 2) + "\n", warnings };
+  },
+};
+
 export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   "claude-desktop": claudeDesktop,
   "claude-code": claudeCode,
@@ -756,4 +803,5 @@ export const ADAPTERS: Record<ClientId, ClientAdapter> = {
   trae,
   amazonq,
   antigravity,
+  crush,
 };

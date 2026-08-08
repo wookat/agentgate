@@ -135,6 +135,34 @@ describe("convert", () => {
     expect(out.sqlite.command).toBe("node");
   });
 
+  it("crush parses the mcp map with type/disabled and renders it back", () => {
+    const cr = JSON.stringify({
+      mcp: {
+        filesystem: { command: "node", args: ["/path/to/mcp-server.js"], env: { NODE_ENV: "production" } },
+        github: {
+          type: "http",
+          url: "https://api.githubcopilot.com/mcp/",
+          headers: { Authorization: "Bearer $GH_PAT" },
+          disabled: true,
+          disabled_tools: ["create_issue"],
+        },
+        linear: { type: "http", url: "https://mcp.linear.app/mcp", oauth: true },
+      },
+    });
+    const { config, warnings } = ADAPTERS.crush.parse(cr);
+    expect(config.servers.find((s) => s.name === "github")?.enabled).toBe(false);
+    expect(config.servers.find((s) => s.name === "linear")?.url).toBe("https://mcp.linear.app/mcp");
+    expect(warnings.some((w) => w.includes("disabled_tools"))).toBe(true);
+    expect(warnings.some((w) => w.includes("oauth"))).toBe(true);
+    const rendered = ADAPTERS.crush.render(config);
+    const out = JSON.parse(rendered.content);
+    expect(out.$schema).toBe("https://charm.land/crush.json");
+    expect(out.mcp.filesystem.command).toBe("node");
+    expect(out.mcp.filesystem.type).toBeUndefined();
+    expect(out.mcp.github.type).toBe("http");
+    expect(out.mcp.github.disabled).toBe(true);
+  });
+
   it("gemini-cli distinguishes sse url from streamable httpUrl", () => {
     const gm = JSON.stringify({
       mcpServers: {
