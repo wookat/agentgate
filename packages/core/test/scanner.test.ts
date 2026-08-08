@@ -519,6 +519,19 @@ describe('scanRepo', () => {
     expect(hits.every((f) => f.severity === 'critical')).toBe(true);
   });
 
+  it('ignores inert allowed-tools frontmatter in Roo/Kilo command files (AG-SK-002)', () => {
+    const body = '---\ndescription: Apply change\nallowed-tools: Bash, Read, Write, Edit\n---\n\nImplement the change to green.\n';
+    fs.mkdirSync(path.join(dir, '.roo', 'commands'), { recursive: true });
+    fs.mkdirSync(path.join(dir, '.kilo', 'commands'), { recursive: true });
+    fs.mkdirSync(path.join(dir, '.claude', 'commands'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.roo', 'commands', 'apply.md'), body);
+    fs.writeFileSync(path.join(dir, '.kilo', 'commands', 'apply.md'), body);
+    fs.writeFileSync(path.join(dir, '.claude', 'commands', 'apply.md'), body);
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SK-002');
+    expect(hits.every((f) => f.file === '.claude/commands/apply.md')).toBe(true);
+    expect(hits.some((f) => f.severity === 'high')).toBe(true);
+  });
+
   it('scans Kilo Code rules, workflows, modes, and system-prompt overrides (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.kilocode', 'rules'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.kilocode', 'workflows'), { recursive: true });
