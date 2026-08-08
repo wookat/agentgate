@@ -336,6 +336,9 @@ describe('collectDependencies remote specs', () => {
         '  asynckit@0.4.0:',
         '    resolution: {integrity: sha512-z, tarball: https://registry.nlark.com/asynckit/download/asynckit-0.4.0.tgz}',
         '',
+        "  '@primer/octicons@https://codeload.github.com/primer/octicons/tar.gz/77ef6b225b3e7f30f210e10c45dd00b364a9973b(encoding@0.1.13)(eslint-config-prettier@10.1.8(eslint@8.57.1))':",
+        '    resolution: {integrity: sha512-v, tarball: https://codeload.github.com/primer/octicons/tar.gz/77ef6b225b3e7f30f210e10c45dd00b364a9973b}',
+        '',
         '  https://example.com/evil.tgz:',
         '    resolution: {integrity: sha512-w, tarball: https://example.com/evil.tgz}',
         '    name: evil-dep',
@@ -347,6 +350,9 @@ describe('collectDependencies remote specs', () => {
     // mutable codeload/git/plain-tarball resolutions are collected
     expect(remoteSpecs.map((s) => `${s.name}:${s.spec}`).sort()).toEqual([
       '@adguard/assistant:git+https://bitbucket.org/team/assistant.git#semver:v4.3.70',
+      // nested peer-suffix parens stripped from the key — the clean 40-hex
+      // commit tarball spec is exempted downstream by the scoring pass
+      '@primer/octicons:https://codeload.github.com/primer/octicons/tar.gz/77ef6b225b3e7f30f210e10c45dd00b364a9973b',
       'ags:https://codeload.github.com/aylur/ags/tar.gz/main',
       'evil-dep:https://example.com/evil.tgz',
     ]);
