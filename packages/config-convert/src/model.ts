@@ -29,6 +29,7 @@ export type ClientId =
   | "kiro"
   | "roo-code"
   | "kilocode"
+  | "kilo"
   | "zed"
   | "continue"
   | "amp"
@@ -58,6 +59,7 @@ export const CLIENT_IDS: ClientId[] = [
   "kiro",
   "roo-code",
   "kilocode",
+  "kilo",
   "zed",
   "continue",
   "amp",

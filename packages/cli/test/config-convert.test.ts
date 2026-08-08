@@ -57,6 +57,15 @@ describe('agentgate config convert', () => {
     expect(defaultConfigPath('cursor', proj)).toBe(path.join(proj, '.cursor', 'mcp.json'));
   });
 
+  it('defaultConfigPath splits the two Kilo surfaces by schema', () => {
+    const proj = path.join(dir, 'proj-kilo');
+    fs.mkdirSync(path.join(proj, '.kilo'), { recursive: true });
+    fs.writeFileSync(path.join(proj, '.kilo', 'mcp.json'), '{"mcpServers":{}}');
+    fs.writeFileSync(path.join(proj, 'kilo.jsonc'), '{"mcp":{}}');
+    expect(defaultConfigPath('kilo', proj)).toBe(path.join(proj, 'kilo.jsonc'));
+    expect(defaultConfigPath('kilocode', proj)).toBe(path.join(proj, '.kilo', 'mcp.json'));
+  });
+
   it('rejects unknown client names via option choices', async () => {
     const res = await run(['config', 'convert', '--from', 'nope', '--to', 'vscode', '--in', 'x']);
     expect(res.code).not.toBe(0);
