@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0062",
+ "title": "devplatform-react-mcp (npm) is a dropper disguised as a React MCP SDK",
+ "summary": "devplatform-react-mcp@35.5.6 poses as a React MCP SDK. On require(), it assembles Cloudflare Workers hostnames from string fragments at runtime, downloads a platform-specific binary, writes it to a hidden temp path, marks it executable, and spawns it detached; a DNS-TXT fallback resolves further payload sources. The package was removed from npm after detection. Treat every version as malicious.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "GHSA-mcm8-ccm7-f469",
+  "MAL-2026-13502"
+ ],
+ "cwe": [
+  "CWE-506"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "devplatform-react-mcp",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-mcm8-ccm7-f469"
+  },
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-13502"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-07"
+ }
+}

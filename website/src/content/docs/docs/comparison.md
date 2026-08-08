@@ -23,7 +23,7 @@ v2.5.0.*
 | `allowed-tools` overprivilege analysis | yes (AG-SK-002) | unknown — unverifiable without a token | no |
 | Load-time dynamic-context command analysis | yes (AG-SK-003) | unknown — unverifiable without a token | no |
 | Tool-surface lockfile + drift gate (rug-pull defense) | yes (`lock` / `diff` / `ci`) | no equivalent found | no |
-| Curated MCP advisory database | yes — [74 public advisories](/advisories/), bundled for offline use + live API | no public equivalent found | OSV covers registry malware, not MCP-server CVEs as a category |
+| Curated MCP advisory database | yes — [77 public advisories](/advisories/), bundled for offline use + live API | no public equivalent found | OSV covers registry malware, not MCP-server CVEs as a category |
 | Known-malware package checks | yes (OSV + MCPA) | requires account | yes (their core strength) |
 | Hallucinated-dependency / typosquat checks | yes (`deps`) | no | socket: partial (different focus) |
 | SARIF for GitHub code scanning | yes, per-rule severity + fingerprints | unknown | osv-scanner: yes |

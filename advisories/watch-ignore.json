@@ -2,7 +2,10 @@
   "comment": "Reviewed sweep findings deliberately not mirrored into the MCPA database. ids: individual GHSA/CVE/OSV ids; packages: ecosystem:name channels whose non-MCP app-level advisories are delegated to general scanners (osv-scanner et al). Rationale is recorded in the GAP report named next to each group.",
   "ids": [
     "GHSA-q94p-g4rh-r9rf",
-    "CVE-2026-18991"
+    "CVE-2026-18991",
+    "GHSA-fjwc-rc47-268g",
+    "GHSA-c8c4-xf97-vvc8",
+    "GHSA-8cv7-xjpc-f5hw"
   ],
   "packages": [
     "npm:flowise",
@@ -10,6 +13,9 @@
   ],
   "rationale": {
     "GHSA-q94p-g4rh-r9rf": "NanoClaw is not a registry package the package-runner matcher can see (GAP-ROUND-27)",
+    "GHSA-fjwc-rc47-268g": "Kirachon context-engine (context-engine-mcp-server) is not published to any registry; the npm/PyPI packages named context-engine are unrelated projects (GAP-ROUND-267)",
+    "GHSA-c8c4-xf97-vvc8": "INQUIRELAB mcp-bridge-api is rolling-release, not in npm/PyPI — same mapping bar as round 261 (GAP-ROUND-267)",
+    "GHSA-8cv7-xjpc-f5hw": "abdullah1854 MCPGateway is a commit-ranged GitHub-only project, not in any registry (GAP-ROUND-267)",
     "npm:flowise": "platform-level CVEs delegated to osv-scanner; MCP-specific flowise advisories are still ingested (GAP-ROUND-22, MCPA-2026-0006); the GHSA keyword sweep still surfaces new MCP-related flowise advisories"
   }
 }
