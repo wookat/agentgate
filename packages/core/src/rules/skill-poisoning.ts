@@ -1203,7 +1203,10 @@ const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string 
  * echo/printf are masked first — text like `echo 'run: curl … | sh'` is a message, not a pipeline.
  */
 export function classifyRiskyCommand(command: string): { severity: 'critical' | 'high'; risk: string } | undefined {
-  const effective = command.replace(/\b(echo|printf)\s+(-\w+\s+)*'[^']*'/g, '$1');
+  const effective = command
+    .replace(/\b(echo|printf)\s+(-\w+\s+)*'[^']*'/g, '$1')
+    // Scaffolding a local env file from a committed placeholder template reads no secrets.
+    .replace(/\bcp\s+[\w./-]*\.env\.(example|sample|template|dist)\b\s+[\w./-]+/g, '');
   return RISKY_COMMANDS.find((r) => r.re.test(effective));
 }
 
@@ -1298,6 +1301,23 @@ export function extractAntigravityHookCommands(doc: unknown): string[] {
 
 /** Cursor project hook files; their `hooks` field runs command scripts around agent-loop stages. */
 const CURSOR_HOOKS_FILE = /(^|\/)\.cursor\/hooks\.json$/i;
+
+/** Cursor cloud-agent environment config; `install` runs at Build creation and `start`/`terminals[].command` run when an agent boots — all sourced from the repo. */
+const CURSOR_ENVIRONMENT_FILE = /(^|\/)\.cursor\/environment\.json$/i;
+
+/** Collect the auto-executed command strings (with their config key) from a Cursor environment.json document. */
+export function extractCursorEnvironmentCommands(doc: unknown): { key: string; command: string }[] {
+  if (typeof doc !== 'object' || doc === null) return [];
+  const d = doc as { install?: unknown; start?: unknown; terminals?: unknown };
+  const out: { key: string; command: string }[] = [];
+  if (typeof d.install === 'string') out.push({ key: 'install', command: d.install });
+  if (typeof d.start === 'string') out.push({ key: 'start', command: d.start });
+  for (const t of Array.isArray(d.terminals) ? d.terminals : []) {
+    const c = (t as { command?: unknown })?.command;
+    if (typeof c === 'string') out.push({ key: 'terminals', command: c });
+  }
+  return out;
+}
 
 /** Codex project hook files; command hooks run on lifecycle events for anyone who trusts the project layer. */
 const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
@@ -1519,6 +1539,7 @@ export const skillDynamicContextRule: Rule = {
     const isAmazonqAgent = AMAZONQ_AGENT_HOOKS_FILE.test(file);
     const isVscodeTasks = VSCODE_TASKS_FILE.test(file);
     const isCursorHooks = CURSOR_HOOKS_FILE.test(file);
+    const isCursorEnvironment = CURSOR_ENVIRONMENT_FILE.test(file);
     const isCopilotHooks = COPILOT_HOOKS_FILE.test(file) || COPILOT_SETTINGS_FILE.test(file);
     const isCrushConfig = CRUSH_CONFIG_FILE.test(file);
     const isCodexHooks = CODEX_HOOKS_FILE.test(file);
@@ -1531,7 +1552,7 @@ export const skillDynamicContextRule: Rule = {
     const isMarketplaceCatalog = MARKETPLACE_CATALOG_FILE.test(file);
     const isGeminiSettings = GEMINI_SETTINGS_FILE.test(file);
     const isQwenSettings = QWEN_SETTINGS_FILE.test(file);
-    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCopilotHooks || isCodexHooks || isFactoryHooks || isAntigravityHooks || isCrushConfig || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
+    const isNamedSurface = CLAUDE_SETTINGS_FILE.test(file) || isKiroHook || isAmazonqAgent || isVscodeTasks || isCursorHooks || isCursorEnvironment || isCopilotHooks || isCodexHooks || isFactoryHooks || isAntigravityHooks || isCrushConfig || isPluginHooks || isPluginLsp || isPluginMonitors || isMarketplaceCatalog || isGeminiSettings || isQwenSettings;
     // Plugin manifests can point hook/monitor config at arbitrary relative paths, so fall back to
     // shape detection for other JSON files: dangerous commands only fire the shared classifier anyway.
     if (!isNamedSurface && !/\.json$/i.test(file)) return [];
@@ -1649,6 +1670,23 @@ export const skillDynamicContextRule: Rule = {
             file,
             ...(line > 0 ? { line } : {}),
             message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
+    if (isCursorEnvironment) {
+      for (const { key, command } of extractCursorEnvironmentCommands(data)) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Cursor cloud-agent environment "${key}" command ${hit.risk.replace('at skill load time', 'automatically when a cloud agent builds or boots this repo')}: "${command.slice(0, 80)}"`,
           }),
         );
       }
