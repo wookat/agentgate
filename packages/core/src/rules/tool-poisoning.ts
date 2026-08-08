@@ -31,10 +31,13 @@ export function findHiddenInSource(content: string): { char: string; line: numbe
 export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
-  // "do not tell the user to <verb> ..." is phrasing guidance, not concealment.
-  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)/i, label: 'concealment instruction' },
+  // "do not tell the user to <verb> ..." is phrasing guidance, and "do not show the user X until Y"
+  // is workflow gating (the artifact is shown eventually), not concealment.
+  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)(?![^.\n]*\buntil\b)/i, label: 'concealment instruction' },
   { re: /\bbefore\s+using\s+this\s+tool[^.]*\b(read|send|pass|include)\b/i, label: 'cross-tool coercion' },
-  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*\b(file|ssh|key|token|secret|credential|\.env|id_rsa)/i, label: 'exfiltration instruction' },
+  // Requires a sensitive target: "you must read/include the <reference|extension> file" is ordinary
+  // skill-doc structure, while real exfiltration names keys, tokens, or credential paths.
+  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*\b(ssh|key|token|secret|credential|\.env|id_rsa)/i, label: 'exfiltration instruction' },
   { re: /\bsidenote\b|\bconversation_history\b/i, label: 'known poisoning marker' },
 ];
 

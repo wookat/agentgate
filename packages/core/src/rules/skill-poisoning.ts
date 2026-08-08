@@ -1522,12 +1522,13 @@ export const skillPoisoningRule: Rule = {
       // ordinary prompt-template structure there — not a concealment channel
       // like they are in a tool description.
       const isStructural = (s: string) => label === 'hidden instruction tag' && /^<(instructions|important)>$/i.test(s);
-      // Inline code spans (`...`) quote a pattern the same way a fenced
-      // block does — e.g. a path template like `blocks/<name>--<system>.md`.
+      // Inline code spans (`...`) and double-quoted spans ("...") quote a pattern the
+      // same way a fenced block does — e.g. a path template like `blocks/<name>--<system>.md`
+      // or anti-injection guidance citing "ignore previous instructions" as an example.
       const inlineQuoted = ({ m, line }: { m: RegExpMatchArray; line: number }) => {
         const col = (m.index ?? 0) - (content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1);
         const text = content.split('\n')[line - 1] ?? '';
-        for (const span of text.matchAll(/`[^`\n]*`/g)) {
+        for (const span of text.matchAll(/`[^`\n]*`|"[^"\n]*"|“[^“”\n]*”/g)) {
           const s = span.index ?? 0;
           if (col > s && col < s + span[0].length - 1) return true;
         }
