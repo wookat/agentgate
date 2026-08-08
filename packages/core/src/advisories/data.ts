@@ -1745,5 +1745,62 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0066",
+    "title": "Mini Shai-Hulud campaign compromised popular MCP servers (@antv/mcp-server-antv, mcp-echarts, mcp-mermaid)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-07-27",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@antv/mcp-server-antv",
+        "ranges": [
+          {
+            "introduced": "0.2.8",
+            "last_affected": "0.2.8"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-echarts",
+        "ranges": [
+          {
+            "introduced": "0.8.1",
+            "last_affected": "0.8.1"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "mcp-mermaid",
+        "ranges": [
+          {
+            "introduced": "0.5.1",
+            "last_affected": "0.5.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0067",
+    "title": "brave-search-mcp-server (npm) — malicious squat of the official Brave Search MCP server name",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-07-27",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "brave-search-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
