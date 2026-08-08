@@ -61,6 +61,13 @@ Any of these markdown layouts are treated as skill files:
   legacy `.openhands/microagents/**.md` — auto-loaded as agent context,
   always or on keyword triggers). `.openhands/setup.sh`, which OpenHands runs
   automatically at session start, is covered by the source-scan rules.
+- Factory Droid repository customization (`.factory/skills/**.md` skill
+  trees, `.factory/commands/**.md` slash-command prompts, and
+  `.factory/droids/*.md` custom-droid system prompts — all loaded from the
+  repo). Hook commands in `.factory/hooks.json` (legacy
+  `.factory/hooks/hooks.json`, or a `hooks` key in `.factory/settings.json`)
+  run automatically at Droid lifecycle events and are classified for
+  dangerous idioms.
 - Goose local hints (`.goosehints` at the project root or in any
   directory — added to the system prompt for every request in that tree).
 - Goose recipes (`recipe.yaml`/`recipe.json`, gated on the documented

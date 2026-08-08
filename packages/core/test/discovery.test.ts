@@ -50,6 +50,7 @@ describe('knownConfigLocations', () => {
         'warp',
         'lmstudio',
         'junie',
+        'factory',
         'qoder',
         'amazonq',
         'copilot-cli',
@@ -435,6 +436,23 @@ describe('discoverConfigFiles', () => {
     expect(found.map((f) => f.client)).toEqual(['junie', 'junie']);
     const servers = found.flatMap((f) => parseConfigFile(f));
     expect(servers.map((s) => s.name).sort()).toEqual(['boost', 'global']);
+  });
+
+  it('finds Factory Droid user and project configs', () => {
+    const project = path.join(dir, 'proj-factory');
+    fs.mkdirSync(path.join(dir, '.factory'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.factory', 'mcp.json'), '{"mcpServers":{"linear":{"type":"http","url":"https://mcp.linear.app/mcp"}}}');
+    fs.mkdirSync(path.join(project, '.factory'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.factory', 'mcp.json'),
+      '{"mcpServers":{"docs":{"type":"stdio","command":"npx","args":["-y","@team/docs-mcp"]}}}',
+    );
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['factory', 'factory']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['docs', 'linear']);
+    expect(servers.find((s) => s.name === 'linear')?.url).toBe('https://mcp.linear.app/mcp');
   });
 
   it('finds .mcp.json bundled by nested Claude Code plugins', () => {
