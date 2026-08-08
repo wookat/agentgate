@@ -1377,7 +1377,7 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 
 /** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`, Codex `.codex-plugin/` and `.cursor-plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
-export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin)\/plugin\.json$/i;
+export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin|\.goose-plugin)\/plugin\.json$/i;
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
 const MARKETPLACE_CATALOG_FILE = /(^|\/)((\.claude-plugin|\.github\/plugin|\.factory-plugin|\.cursor-plugin|\.agents\/plugins)\/marketplace\.json|\.agents\/plugins\/api_marketplace\.json)$/i;

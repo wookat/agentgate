@@ -274,7 +274,7 @@ function gooseRecipeLocations(projectDir: string): ClientConfigLocation[] {
 const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 
 /** Plugin metadata dirs marking a plugin/marketplace root (Claude Code, Copilot CLI, Factory Droid, and Codex conventions). */
-const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin']);
+const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin']);
 
 /**
  * MCP servers bundled by Claude Code / Copilot CLI plugins: a plugin root is any directory
@@ -342,8 +342,11 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
 }
 
 /**
- * A plugin manifest's `mcpServers` field may be inline config (an object) or
- * one or more config paths relative to the plugin root.
+ * A plugin manifest's `mcpServers` field may be inline config (an object),
+ * one or more config paths relative to the plugin root, or the Open Plugin
+ * Spec's `{ paths: [...], exclusive: bool }` component form (goose): each
+ * referenced document holds the server config, and unless `exclusive` the
+ * plugin root's `.mcp.json` is read too.
  */
 function pluginManifestServerLocations(pluginRoot: string, manifestPath: string): ClientConfigLocation[] {
   let manifest: Record<string, unknown>;
@@ -352,11 +355,21 @@ function pluginManifestServerLocations(pluginRoot: string, manifestPath: string)
   } catch {
     return [];
   }
-  const field = manifest?.mcpServers;
+  let field = manifest?.mcpServers;
+  let componentPaths = false;
+  if (typeof field === 'object' && field !== null && !Array.isArray(field) && Array.isArray((field as Record<string, unknown>).paths)) {
+    componentPaths = true;
+    field = (field as Record<string, unknown>).paths;
+  }
   if (typeof field === 'object' && field !== null && !Array.isArray(field)) {
     return [{ client: 'claude-plugin', path: manifestPath, format: 'mcpServers-json' }];
   }
   const out: ClientConfigLocation[] = [];
+  if (componentPaths) {
+    const rootMcp = path.join(pluginRoot, '.mcp.json');
+    const exclusive = (manifest.mcpServers as Record<string, unknown>).exclusive === true;
+    if (!exclusive && fs.existsSync(rootMcp)) out.push({ client: 'claude-plugin', path: rootMcp, format: 'mcpServers-json' });
+  }
   for (const ref of typeof field === 'string' ? [field] : Array.isArray(field) ? field : []) {
     if (typeof ref !== 'string') continue;
     const resolved = path.resolve(pluginRoot, ref.replace(/^\$\{(CLAUDE|DROID)_PLUGIN_ROOT\}\/?/, ''));
