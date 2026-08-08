@@ -343,7 +343,9 @@ describe('supply-chain', () => {
     expect(refs[0]?.context).toContain('data_processor');
     // not the goose recipe shape → not a goose recipe
     expect(gooseRecipeDependencyRefs('recipe.yaml', 'package:\n  name: mytool\n')).toHaveLength(0);
-    expect(gooseRecipeDependencyRefs('other.yaml', content)).toHaveLength(0);
+    // subrecipes are referenced under arbitrary names — the shape gate covers them
+    expect(gooseRecipeDependencyRefs('subrecipes/data-helper.yaml', content)).toHaveLength(2);
+    expect(gooseRecipeDependencyRefs('notes.md', content)).toHaveLength(0);
   });
 
   it('serverPackageRef yields the bare name for PEP 508 range specs and extras', () => {

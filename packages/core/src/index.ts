@@ -8,7 +8,7 @@ export * from './sarif.js';
 export * from './docs.js';
 export { ALL_RULES } from './rules/index.js';
 export { serverPackageRef, opencodePluginRefs, OPENCODE_CONFIG_FILE, marketplacePluginRefs, MARKETPLACE_CATALOG_FILE, gooseRecipeDependencyRefs } from './rules/supply-chain.js';
-export { GOOSE_RECIPE_FILE } from './rules/skill-poisoning.js';
+export { GOOSE_RECIPE_FILE, GOOSE_RECIPE_CANDIDATE, parseGooseRecipeDoc } from './rules/skill-poisoning.js';
 export { checkIncludeToolsCoverage } from './rules/overprivileged.js';
 export * from './deps/types.js';
 export * from './deps/collect.js';
