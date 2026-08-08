@@ -454,6 +454,27 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['repo-api', 'tools']);
   });
 
+  it('finds mcpServers declared by bare plugin.json manifests (Open Plugin Spec first lookup)', () => {
+    const project = path.join(dir, 'proj12');
+    // Repo-root manifest with a path-referenced mcp config (microsoft/azure-skills layout).
+    fs.mkdirSync(project, { recursive: true });
+    fs.writeFileSync(path.join(project, 'plugin.json'), '{"name":"azure","mcpServers":"./.mcp.json"}');
+    fs.writeFileSync(path.join(project, '.mcp.json'), '{"mcpServers":{"azure":{"command":"npx","args":["-y","@azure/mcp@latest","server","start"]}}}');
+    // Marketplace-repo layout: plugins/<name>/plugin.json with inline servers.
+    fs.mkdirSync(path.join(project, 'plugins', 'inline-bare'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'inline-bare', 'plugin.json'),
+      '{"name":"inline-bare","mcpServers":{"tools":{"command":"npx","args":["-y","acme-tools-mcp"]}}}',
+    );
+    // A bare plugin.json without mcpServers (Grafana/Obsidian-style) is ignored.
+    fs.mkdirSync(path.join(project, 'plugins', 'other-eco'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'plugins', 'other-eco', 'plugin.json'), '{"id":"other","main":"module.js"}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const pluginLocs = found.filter((f) => f.client === 'claude-plugin');
+    const servers = pluginLocs.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['azure', 'tools']);
+  });
+
   it('finds inline and path-referenced mcpServers in plugin manifests', () => {
     const project = path.join(dir, 'proj9');
     // Inline config in plugin.json.

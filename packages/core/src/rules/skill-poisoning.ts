@@ -1221,7 +1221,7 @@ export const skillDynamicContextRule: Rule = {
     if (!isNamedSurface) {
       const shaped = Array.isArray(data)
         ? extractMonitorCommands(data.filter((m) => typeof (m as { name?: unknown })?.name === 'string' && typeof (m as { description?: unknown })?.description === 'string'))
-        : extractHookCommands((data as { hooks?: unknown }).hooks);
+        : [...extractHookCommands((data as { hooks?: unknown }).hooks), ...extractCopilotHookCommands((data as { hooks?: unknown }).hooks)];
       const kind = Array.isArray(data) ? 'monitor' : 'hook';
       for (const command of shaped) {
         const hit = classifyRiskyCommand(command);
