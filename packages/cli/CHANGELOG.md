@@ -1,5 +1,16 @@
 # mcp-agentgate
 
+## 0.57.0
+
+### Minor Changes
+
+- fdb93a7: Cover OpenCode's singular project directories: `.opencode/agent/`, `.opencode/command/`, and `.opencode/mode(s)/` markdown files are now scanned (AG-SK-001) and their `permission` frontmatter checked (AG-SK-002), matching OpenCode's own `{agent,agents}` / `{command,commands}` / `{mode,modes}` loader globs.
+
+### Patch Changes
+
+- Updated dependencies [fdb93a7]
+  - mcp-agentgate-core@0.57.0
+
 ## 0.56.0
 
 ### Minor Changes
