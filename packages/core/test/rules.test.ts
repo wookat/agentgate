@@ -4,7 +4,7 @@ import { credentialLeakRule } from '../src/rules/credential-leak.js';
 import { checkIncludeToolsCoverage, overprivilegedRule } from '../src/rules/overprivileged.js';
 import { rceVectorsRule } from '../src/rules/rce-vectors.js';
 import { ssrfRule } from '../src/rules/ssrf.js';
-import { marketplacePluginRefs, opencodePluginRefs, serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
+import { gooseRecipeDependencyRefs, marketplacePluginRefs, opencodePluginRefs, serverPackageRef, supplyChainRule } from '../src/rules/supply-chain.js';
 import { toolPoisoningRule } from '../src/rules/tool-poisoning.js';
 import { toxicFlowRule, toolShadowingRule } from '../src/rules/cross-server.js';
 import { scanConfiguration, scanServers, scanTools } from '../src/scanner.js';
@@ -310,6 +310,34 @@ describe('supply-chain', () => {
     expect(refs[1]).toMatchObject({ name: '@acme/ranged', version: undefined, ecosystem: 'npm' });
     expect(refs[0]?.context).toContain('npm-pinned');
     expect(marketplacePluginRefs('other.json', content)).toHaveLength(0);
+  });
+
+  it('gooseRecipeDependencyRefs extracts inline_python PyPI dependencies for advisory checks', () => {
+    const content = [
+      'version: "1.0.0"',
+      'title: "Data helper"',
+      'description: "Process data"',
+      'instructions: "Use the data_processor extension."',
+      'extensions:',
+      '  - type: inline_python',
+      '    name: data_processor',
+      '    code: "print(1)"',
+      '    dependencies:',
+      '      - pandas',
+      '      - numpy==1.26.4',
+      '  - type: stdio',
+      '    name: other',
+      '    cmd: uvx',
+      '    args: ["some-pkg"]',
+    ].join('\n');
+    const refs = gooseRecipeDependencyRefs('recipe.yaml', content);
+    expect(refs).toHaveLength(2);
+    expect(refs[0]).toMatchObject({ name: 'pandas', version: undefined, ecosystem: 'pypi' });
+    expect(refs[1]).toMatchObject({ name: 'numpy', version: '1.26.4', ecosystem: 'pypi' });
+    expect(refs[0]?.context).toContain('data_processor');
+    // not the goose recipe shape → not a goose recipe
+    expect(gooseRecipeDependencyRefs('recipe.yaml', 'package:\n  name: mytool\n')).toHaveLength(0);
+    expect(gooseRecipeDependencyRefs('other.yaml', content)).toHaveLength(0);
   });
 
   it('serverPackageRef yields the bare name for PEP 508 range specs and extras', () => {

@@ -1135,7 +1135,7 @@ export function extractAmazonqHookCommands(hooks: unknown): string[] {
  * `instructions`/`prompt`/`activities` become the agent's instructions for everyone who
  * runs the recipe. The parse gates on the documented recipe shape since the name is generic.
  */
-const GOOSE_RECIPE_FILE = /(^|\/)recipe\.(ya?ml|json)$/i;
+export const GOOSE_RECIPE_FILE = /(^|\/)recipe\.(ya?ml|json)$/i;
 
 /** Kiro project hook files (`.kiro/hooks/*.json`) whose command actions run automatically on session events. */
 const KIRO_HOOK_FILE = /(^|\/)\.kiro\/hooks\/.+\.json$/i;
