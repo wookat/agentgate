@@ -1,0 +1,53 @@
+{
+  "id": "MCPA-2026-0051",
+  "title": "Flowise RCE via SQLite Record Manager node (CVE-2026-69259)",
+  "summary": "Flowise 3.1.2 and earlier allow the SQLite Record Manager node's configuration to reach code execution on the host (reported by elttam). Fixed in 3.1.3.",
+  "type": "rce-vectors",
+  "severity": "critical",
+  "aliases": [
+    "CVE-2026-69259",
+    "GHSA-x3hf-7cj6-3r4m"
+  ],
+  "cwe": [
+    "CWE-94"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "flowise",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "flowise-components",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-x3hf-7cj6-3r4m"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/FlowiseAI/Flowise/security/advisories/GHSA-x3hf-7cj6-3r4m"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-69259"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-04"
+  }
+}

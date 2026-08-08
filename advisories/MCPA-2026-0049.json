@@ -1,0 +1,53 @@
+{
+  "id": "MCPA-2026-0049",
+  "title": "Flowise CSV Agent prompt-injection remote code execution (CVE-2026-70477)",
+  "summary": "Flowise 3.1.2 and earlier allow prompt-injection content processed by the CSV Agent to reach the Python execution path and run arbitrary code on the host \u2014 a toxic flow from untrusted data to code execution. Fixed in 3.1.3.",
+  "type": "rce-vectors",
+  "severity": "critical",
+  "aliases": [
+    "CVE-2026-70477",
+    "GHSA-5xvg-pmgg-3mxr"
+  ],
+  "cwe": [
+    "CWE-94"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "flowise",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "flowise-components",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.3"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-5xvg-pmgg-3mxr"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/FlowiseAI/Flowise/security/advisories/GHSA-5xvg-pmgg-3mxr"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-70477"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-04"
+  }
+}

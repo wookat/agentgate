@@ -1,0 +1,38 @@
+{
+  "id": "MCPA-2026-0055",
+  "title": "Flowise unauthenticated text-to-speech endpoint abuses private chatflow TTS credentials (GHSA-8gj2-2cvc-6xx7)",
+  "summary": "Flowise 3.1.3 and earlier expose a text-to-speech endpoint without authorization checks, letting unauthenticated callers consume the TTS credentials configured on private chatflows. Fixed in 3.1.4 (note: one release later than the 3.1.3 batch).",
+  "type": "auth-missing",
+  "severity": "medium",
+  "aliases": [
+    "GHSA-8gj2-2cvc-6xx7"
+  ],
+  "cwe": [
+    "CWE-862"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "flowise",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "3.1.4"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-8gj2-2cvc-6xx7"
+    },
+    {
+      "type": "advisory",
+      "url": "https://github.com/FlowiseAI/Flowise/security/advisories/GHSA-8gj2-2cvc-6xx7"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-04"
+  }
+}
