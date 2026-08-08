@@ -1,0 +1,43 @@
+{
+  "id": "MCPA-2026-0037",
+  "title": "LangBot authenticated RCE via STDIO MCP server configuration (CVE-2026-54449)",
+  "summary": "LangBot (PyPI: langbot) through 4.10.5: any authenticated user can achieve arbitrary command execution on the LangBot server by adding an 'STDIO' MCP server with an arbitrary command in the MCP Server Configuration \u2014 the command is passed to StdioServerParameters and executed on the host. No fixed release was available at publication.",
+  "type": "rce-vectors",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-54449",
+    "GHSA-3pvh-63gf-j9mw"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+    "score": 8.8
+  },
+  "cwe": [
+    "CWE-77"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "langbot",
+      "ranges": [
+        {
+          "introduced": "0",
+          "last_affected": "4.10.5"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/langbot-app/LangBot/security/advisories/GHSA-3pvh-63gf-j9mw"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/advisories/GHSA-3pvh-63gf-j9mw"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-15"
+  }
+}

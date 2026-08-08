@@ -1,0 +1,48 @@
+{
+  "id": "MCPA-2026-0040",
+  "title": "mcp-memory-keeper arbitrary local file read in context_import via unvalidated filePath (CVE-2026-54561)",
+  "summary": "mcp-memory-keeper (npm) before 0.13.0: context_import passes the caller-supplied filePath directly to fs.readFileSync with no path confinement \u2014 a malicious MCP client or a prompt-injected agent can read any file the server process can access. Fixed in 0.13.0.",
+  "type": "path-traversal",
+  "severity": "medium",
+  "aliases": [
+    "CVE-2026-54561",
+    "GHSA-f7wf-v2vw-mpcx"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+    "score": 6.2
+  },
+  "cwe": [
+    "CWE-22",
+    "CWE-209"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "mcp-memory-keeper",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "0.13.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/mkreyman/mcp-memory-keeper/security/advisories/GHSA-f7wf-v2vw-mpcx"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/mkreyman/mcp-memory-keeper/pull/36"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/mkreyman/mcp-memory-keeper/releases/tag/v0.13.0"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-17"
+  }
+}

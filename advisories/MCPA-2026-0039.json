@@ -1,0 +1,48 @@
+{
+  "id": "MCPA-2026-0039",
+  "title": "@andrea9293/mcp-documentation-server Web UI binds to all interfaces without authentication (CVE-2026-54504)",
+  "summary": "@andrea9293/mcp-documentation-server (npm) 1.13.0: the Web UI/API that starts automatically on port 3080 binds to all network interfaces (0.0.0.0) instead of localhost-only, and its document-management API endpoints require no authentication \u2014 any network-adjacent attacker can read, modify, or delete the server's documents. Fixed in 1.13.1.",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-54504",
+    "GHSA-6f5r-5672-72j7"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+    "score": 8.8
+  },
+  "cwe": [
+    "CWE-306",
+    "CWE-668"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@andrea9293/mcp-documentation-server",
+      "ranges": [
+        {
+          "introduced": "1.13.0",
+          "fixed": "1.13.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/andrea9293/mcp-documentation-server/security/advisories/GHSA-6f5r-5672-72j7"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/andrea9293/mcp-documentation-server/commit/37159d4e06b8ee50c3645b2496e3d3f6d32c47f9"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/andrea9293/mcp-documentation-server/releases/tag/v1.13.1"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-15"
+  }
+}

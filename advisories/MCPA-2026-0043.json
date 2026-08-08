@@ -1,0 +1,45 @@
+{
+  "id": "MCPA-2026-0043",
+  "title": "PraisonAI MCP HTTP-stream transport is unauthenticated by default (CVE-2026-61427)",
+  "summary": "PraisonAI (PyPI: praisonai) before 4.6.78 exposes the MCP HTTP-stream transport without authentication by default: the CLI --api-key option defaults to None and the server only enforces Authorization/Bearer checks when an API key is configured, so 'praisonai mcp serve --transport http-stream' without an API key accepts unauthenticated MCP requests. Fixed in 4.6.78. Package mapping (PyPI praisonai) verified independently \u2014 the GHSA carries no package mapping.",
+  "type": "auth-missing",
+  "severity": "medium",
+  "aliases": [
+    "CVE-2026-61427",
+    "GHSA-5866-9272-qcfv",
+    "GHSA-hc5v-gxvj-58wh"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L",
+    "score": 7.3
+  },
+  "cwe": [
+    "CWE-20"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "praisonai",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "4.6.78"
+        }
+      ],
+      "note": "Package mapping verified independently; the NVD/GHSA entry names the project but maps no registry package."
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/MervinPraison/PraisonAI/security/advisories/GHSA-hc5v-gxvj-58wh"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-61427"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-15"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "MCPA-2026-0042",
+  "title": "Phantom arbitrary file write and decode-bomb DoS via unconfined MCP tool paths",
+  "summary": "Phantom (PyPI: phantom-audio) through 1.3.0: when PHANTOM_OUTPUT_DIR is unset (the default), the MCP tools accept arbitrary absolute output paths with no confinement \u2014 anything able to send tool calls (e.g. a prompt-injected agent) can write or overwrite arbitrary files the process user can write, including shell startup files, plus a decode-bomb denial of service. Fixed in 1.3.1.",
+  "type": "path-traversal",
+  "severity": "high",
+  "aliases": [
+    "GHSA-52vm-mxx8-f227"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
+    "score": 7.7
+  },
+  "cwe": [
+    "CWE-22",
+    "CWE-73",
+    "CWE-400"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "phantom-audio",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "1.3.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/fadelabs/phantom/security/advisories/GHSA-52vm-mxx8-f227"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/advisories/GHSA-52vm-mxx8-f227"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-09"
+  }
+}
