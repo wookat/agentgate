@@ -1560,5 +1560,81 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0056",
+    "title": "Flowise unauthenticated OAuth2 credential refresh via prefix-based whitelist bypass (CVE-2026-70636)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "3.1.4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0057",
+    "title": "Flowise OpenAI Assistants IDOR exposes cross-workspace credentials and files (CVE-2026-67622)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "3.1.4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0058",
+    "title": "Flowise document store mutation endpoints lack authorization checks (CVE-2026-67621)",
+    "type": "auth-missing",
+    "severity": "high",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "flowise",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "3.1.4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0059",
+    "title": "OpenHands resolver command injection in initialize_repo (CVE-2026-19022)",
+    "type": "rce-vectors",
+    "severity": "medium",
+    "published": "2026-08-06",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "openhands-ai",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "0.62.0"
+          }
+        ]
+      }
+    ]
   }
 ];

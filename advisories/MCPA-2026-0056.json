@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0056",
+ "title": "Flowise unauthenticated OAuth2 credential refresh via prefix-based whitelist bypass (CVE-2026-70636)",
+ "summary": "Flowise through 3.1.4: the authentication middleware whitelist uses prefix matching, so a POST to the oauth2-credential refresh route with a trailing credential identifier bypasses all authentication and authorization, letting unauthenticated attackers trigger OAuth token rotation for credentials in any workspace (a bypass of the CVE-2026-41273 fix). No fixed release: Flowise announced its sunset; through 3.1.4 (latest) remains affected.",
+ "type": "auth-missing",
+ "severity": "high",
+ "aliases": [
+  "CVE-2026-70636",
+  "GHSA-rm9r-9424-cccf"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N",
+  "score": 7.5
+ },
+ "cwe": [
+  "CWE-862"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "flowise",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "3.1.4"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-rm9r-9424-cccf"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-70636"
+  },
+  {
+   "type": "web",
+   "url": "https://flowiseai.com/sunset"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-07"
+ }
+}
