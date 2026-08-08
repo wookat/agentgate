@@ -1,5 +1,19 @@
 # mcp-agentgate-core
 
+## 0.51.0
+
+### Minor Changes
+
+- effbcfd: Copilot CLI MCP configs: the user-level `~/.copilot/mcp-config.json` (written by `copilot mcp add` / `/mcp add`) and the project-level `.github/mcp.json` (`mcpServers` wrapper or bare top-level server map) are discovered and run through the full config rule set and advisory checks.
+- 84cd735: Copilot CLI hooks: repo-level `.github/hooks/*.json` and user-level `.copilot/hooks/*.json` command hooks (both `bash` and `powershell` keys) run through the shared dangerous-command classification (AG-SK-003) — they execute automatically on lifecycle events for anyone who opens the repository in Copilot CLI.
+- 50abc3f: Copilot CLI settings files (repo-level `.github/copilot/settings.json` + `settings.local.json`, user-level `.copilot/settings.json`) are now scanned: inline `hooks` commands go through the shared dangerous-command classification (AG-SK-003), and plugins auto-enabled via `enabledPlugins` from mutable `extraKnownMarketplaces` git sources report AG-SC-001 — repository settings apply to everyone who works in the repository.
+- 7d20285: Copilot CLI plugin surfaces: marketplace catalogs at `.github/plugin/marketplace.json` and plugin manifests at `.plugin/plugin.json` / `.github/plugin/plugin.json` are now scanned — mutable plugin `source` entries (no `sha`/release `ref`) report AG-SC-001, inline `hooks` (flat Copilot event schema) go through the shared dangerous-command classification (AG-SK-003), and manifest `mcpServers` are discovered and advisory-checked like Claude Code plugins.
+- b5ad266: Plugin LSP coverage extends to the Open Plugin Spec: `lsp-config/servers.json` files (Copilot CLI convention) are classified like `.lsp.json`, and the LSP command extractor now also reads the cross-platform `bash`/`powershell` launch-script keys — a dangerous command can hide in either platform's variant.
+
+### Patch Changes
+
+- 5595dbc: AG-SK-001 precision fixes from a Copilot-ecosystem corpus sweep: the exfiltration-instruction pattern now requires a sensitive target ("You MUST read the reference files" is ordinary skill-doc structure), "do not show the user X until Y" workflow gating is no longer concealment, and injection phrases quoted in double quotes as defensive examples ("ignore previous instructions") downgrade to low like inline code spans.
+
 ## 0.50.0
 
 ### Minor Changes
