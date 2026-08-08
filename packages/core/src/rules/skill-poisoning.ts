@@ -52,6 +52,15 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
 export const SKILL_FILE =
   /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo\/commands\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
 
+/**
+ * Command files whose host client ignores `allowed-tools` frontmatter
+ * (verified in upstream source): Roo Code commands honor only
+ * description/argument-hint/mode, Kilo Code commands only
+ * description/agent/model/subtask — a pasted `allowed-tools:` grant is inert
+ * there, so it is not an approval surface.
+ */
+const ALLOWED_TOOLS_INERT_FILE = /(^|\/)\.(roo|kilo)\/commands\/.+\.md$/i;
+
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
   const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -488,7 +497,7 @@ export const skillOverprivilegeRule: Rule = {
   checkSkill(file, content) {
     const findings = [];
     const line = content.split(/\r?\n/).findIndex((l) => /^allowed-tools\s*:/i.test(l)) + 1;
-    for (const grant of parseAllowedTools(content)) {
+    for (const grant of ALLOWED_TOOLS_INERT_FILE.test(file) ? [] : parseAllowedTools(content)) {
       const hit = RISKY_GRANTS.find((r) => r.re.test(grant));
       if (hit) {
         findings.push(
