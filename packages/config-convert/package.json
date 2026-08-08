@@ -1,6 +1,6 @@
 {
   "name": "mcp-agentgate-config-convert",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "Convert MCP server configuration between clients (Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode)",
   "license": "Apache-2.0",
   "repository": {
