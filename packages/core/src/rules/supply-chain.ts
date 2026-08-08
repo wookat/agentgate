@@ -92,7 +92,7 @@ export function remoteSourceSpec(spec: string): { kind: 'git' | 'archive'; host:
     return undefined;
   }
   if (/^git[+:]/i.test(spec) || /\.git(@|#|$)/i.test(url)) return { kind: 'git', host };
-  if (/\.(tgz|tar\.gz|zip)(\?|#|$)/i.test(url)) return { kind: 'archive', host };
+  if (/\.(tgz|tar\.gz|zip|whl)(\?|#|$)/i.test(url)) return { kind: 'archive', host };
   return undefined;
 }
 
