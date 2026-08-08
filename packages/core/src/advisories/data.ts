@@ -795,5 +795,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0021",
+    "title": "HKUDS nanobot SSRF in the web_fetch tool via 3xx redirects (CVE-2026-49138)",
+    "type": "ssrf",
+    "severity": "medium",
+    "published": "2026-06-01",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "nanobot-ai",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.2.1"
+          }
+        ]
+      }
+    ]
   }
 ];
