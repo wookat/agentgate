@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALL_RULES, Rule } from './rules/index.js';
-import { COPILOT_HOOKS_FILE, COPILOT_SETTINGS_FILE, KIRO_AGENT_HOOK_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
+import { COPILOT_HOOKS_FILE, COPILOT_SETTINGS_FILE, KIRO_AGENT_HOOK_FILE, PLUGIN_MANIFEST_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
+import { MARKETPLACE_CATALOG_FILE } from './rules/supply-chain.js';
 import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.qwen']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.claude', '.cursor', '.codex', '.opencode', '.windsurf', '.clinerules', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.qwen', '.plugin']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
@@ -93,7 +94,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
     const isSkill = SKILL_FILE.test(relPosix);
     if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix)) continue;
-    if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix)) continue;
+    if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
       .split('/')
       .slice(0, -1)

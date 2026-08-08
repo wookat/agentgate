@@ -159,8 +159,8 @@ function checkClaudeMarketplaces(rule: Rule, file: string, content: string, clie
   return findings;
 }
 
-/** In-repo plugin marketplace catalog; each entry's `source` tells installers where plugin code comes from. */
-export const MARKETPLACE_CATALOG_FILE = /(^|\/)\.claude-plugin\/marketplace\.json$/i;
+/** In-repo plugin marketplace catalog (Claude Code `.claude-plugin/`, Copilot CLI `.github/plugin/`); each entry's `source` tells installers where plugin code comes from. */
+export const MARKETPLACE_CATALOG_FILE = /(^|\/)(\.claude-plugin|\.github\/plugin)\/marketplace\.json$/i;
 
 /**
  * Registry package refs for the npm-distributed plugins in a marketplace

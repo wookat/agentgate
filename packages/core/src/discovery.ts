@@ -165,9 +165,12 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
 /** Directory names never descended into while looking for plugin roots. */
 const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 
+/** Plugin metadata dirs marking a plugin/marketplace root (Claude Code and Copilot CLI conventions). */
+const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin']);
+
 /**
- * MCP servers bundled by Claude Code plugins: a plugin root is any directory
- * carrying `.claude-plugin/plugin.json`, and its sibling `.mcp.json` starts
+ * MCP servers bundled by Claude Code / Copilot CLI plugins: a plugin root is any directory
+ * carrying `.claude-plugin/plugin.json` (or `.plugin/`, `.github/plugin/`), and its sibling `.mcp.json` starts
  * automatically for everyone who enables the plugin. Nested roots matter for
  * marketplace repos hosting many plugins; the project root's own `.mcp.json`
  * is already covered by the claude-code location.
@@ -182,13 +185,15 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
     return [];
   }
   for (const entry of entries.filter((e) => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))) {
-    if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && entry.name !== '.claude-plugin')) continue;
-    const dir = path.join(projectDir, entry.name);
-    if (entry.name === '.claude-plugin' && fs.existsSync(path.join(dir, 'marketplace.json'))) {
+    if (PLUGIN_SEARCH_SKIP.has(entry.name) || (entry.name.startsWith('.') && !PLUGIN_META_DIRS.has(entry.name) && entry.name !== '.github')) continue;
+    const dir = entry.name === '.github' ? path.join(projectDir, entry.name, 'plugin') : path.join(projectDir, entry.name);
+    if (entry.name === '.github' && !fs.existsSync(dir)) continue;
+    const isPluginMeta = PLUGIN_META_DIRS.has(entry.name) || entry.name === '.github';
+    if (isPluginMeta && fs.existsSync(path.join(dir, 'marketplace.json'))) {
       // Marketplace entries can define plugins entirely inline (strict: false), including mcpServers.
       out.push({ client: 'claude-plugin', path: path.join(dir, 'marketplace.json'), format: 'marketplace-json' });
     }
-    if (entry.name === '.claude-plugin' && fs.existsSync(path.join(dir, 'plugin.json'))) {
+    if (isPluginMeta && fs.existsSync(path.join(dir, 'plugin.json'))) {
       if (depth > 0) {
         const mcpJson = path.join(projectDir, '.mcp.json');
         if (fs.existsSync(mcpJson)) out.push({ client: 'claude-plugin', path: mcpJson, format: 'mcpServers-json' });

@@ -436,6 +436,24 @@ describe('discoverConfigFiles', () => {
     expect(servers[0]!.command).toBe('npx');
   });
 
+  it('finds mcpServers in Copilot CLI plugin manifests (.plugin/, .github/plugin/)', () => {
+    const project = path.join(dir, 'proj11');
+    fs.mkdirSync(path.join(project, 'plugins', 'dotplugin', '.plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'plugins', 'dotplugin', '.plugin', 'plugin.json'),
+      '{"name":"dotplugin","mcpServers":{"tools":{"command":"npx","args":["-y","acme-tools-mcp"]}}}',
+    );
+    fs.mkdirSync(path.join(project, '.github', 'plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.github', 'plugin', 'plugin.json'),
+      '{"name":"repo-plugin","mcpServers":{"repo-api":{"url":"https://api.example.com/mcp"}}}',
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.map((f) => f.client)).toEqual(['claude-plugin', 'claude-plugin']);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['repo-api', 'tools']);
+  });
+
   it('finds inline and path-referenced mcpServers in plugin manifests', () => {
     const project = path.join(dir, 'proj9');
     // Inline config in plugin.json.
