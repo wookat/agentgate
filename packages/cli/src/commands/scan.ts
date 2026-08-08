@@ -6,6 +6,8 @@ import {
   Severity,
   checkIncludeToolsCoverage,
   fetchLiveMcpaAdvisories,
+  GOOSE_RECIPE_FILE,
+  gooseRecipeDependencyRefs,
   matchMcpaAdvisories,
   MARKETPLACE_CATALOG_FILE,
   marketplacePluginRefs,
@@ -106,6 +108,16 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
       pkgRefs.push(...marketplacePluginRefs(rel, fs.readFileSync(file, 'utf8')));
     } catch {
       // unreadable catalog: the repo walk already surfaced what it could
+    }
+  }
+  // Goose recipe inline_python dependencies are installed by uvx and imported
+  // when the recipe runs, so they get the same known-malware advisory checks.
+  for (const file of scannedFiles.filter((f) => GOOSE_RECIPE_FILE.test(f.split(path.sep).join('/')))) {
+    try {
+      const rel = path.relative(projectDir, file).split(path.sep).join('/');
+      pkgRefs.push(...gooseRecipeDependencyRefs(rel, fs.readFileSync(file, 'utf8')));
+    } catch {
+      // unreadable recipe: the repo walk already surfaced what it could
     }
   }
   // AgentGate MCP advisory database: bundled copy (works offline) merged

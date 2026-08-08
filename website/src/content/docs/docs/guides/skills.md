@@ -69,7 +69,8 @@ Any of these markdown layouts are treated as skill files:
   the recipe's `extensions` list is discovered as MCP servers. `inline_python`
   extensions (code executed via uvx when the recipe starts) are classified
   for dangerous idioms — download-and-exec, secret exfiltration, credential
-  reads.
+  reads — and their PyPI `dependencies` are checked against the OSV and
+  MCPA advisory databases.
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under

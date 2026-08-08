@@ -1,7 +1,8 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
 import { Rule, finding } from './rule.js';
-import { COPILOT_SETTINGS_FILE, parseJsonc } from './skill-poisoning.js';
+import { parse as parseYaml } from 'yaml';
+import { COPILOT_SETTINGS_FILE, GOOSE_RECIPE_FILE, parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
 const PYPI_RUNNERS = new Set(['uvx', 'pipx']);
@@ -94,6 +95,39 @@ export function opencodePluginRefs(file: string, content: string): (DependencyRe
     const { name, version } = splitSpec(spec);
     return { name, version, ecosystem: 'npm', origin: 'manifest', file, context: `OpenCode plugin "${spec}"` };
   });
+}
+
+/**
+ * Registry package refs for the PyPI `dependencies` of `inline_python`
+ * extensions in a Goose recipe — uvx installs and runs them for everyone who
+ * runs the recipe, so they get the same known-malware advisory checks. Gated
+ * on the documented recipe shape since the filename is generic.
+ */
+export function gooseRecipeDependencyRefs(file: string, content: string): (DependencyRef & { version?: string })[] {
+  if (!GOOSE_RECIPE_FILE.test(file)) return [];
+  let doc: unknown;
+  try {
+    doc = parseYaml(content);
+  } catch {
+    return [];
+  }
+  if (typeof doc !== 'object' || doc === null) return [];
+  const recipe = doc as { title?: unknown; description?: unknown; instructions?: unknown; prompt?: unknown; extensions?: unknown };
+  if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') return [];
+  if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') return [];
+  const refs: (DependencyRef & { version?: string })[] = [];
+  for (const entryRaw of Array.isArray(recipe.extensions) ? recipe.extensions : []) {
+    if (typeof entryRaw !== 'object' || entryRaw === null) continue;
+    const entry = entryRaw as { type?: unknown; name?: unknown; dependencies?: unknown };
+    if (entry.type !== 'inline_python' || !Array.isArray(entry.dependencies)) continue;
+    const extName = typeof entry.name === 'string' ? entry.name : 'unnamed';
+    for (const spec of entry.dependencies) {
+      if (typeof spec !== 'string') continue;
+      const { name, version } = splitSpec(spec);
+      refs.push({ name, version, ecosystem: 'pypi', origin: 'manifest', file, context: `Goose recipe inline_python extension "${extName}"` });
+    }
+  }
+  return refs;
 }
 
 /** Claude Code project settings; `extraKnownMarketplaces` + `enabledPlugins` auto-install plugin code for anyone who trusts the folder. */
