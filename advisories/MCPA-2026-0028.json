@@ -1,0 +1,47 @@
+{
+  "id": "MCPA-2026-0028",
+  "title": "mcp-atlassian unauthenticated SSRF via X-Atlassian-*-Url headers (CVE-2026-27826)",
+  "summary": "mcp-atlassian (PyPI) before 0.17.0 lets an unauthenticated attacker who can reach the HTTP endpoint force the server to make outbound HTTP requests to an arbitrary attacker-controlled URL by supplying the custom X-Atlassian-Jira-Url / X-Atlassian-Confluence-Url headers without an Authorization header. Fixed in 0.17.0 by validating the header-supplied URLs.",
+  "type": "ssrf",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-27826",
+    "GHSA-7r34-79r5-rcc9"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:N",
+    "score": 8.2
+  },
+  "cwe": [
+    "CWE-918"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp-atlassian",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "0.17.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/sooperset/mcp-atlassian/security/advisories/GHSA-7r34-79r5-rcc9"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/sooperset/mcp-atlassian/commit/5cd697dfce9116ef330b8dc7a91291640e0528d9"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/advisories/GHSA-7r34-79r5-rcc9"
+    }
+  ],
+  "timeline": {
+    "published": "2026-03-10"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "MCPA-2026-0029",
+  "title": "mcp-atlassian DNS-rebinding TOCTOU bypass of the SSRF fix",
+  "summary": "mcp-atlassian (PyPI) before 0.22.0 validates the attacker-controlled X-Atlassian-Jira-Url / X-Atlassian-Confluence-Url header host once at middleware time (the CVE-2026-27826 fix), but the outbound request is later built with the raw hostname and re-resolves at connect time with no IP pinning. A DNS-rebinding name that returns a public IP during validation and an internal IP at connect time bypasses the SSRF guard. Fixed in 0.22.0.",
+  "type": "ssrf",
+  "severity": "medium",
+  "aliases": [
+    "GHSA-489g-7rxv-6c8q"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:L/A:N",
+    "score": 6.5
+  },
+  "cwe": [
+    "CWE-918"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp-atlassian",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "0.22.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/sooperset/mcp-atlassian/security/advisories/GHSA-489g-7rxv-6c8q"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/advisories/GHSA-489g-7rxv-6c8q"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-10"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "MCPA-2026-0030",
+  "title": "mcp-atlassian arbitrary server-side file read via Jira attachment upload",
+  "summary": "mcp-atlassian (PyPI) before 0.22.0 passes the client-supplied file_path of the Jira attachment-upload tools directly to open() on the server's filesystem. Any authenticated MCP client \u2014 or an AI agent manipulated via prompt injection \u2014 can read arbitrary files the server process can access and exfiltrate them as Atlassian attachments. Fixed in 0.22.0.",
+  "type": "path-traversal",
+  "severity": "high",
+  "aliases": [
+    "GHSA-wm45-qh3g-v83f"
+  ],
+  "cvss": {
+    "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
+    "score": 7.7
+  },
+  "cwe": [
+    "CWE-22",
+    "CWE-73"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp-atlassian",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "0.22.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/sooperset/mcp-atlassian/security/advisories/GHSA-wm45-qh3g-v83f"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/advisories/GHSA-wm45-qh3g-v83f"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-10"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "MCPA-2026-0034",
+  "title": "MCP Python SDK WebSocket server transport lacks Host/Origin validation (CVE-2026-59950)",
+  "summary": "The MCP Python SDK (PyPI: mcp) before 1.28.1: the deprecated WebSocket server transport (mcp.server.websocket.websocket_server) accepted the WebSocket handshake without any Host or Origin header validation \u2014 the TransportSecuritySettings mechanism used by the SSE and Streamable HTTP transports was not wired into it, enabling DNS-rebinding / cross-origin access to locally hosted servers. Fixed in 1.28.1.",
+  "type": "auth-missing",
+  "severity": "high",
+  "aliases": [
+    "CVE-2026-59950",
+    "GHSA-vj7q-gjh5-988w"
+  ],
+  "cwe": [
+    "CWE-346",
+    "CWE-1385"
+  ],
+  "packages": [
+    {
+      "ecosystem": "pypi",
+      "name": "mcp",
+      "ranges": [
+        {
+          "introduced": "0",
+          "fixed": "1.28.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/security/advisories/GHSA-vj7q-gjh5-988w"
+    },
+    {
+      "type": "web",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-59950"
+    },
+    {
+      "type": "fix",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/pull/2992"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/modelcontextprotocol/python-sdk/releases/tag/v1.28.1"
+    }
+  ],
+  "timeline": {
+    "published": "2026-07-16"
+  }
+}
