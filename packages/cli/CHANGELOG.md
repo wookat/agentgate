@@ -1,5 +1,18 @@
 # mcp-agentgate
 
+## 0.63.0
+
+### Minor Changes
+
+- 887ac7d: Scan the Cline `.cline/` project tree: `.cline/skills/**/SKILL.md` project skills are skill-scanned (AG-SK-001), and `.cline/plugins/` project plugin files (auto-loaded and executed by Cline at startup) are treated as startup exec surface by AG-RC-001 — curl|sh reports critical and dynamic code-execution primitives report medium without needing MCP markers. Previously the `.cline/` directory was not walked at all.
+
+### Patch Changes
+
+- 998a497: Advisory database 74 → 77: MCPA-2026-0061 opencode-optimised-toolings (malicious OpenCode plugin that replaces the opencode binary with a non-publisher build — still live on npm), MCPA-2026-0062 devplatform-react-mcp (dropper disguised as a React MCP SDK), MCPA-2026-0063 agenthub-multiagent-mcp (hardcoded C2 drives Claude Code with --dangerously-skip-permissions).
+- Updated dependencies [887ac7d]
+- Updated dependencies [998a497]
+  - mcp-agentgate-core@0.63.0
+
 ## 0.62.1
 
 ### Patch Changes
