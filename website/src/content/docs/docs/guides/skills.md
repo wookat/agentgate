@@ -57,6 +57,10 @@ Any of these markdown layouts are treated as skill files:
   included — auto-loaded as chat context in the IDE and CLI).
 - JetBrains Junie project guidelines (`.junie/guidelines.md` — auto-loaded
   into every Junie task in the IDE and CLI).
+- OpenHands repository customization (`.openhands/skills/**.md` and the
+  legacy `.openhands/microagents/**.md` — auto-loaded as agent context,
+  always or on keyword triggers). `.openhands/setup.sh`, which OpenHands runs
+  automatically at session start, is covered by the source-scan rules.
 
 Skills can also *declare MCP servers of their own* (Amp convention): a
 sibling `mcp.json` or an `mcpServers` field in `SKILL.md` frontmatter, under
