@@ -170,12 +170,50 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     // their `extensions` list starts for everyone who runs the recipe
     { client: 'goose', path: path.join(projectDir, 'recipe.yaml'), format: 'goose-recipe-yaml' },
     { client: 'goose', path: path.join(projectDir, 'recipe.json'), format: 'goose-recipe-yaml' },
+    ...gooseSubRecipeLocations(projectDir),
     { client: 'copilot-cli', path: path.join(projectDir, '.github', 'mcp.json'), format: 'copilot-mcp-json' },
     ...copilotAgentServerLocations(path.join(projectDir, '.github', 'agents')),
     ...skillServerLocations(path.join(projectDir, '.agents', 'skills'), 'skill'),
     ...skillServerLocations(path.join(projectDir, '.claude', 'skills'), 'skill'),
     ...pluginServerLocations(projectDir),
   ];
+}
+
+/**
+ * Subrecipes referenced from the root recipe's `sub_recipes[].path`: each entry's
+ * `instructions` and `extensions` take effect when the main recipe delegates to it,
+ * so referenced files get the same extension discovery as the root recipe. Paths
+ * resolve relative to the recipe's directory; references outside the project are
+ * skipped. Subrecipes cannot nest further sub_recipes (documented), so no recursion.
+ */
+function gooseSubRecipeLocations(projectDir: string): ClientConfigLocation[] {
+  const out: ClientConfigLocation[] = [];
+  const seen = new Set<string>();
+  for (const rootName of ['recipe.yaml', 'recipe.json']) {
+    const rootPath = path.join(projectDir, rootName);
+    let doc: unknown;
+    try {
+      doc = YAML.parse(fs.readFileSync(rootPath, 'utf8'));
+    } catch {
+      continue;
+    }
+    if (typeof doc !== 'object' || doc === null) continue;
+    const recipe = doc as Record<string, unknown>;
+    if (typeof recipe.title !== 'string' || typeof recipe.description !== 'string') continue;
+    if (typeof recipe.instructions !== 'string' && typeof recipe.prompt !== 'string') continue;
+    if (!Array.isArray(recipe.sub_recipes)) continue;
+    for (const subRaw of recipe.sub_recipes) {
+      if (typeof subRaw !== 'object' || subRaw === null) continue;
+      const ref = (subRaw as Record<string, unknown>).path;
+      if (typeof ref !== 'string') continue;
+      const resolved = path.resolve(projectDir, ref);
+      if (!resolved.startsWith(path.resolve(projectDir) + path.sep)) continue;
+      if (seen.has(resolved) || !fs.existsSync(resolved)) continue;
+      seen.add(resolved);
+      out.push({ client: 'goose', path: resolved, format: 'goose-recipe-yaml' });
+    }
+  }
+  return out;
 }
 
 /** Directory names never descended into while looking for plugin roots. */

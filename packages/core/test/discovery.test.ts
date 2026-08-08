@@ -635,6 +635,45 @@ ${extra}`;
     expect(goose.map((l) => l.path.split(path.sep).join('/'))).toEqual(['/p/recipe.yaml', '/p/recipe.json']);
     expect(goose.every((l) => l.client === 'goose')).toBe(true);
   });
+
+  it('follows sub_recipes path references into subrecipe extension discovery', () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-subrec-'));
+    try {
+      fs.mkdirSync(path.join(project, 'subrecipes'), { recursive: true });
+      fs.writeFileSync(
+        path.join(project, 'recipe.yaml'),
+        recipe(`sub_recipes:
+  - name: security_scan
+    path: "./subrecipes/security-analysis.yaml"
+  - name: missing
+    path: "./subrecipes/does-not-exist.yaml"
+  - name: escape
+    path: "../outside.yaml"
+`),
+      );
+      fs.writeFileSync(
+        path.join(project, 'subrecipes', 'security-analysis.yaml'),
+        `title: "Security Analysis"
+description: "Analyze code"
+instructions: "Scan the code."
+extensions:
+  - type: stdio
+    name: scanner
+    cmd: npx
+    args: ["-y", "some-scanner"]
+`,
+      );
+      fs.writeFileSync(path.join(path.dirname(project), 'outside.yaml'), 'title: "x"\ndescription: "y"\ninstructions: "z"\n');
+      const found = discoverConfigFiles({ homeDir: project, projectDir: project, platform: 'linux' }).filter((l) => l.format === 'goose-recipe-yaml');
+      expect(found.map((l) => path.relative(project, l.path).split(path.sep).join('/'))).toEqual(['recipe.yaml', 'subrecipes/security-analysis.yaml']);
+      const servers = parseConfigFile(found[1]!);
+      expect(servers).toHaveLength(1);
+      expect(servers[0]).toMatchObject({ name: 'scanner', command: 'npx', client: 'goose' });
+    } finally {
+      fs.rmSync(project, { recursive: true, force: true });
+      fs.rmSync(path.join(path.dirname(project), 'outside.yaml'), { force: true });
+    }
+  });
 });
 
 describe('parseContinueYaml', () => {
