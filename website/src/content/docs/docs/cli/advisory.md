@@ -60,3 +60,10 @@ every release.
   `agentgate deps` (OSV.dev malware checks) and a dependency scanner.
 - `check` takes one package per invocation; scanning a whole client config is
   `agentgate scan`'s job (rule `AG-SC-003` does this automatically).
+- Some entries have **no fixed release** (recorded with `last_affected`
+  instead of `fixed`) — either the vendor hasn't shipped a patch yet, or the
+  product is discontinued entirely (e.g. Flowise announced its
+  [sunset](https://flowiseai.com/sunset), so its post-sunset advisories will
+  never get a fix). For those, "upgrade" is not a remediation: the latest
+  version is still affected, and the practical options are mitigating
+  controls or migrating off the package.

@@ -16,7 +16,7 @@ Every advisory needs at least one **authoritative reference**: CVE/NVD record, G
 ## Steps
 
 1. Fork the repo and create `advisories/MCPA-YYYY-NNNN.json` — take the next free number for the year of publication. The filename must equal the `id`.
-2. Fill in the fields per the [advisory schema](/docs/spec/advisory-schema/): affected packages with OSV-style version ranges (`introduced` / `fixed` / `last_affected`), `severity`, `type`, `references`, `timeline`. Only state dates and versions your references actually support.
+2. Fill in the fields per the [advisory schema](/docs/spec/advisory-schema/): affected packages with OSV-style version ranges (`introduced` / `fixed` / `last_affected`), `severity`, `type`, `references`, `timeline`. Only state dates and versions your references actually support. When no fixed release exists (vendor hasn't patched, or the product is discontinued — e.g. post-sunset Flowise advisories), use `last_affected` rather than guessing a `fixed` version.
 3. Validate locally:
 
    ```bash
