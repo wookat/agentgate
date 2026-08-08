@@ -1,5 +1,11 @@
 # mcp-agentgate-config-convert
 
+## 0.10.0
+
+### Minor Changes
+
+- 73acf28: `config convert` supports `antigravity` (Google Antigravity): parse/render `.agents/mcp_config.json` / `~/.gemini/config/mcp_config.json`, emitting remote servers with the official `serverUrl` field.
+
 ## 0.9.0
 
 ### Minor Changes
