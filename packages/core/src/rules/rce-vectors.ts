@@ -39,6 +39,19 @@ function maskQuotedHeredocs(content: string): string {
   return content.replace(/<<-?\s*(['"])(\w+)\1[^\n]*\n([\s\S]*?)\n\s*\2(\n|$)/g, (whole, _q: string, _tag: string, body: string) => whole.replace(body, body.replace(/[^\n]/g, ' ')));
 }
 
+/**
+ * Mask string literals passed to echo/printf — the shell prints them, never
+ * executes them (installer scripts echo their own curl|sh one-liner in help
+ * text). A `$(`/backtick inside double quotes still executes, so those
+ * strings are left live.
+ */
+function maskEchoedStrings(content: string): string {
+  return content.replace(
+    /\b(echo|printf)\s+(-\w+\s+)*((?:'[^']*'|"(?:[^"$`]|\$[^(])*")(\s+(?:'[^']*'|"(?:[^"$`]|\$[^(])*"))*)/g,
+    (whole, _cmd: string, _flags: string, strings: string) => whole.replace(strings, strings.replace(/[^\n]/g, ' ')),
+  );
+}
+
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
   category: 'rce-vectors',
@@ -84,7 +97,7 @@ export const rceVectorsRule: Rule = {
   },
   checkSource(file, rawContent) {
     const findings = [];
-    const content = /\.(sh|bash|zsh)$/i.test(file) ? maskQuotedHeredocs(rawContent) : rawContent;
+    const content = /\.(sh|bash|zsh)$/i.test(file) ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
     if (REMOTE_EXEC_RE.test(content)) {
       // A `#`-comment line in a shell/config script never executes — installer
       // scripts routinely quote their own curl|sh one-liner in a usage comment.

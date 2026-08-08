@@ -103,6 +103,13 @@ describe('rule branch coverage', () => {
     expect(findings.some((f) => f.category === 'tool-poisoning' && f.severity === 'high')).toBe(true);
   });
 
+  it('tool-poisoning: bidi overrides in test-path files are reported quietly', () => {
+    const findings = repoScan({ 'path.test.ts': 'expect(isSafe("admin\u202e//")).toBe(false);\n' });
+    const hit = findings.find((f) => f.category === 'tool-poisoning')!;
+    expect(hit.severity).toBe('low');
+    expect(hit.message).toContain('defensive fixture');
+  });
+
   it('tool-poisoning: emoji ZWJ sequences are not hidden instructions', () => {
     const findings = repoScan({ 'emoji.ts': 'const e = "\u{1f469}\u200d\u{1f4bb}";\n' });
     expect(findings.some((f) => f.category === 'tool-poisoning')).toBe(false);
