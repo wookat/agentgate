@@ -46,6 +46,8 @@ jobs:
         run: |
           node packages/core/scripts/bundle-advisories.mjs
           git diff --exit-code packages/core/src/advisories/data.ts
+      - name: advisory counts in docs match /advisories
+        run: node scripts/check-advisory-count.mjs
       - name: agentgate scan (repo, static)
         run: >
           node packages/cli/dist/index.js scan .
