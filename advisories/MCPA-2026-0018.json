@@ -1,0 +1,25 @@
+{
+  "id": "MCPA-2026-0018",
+  "title": "n8n-MCP cross-tenant access to workflow version backups in multi-tenant HTTP deployments (CVE-2026-54052)",
+  "summary": "n8n-mcp before 2.56.1 does not isolate its locally stored workflow version history per tenant in multi-tenant HTTP deployments (ENABLE_MULTI_TENANT=true): an authenticated tenant can read workflow version snapshots belonging to other tenants — including full node definitions with credential references and authorization headers — and can delete other tenants' stored backups. stdio and single-tenant HTTP deployments are not affected. Fixed in 2.56.1, which isolates stored history per instance and clears previously un-scoped backups.",
+  "type": "credential-leak",
+  "severity": "critical",
+  "aliases": ["CVE-2026-54052", "GHSA-j6r7-6fhx-77wx"],
+  "cvss": { "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:L", "score": 9.9 },
+  "cwe": ["CWE-639", "CWE-862"],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "n8n-mcp",
+      "ranges": [{ "introduced": "0", "fixed": "2.56.1" }]
+    }
+  ],
+  "references": [
+    { "type": "advisory", "url": "https://github.com/advisories/GHSA-j6r7-6fhx-77wx" },
+    { "type": "web", "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-54052" },
+    { "type": "fix", "url": "https://github.com/czlonkowski/n8n-mcp/releases/tag/v2.56.1" }
+  ],
+  "timeline": {
+    "published": "2026-07-14"
+  }
+}

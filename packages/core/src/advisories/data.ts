@@ -738,5 +738,62 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0018",
+    "title": "n8n-MCP cross-tenant access to workflow version backups in multi-tenant HTTP deployments (CVE-2026-54052)",
+    "type": "credential-leak",
+    "severity": "critical",
+    "published": "2026-07-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "n8n-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.56.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0019",
+    "title": "n8n-MCP incorrect authorization exposes default-scope workflow version backups in multi-tenant HTTP mode (CVE-2026-55608)",
+    "type": "credential-leak",
+    "severity": "medium",
+    "published": "2026-07-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "n8n-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "2.57.4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0020",
+    "title": "HKUDS nanobot improper access controls in MCP enabledTools scope handler (CVE-2026-19244)",
+    "type": "overprivileged",
+    "severity": "low",
+    "published": "2026-08-07",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "nanobot-ai",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.3.0"
+          }
+        ]
+      }
+    ]
   }
 ];
