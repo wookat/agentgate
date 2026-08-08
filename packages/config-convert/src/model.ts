@@ -35,7 +35,8 @@ export type ClientId =
   | "lmstudio"
   | "trae"
   | "amazonq"
-  | "antigravity";
+  | "antigravity"
+  | "crush";
 
 export const CLIENT_IDS: ClientId[] = [
   "claude-desktop",
@@ -57,6 +58,7 @@ export const CLIENT_IDS: ClientId[] = [
   "trae",
   "amazonq",
   "antigravity",
+  "crush",
 ];
 
 export interface ParseResult {

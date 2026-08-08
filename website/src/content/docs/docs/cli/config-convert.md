@@ -16,7 +16,7 @@ npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json
 | `--in <file>` | input file (default: the source client's config at its default location — project-level first, then user-level — or stdin when piped) |
 | `--out <file>` | output file (default: stdout) |
 
-Supported clients: `claude-desktop`, `claude-code`, `cursor`, `vscode`, `codex`, `opencode`, `windsurf`, `cline`, `gemini-cli`, `kiro`, `roo-code`, `zed`, `continue`, `amp`, `warp`, `lmstudio`, `trae`, `amazonq`, `antigravity`.
+Supported clients: `claude-desktop`, `claude-code`, `cursor`, `vscode`, `codex`, `opencode`, `windsurf`, `cline`, `gemini-cli`, `kiro`, `roo-code`, `zed`, `continue`, `amp`, `warp`, `lmstudio`, `trae`, `amazonq`, `antigravity`, `crush`.
 
 Warnings about lossy conversions (fields the target format cannot express) are
 printed to stderr; the conversion still succeeds. Parsing failures exit `2`
