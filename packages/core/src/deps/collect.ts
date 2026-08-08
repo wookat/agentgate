@@ -253,7 +253,7 @@ function lockfileRemoteSpecs(file: string, content: string): RemoteDepSpec[] {
     // packages-section blocks: a 2-space-indented key line followed by its fields.
     // v6/v9 remote keys are `name@<url>`; v5 keys are paths/URLs with a `name:` field.
     for (const block of content.split(/\n(?= {2}\S|'| {2}')/)) {
-      const key = block.match(/^ {2}'?([^'\n]+?)'?:\s*$/m)?.[1]?.replace(/\([^)]*\)/g, '');
+      const key = block.match(/^ {2}'?([^'\n]+?)'?:\s*$/m)?.[1]?.replace(/\(.*$/, '');
       if (!key) continue;
       const tarball = block.match(/tarball: '?([^\s,}']+)/)?.[1];
       const urlKey = key.match(/^(\/?(?:@[^/@]+\/)?[^/@]+)@((?:git\+)?(?:https?|git|ssh):\/\/.+)$/);
