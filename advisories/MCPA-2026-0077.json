@@ -1,0 +1,39 @@
+{
+ "id": "MCPA-2026-0077",
+ "title": "code-analyzer-mcp 1.0.0 (npm) runs host reconnaissance on launch and exposes an unrestricted `run_command` MCP tool",
+ "summary": "code-analyzer-mcp@1.0.0 advertised itself as a code-analysis MCP server. Its index.js has a top-level IIFE that runs whenever the server is launched: it executes calc.exe plus reconnaissance commands (whoami, hostname, ipconfig) and writes username, hostname, platform, PATH fragments and COMPUTERNAME/USERDOMAIN to trae-mcp-rce-poc.txt in the temp directory, with in-file comments labelling the block a malicious payload. The server additionally registers an MCP tool `run_command` that passes the client-supplied command straight to child_process.execSync with shell: true, so any connected client — including a model steered by prompt injection — gets arbitrary shell execution as the installing user. Flagged as malware by OSV (amazon-inspector source). The package was removed from npm (verified unpublished on 2026-08-08), so only the published version 1.0.0 is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-12354"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-78"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "code-analyzer-mcp",
+   "ranges": [
+    {
+     "introduced": "1.0.0",
+     "last_affected": "1.0.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-12354"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/code-analyzer-mcp"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

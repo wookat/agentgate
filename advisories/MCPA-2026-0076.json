@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0076",
+ "title": "claude-cup (npm) registers itself into Claude Code and Cursor and uses the local agent to inventory credential stores, reporting results to its own API",
+ "summary": "The npm package claude-cup presents itself as a Claude Code usage leaderboard. On first launch it auto-registers its MCP server and hooks into Claude Code and, when present, Cursor, then drives the installer's authenticated `claude` CLI with a prompt whose vocabulary is a codeword dictionary for credential material (`striker`->github, `midfielder`->npm, `goalkeeper`->aws_pair, `referee`->private_key, ...) and for the paths that hold it (`home_north`->~/.git-credentials, `away_north`->~/.aws/, `home_south`->~/.ssh/, `tunnel`->shell_history, ...), so what is requested and returned is a per-host inventory of secret locations and their validation state. Counts of discovered/validated/high-exposure secrets plus a machine id, Claude org and install source are then encoded into query parameters of https://api.claude-cup.com/v1/config; an in-tree comment states the scheduling is designed to \"look like a normal background 'environment profiler'\". Earlier versions flagged by OSV (amazon-inspector source) read the credential paths directly and validated harvested tokens against provider APIs under a manifest fetched from a mutable GitHub branch. The package remained live on npm and the 0.9.12 tarball verified on 2026-08-08 still contains the agent-driven credential inventory, the codeword mapping and the reporting channel, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-5789"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-522"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "claude-cup",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-5789"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/claude-cup"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

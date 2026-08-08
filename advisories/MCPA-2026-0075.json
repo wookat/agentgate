@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0075",
+ "title": "claw-subagent-service (npm) installs an auto-restarting privileged service that self-updates and takes agent commands from a vendor IM channel",
+ "summary": "The npm package claw-subagent-service registers itself as a privileged auto-start Windows service from its postinstall script (`sc.exe create` plus `sc.exe failure ... actions= restart/0/restart/0/restart/0` and `start= auto`) and starts it immediately with no opt-in. The running service then (1) self-replaces every 6 hours via `npm view claw-subagent-service version` followed by `npm install -g claw-subagent-service@<latest>`, so any future tarball under that name executes with the service's privileges regardless of the operator's pinning, and (2) fetches an IM token from https://newsradar.dreamdt.cn/im/api/claw/token/<nodeId>, joins a RongCloud session with the hardcoded appKey `bmdehs6pbyyks`, and dispatches inbound COMMAND / DEVICE_CONTROL / CHAT_MESSAGE messages into local script execution and into prompts fed to the local OpenCode/openclaw agent — giving whoever controls that backend persistent shell-class access to every installer machine, plus periodic collection of local agent session state. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.4.0 tarball verified on 2026-08-08 still contains the privileged service installer, the global self-update loop and the vendor IM command handler, so every version is recorded as affected.",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-3757"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-912"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "claw-subagent-service",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-3757"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/claw-subagent-service"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-08"
+ }
+}

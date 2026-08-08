@@ -1,23 +1,31 @@
 {
-  "comment": "Reviewed sweep findings deliberately not mirrored into the MCPA database. ids: individual GHSA/CVE/OSV ids; packages: ecosystem:name channels whose non-MCP app-level advisories are delegated to general scanners (osv-scanner et al). Rationale is recorded in the GAP report named next to each group.",
-  "ids": [
-    "GHSA-q94p-g4rh-r9rf",
-    "CVE-2026-18991",
-    "GHSA-fjwc-rc47-268g",
-    "GHSA-c8c4-xf97-vvc8",
-    "GHSA-8cv7-xjpc-f5hw",
-    "GHSA-wgq9-x672-9734"
-  ],
-  "packages": [
-    "npm:flowise",
-    "npm:flowise-components"
-  ],
-  "rationale": {
-    "GHSA-q94p-g4rh-r9rf": "NanoClaw is not a registry package the package-runner matcher can see (GAP-ROUND-27)",
-    "GHSA-fjwc-rc47-268g": "Kirachon context-engine (context-engine-mcp-server) is not published to any registry; the npm/PyPI packages named context-engine are unrelated projects (GAP-ROUND-267)",
-    "GHSA-c8c4-xf97-vvc8": "INQUIRELAB mcp-bridge-api is rolling-release, not in npm/PyPI — same mapping bar as round 261 (GAP-ROUND-267)",
-    "GHSA-8cv7-xjpc-f5hw": "abdullah1854 MCPGateway is a commit-ranged GitHub-only project, not in any registry (GAP-ROUND-267)",
-    "GHSA-wgq9-x672-9734": "adolfosalasgomez3011 slidev-builder-mcp is GitHub-only, not published to npm or PyPI — same mapping bar as rounds 261/267 (GAP-ROUND-281)",
-    "npm:flowise": "platform-level CVEs delegated to osv-scanner; MCP-specific flowise advisories are still ingested (GAP-ROUND-22, MCPA-2026-0006); the GHSA keyword sweep still surfaces new MCP-related flowise advisories"
-  }
+ "comment": "Reviewed sweep findings deliberately not mirrored into the MCPA database. ids: individual GHSA/CVE/OSV ids; packages: ecosystem:name channels whose non-MCP app-level advisories are delegated to general scanners (osv-scanner et al). Rationale is recorded in the GAP report named next to each group.",
+ "ids": [
+  "GHSA-q94p-g4rh-r9rf",
+  "CVE-2026-18991",
+  "GHSA-fjwc-rc47-268g",
+  "GHSA-c8c4-xf97-vvc8",
+  "GHSA-8cv7-xjpc-f5hw",
+  "GHSA-wgq9-x672-9734",
+  "MAL-2026-13259",
+  "MAL-2026-13210",
+  "MAL-2026-10892",
+  "MAL-2026-12401"
+ ],
+ "packages": [
+  "npm:flowise",
+  "npm:flowise-components"
+ ],
+ "rationale": {
+  "GHSA-q94p-g4rh-r9rf": "NanoClaw is not a registry package the package-runner matcher can see (GAP-ROUND-27)",
+  "GHSA-fjwc-rc47-268g": "Kirachon context-engine (context-engine-mcp-server) is not published to any registry; the npm/PyPI packages named context-engine are unrelated projects (GAP-ROUND-267)",
+  "GHSA-c8c4-xf97-vvc8": "INQUIRELAB mcp-bridge-api is rolling-release, not in npm/PyPI — same mapping bar as round 261 (GAP-ROUND-267)",
+  "GHSA-8cv7-xjpc-f5hw": "abdullah1854 MCPGateway is a commit-ranged GitHub-only project, not in any registry (GAP-ROUND-267)",
+  "GHSA-wgq9-x672-9734": "adolfosalasgomez3011 slidev-builder-mcp is GitHub-only, not published to npm or PyPI — same mapping bar as rounds 261/267 (GAP-ROUND-281)",
+  "npm:flowise": "platform-level CVEs delegated to osv-scanner; MCP-specific flowise advisories are still ingested (GAP-ROUND-22, MCPA-2026-0006); the GHSA keyword sweep still surfaces new MCP-related flowise advisories",
+  "MAL-2026-13259": "chatcc-agent is a commercial Claude Code<->IM bridge (CCLink) whose remote terminal/PTY channel is JWT- plus paired-client-authenticated and is the product's advertised purpose; the OSV entry documents the remote-shell design, not a concealed payload or exfiltration channel. Rationale: GAP-ROUND-291.",
+  "MAL-2026-13210": "@ohos-ports/codex is a third-party HarmonyOS port that resolves @openai/codex from a mutable gitcode.com branch tarball; real supply-chain risk but no payload observed and no impersonation of the @openai publisher's own package name. Rationale: GAP-ROUND-291.",
+  "MAL-2026-10892": "claude-code-timer: the OSV entry itself records 'scanned with no findings of concern' (no lifecycle scripts, no attacker-controlled network calls). Rationale: GAP-ROUND-291.",
+  "MAL-2026-12401": "mcp-audit-sync-internal@99.9.9 is a dependency-confusion placeholder for an internal name, not a package agent users install; delegated to general scanners. Rationale: GAP-ROUND-291."
+ }
 }
