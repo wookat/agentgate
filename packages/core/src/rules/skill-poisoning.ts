@@ -50,7 +50,7 @@ import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
  * (`system-prompt-<mode-slug>`, no extension).
  */
 export const SKILL_FILE =
-  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo\/commands\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
+  /(^|\/)skill\.md$|(^|\/)\.(agents|claude|cursor|codex|opencode|qwen)\/(skills|commands|agents)\/.+\.md$|(^|\/)\.opencode\/(command|agent|modes?)\/.+\.md$|(^|\/)plugins\/[^/]+\/(skills|commands|agents)\/.+\.md$|(^|\/)\.windsurf\/(rules|workflows)\/.+\.md$|(^|\/)\.clinerules(\/.+\.(md|txt))?$|(^|\/)\.cursor\/rules\/.+\.mdc$|(^|\/)\.(windsurfrules|cursorrules)$|(^|\/)\.(gemini|qwen)\/commands\/.+\.toml$|(^|\/)commands\/.+\.toml$|(^|\/)\.continue\/(rules|prompts)\/.+\.md$|(^|\/)\.trae\/(rules\/.+|project_rules|user_rules)\.md$|(^|\/)\.kiro\/(steering|agents)\/.+\.md$|(^|\/)\.roo\/rules(-[\w-]+)?\/.+\.(md|txt)$|(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.roorules(-[\w-]+)?$|(^|\/)\.roomodes$|(^|\/)(agents|agent|claude|gemini|qwen(\.local)?)\.md$|^\.rules$|(^|\/)\.github\/copilot-instructions\.md$|(^|\/)\.github\/instructions\/.+\.instructions\.md$|(^|\/)\.github\/prompts\/.+\.prompt\.md$|(^|\/)\.github\/agents\/.+\.md$|(^|\/)\.github\/chatmodes\/.+\.chatmode\.md$|(^|\/)\.junie\/guidelines\.md$|(^|\/)\.openhands\/(skills|microagents)\/.+\.md$|(^|\/)\.goosehints$|(^|\/)\.amazonq\/rules\/.+\.md$|(^|\/)\.qwen\/rules\/.+\.md$|(^|\/)\.factory\/(skills|commands|droids)\/.+\.md$|(^|\/)\.agents?\/(rules|workflows)\/.+\.md$|(^|\/)\.kilo(code)?\/(rules(-[\w-]+)?|workflows)\/.+\.(md|txt)$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$|(^|\/)\.kilocodemodes$|(^|\/)\.kilocoderules(-[\w-]+)?$|(^|\/)\.kilo(code)?\/system-prompt-[\w-]+$/i;
 
 /**
  * Command files whose host client ignores `allowed-tools` frontmatter
@@ -59,7 +59,7 @@ export const SKILL_FILE =
  * description/agent/model/subtask — a pasted `allowed-tools:` grant is inert
  * there, so it is not an approval surface.
  */
-const ALLOWED_TOOLS_INERT_FILE = /(^|\/)\.(roo|kilo)\/commands\/.+\.md$/i;
+const ALLOWED_TOOLS_INERT_FILE = /(^|\/)\.roo\/commands\/.+\.md$|(^|\/)\.kilo(code)?\/(commands?|agents?|modes?)\/.+\.md$/i;
 
 /** Extract the `allowed-tools` frontmatter value(s) from a SKILL.md file. */
 export function parseAllowedTools(content: string): string[] {
@@ -102,11 +102,16 @@ const CLAUDE_SETTINGS_FILE = /(^|\/)\.claude\/settings(\.local)?\.json$/i;
 /** Factory Droid settings (project `.factory/settings.json` plus `settings.local.json` overrides); `commandAllowlist` entries and high autonomy pre-authorize execution for anyone opening the project. */
 export const FACTORY_SETTINGS_FILE = /(^|\/)\.factory\/settings(\.local)?\.json$/i;
 
-/** OpenCode config whose `permission` block can pre-approve tools for everyone using the project. */
-const OPENCODE_CONFIG_FILE = /(^|\/)opencode\.jsonc?$/i;
+/** OpenCode config (plus Kilo CLI's `kilo.json(c)` — same schema, the CLI is an OpenCode fork) whose `permission` block can pre-approve tools for everyone using the project. */
+const OPENCODE_CONFIG_FILE = /(^|\/)(opencode|kilo)\.jsonc?$/i;
+
+/** Client label for OpenCode-schema files: Kilo CLI is an OpenCode fork with the same config/agent semantics under `.kilo`/`.kilocode` and `kilo.json(c)`. */
+function opencodeEngine(file: string): string {
+  return /(^|\/)kilo\.jsonc?$|(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI' : 'OpenCode';
+}
 
 /** OpenCode agent/mode markdown files (project `.opencode/{agent,agents,mode,modes}/**.md` — OpenCode scans both singular and plural directories; permissions in YAML frontmatter). */
-const OPENCODE_AGENT_MD = /(^|\/)\.opencode\/(agents?|modes?)\/.+\.md$/i;
+const OPENCODE_AGENT_MD = /(^|\/)\.(opencode|kilo(code)?)\/(agents?|modes?)\/.+\.md$/i;
 
 /** Crush (Charm) legacy JSON config (project `.crush.json`/`crush.json`, user `.config/crush/crush.json`, JSONC). */
 export const CRUSH_CONFIG_FILE = /(^|\/)\.?crush\.json$/i;
@@ -512,6 +517,7 @@ export const skillOverprivilegeRule: Rule = {
       }
     }
     if (OPENCODE_AGENT_MD.test(file)) {
+      const engine = opencodeEngine(file);
       const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
       let data: unknown;
       try {
@@ -528,7 +534,7 @@ export const skillOverprivilegeRule: Rule = {
             target: file,
             file,
             ...(permLine > 0 ? { line: permLine } : {}),
-            message: `OpenCode agent sets a catch-all "allow" permission in its frontmatter — every tool (including shell) runs without prompts for anyone using this checked-in agent`,
+            message: `${engine} agent sets a catch-all "allow" permission in its frontmatter — every tool (including shell) runs without prompts for anyone using this checked-in agent`,
           }),
         );
       } else if (typeof permission === 'object' && permission !== null) {
@@ -542,7 +548,7 @@ export const skillOverprivilegeRule: Rule = {
                 target: file,
                 file,
                 ...(keyLine > 0 ? { line: keyLine } : {}),
-                message: `OpenCode agent sets permission.${key} to "allow" in its frontmatter — ${risk} without a permission prompt for anyone using this checked-in agent; use granular rules or "ask"`,
+                message: `${engine} agent sets permission.${key} to "allow" in its frontmatter — ${risk} without a permission prompt for anyone using this checked-in agent; use granular rules or "ask"`,
               }),
             );
           }
@@ -1021,6 +1027,7 @@ export const skillOverprivilegeRule: Rule = {
     }
     if (isOpencode) {
       const findings = [];
+      const engine = opencodeEngine(file);
       for (const { scope, permission } of opencodePermissionBlocks(data)) {
         if (opencodeAllowsAll(permission)) {
           const line = content.split(/\r?\n/).findIndex((l) => l.includes('"permission"')) + 1;
@@ -1030,7 +1037,7 @@ export const skillOverprivilegeRule: Rule = {
               target: file,
               file,
               ...(line > 0 ? { line } : {}),
-              message: `OpenCode config sets a catch-all "allow" ${scope} — every tool (including shell) runs without prompts for anyone opening this project`,
+              message: `${engine} config sets a catch-all "allow" ${scope} — every tool (including shell) runs without prompts for anyone opening this project`,
             }),
           );
         } else if (typeof permission === 'object' && permission !== null) {
@@ -1043,7 +1050,7 @@ export const skillOverprivilegeRule: Rule = {
                   target: file,
                   file,
                   ...(line > 0 ? { line } : {}),
-                  message: `OpenCode config sets ${scope}.${key} to "allow" — ${risk} without a permission prompt; use granular rules (e.g. "git *": "allow") or "ask"`,
+                  message: `${engine} config sets ${scope}.${key} to "allow" — ${risk} without a permission prompt; use granular rules (e.g. "git *": "allow") or "ask"`,
                 }),
               );
             }

@@ -27,16 +27,18 @@ const EXEC_TOOL_RE = new RegExp(
 const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpServer\b|mcpServers/i;
 
 /**
- * OpenCode auto-discovers `.opencode/{plugin,plugins}/*.{ts,js}` and Cline
- * auto-loads project plugins under `.cline/plugins/` — both execute at
+ * OpenCode auto-discovers `.opencode/{plugin,plugins}/*.{ts,js}` (Kilo CLI,
+ * an OpenCode fork, does the same under `.kilo`/`.kilocode`) and Cline
+ * auto-loads project plugins under `.cline/plugins/` — all execute at
  * startup, so dynamic-exec primitives there run on repo open, MCP markers or
  * not.
  */
-const STARTUP_PLUGIN_FILE = /(^|\/)\.opencode\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
+const STARTUP_PLUGIN_FILE = /(^|\/)\.(opencode|kilo(code)?)\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
 
 /** Client name for a startup-plugin path, for finding messages. */
 function startupPluginClient(file: string): string {
-  return /(^|\/)\.cline\//i.test(file) ? 'Cline' : 'OpenCode';
+  if (/(^|\/)\.cline\//i.test(file)) return 'Cline';
+  return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI' : 'OpenCode';
 }
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
@@ -110,6 +112,15 @@ export const rceVectorsRule: Rule = {
     ];
   },
   checkSource(file, rawContent) {
+    /** True when the match sits inside a string under the nearest enclosing deny/block key (e.g. `"deniedCommands": [...]`). */
+    function isDenyListEntry(content: string, idx: number): boolean {
+      const lines = content.slice(0, idx).split('\n');
+      for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 30; i--, seen++) {
+        const key = /["']([^"']+)["']\s*:/.exec(lines[i]!);
+        if (key) return /\b(den(y|ied|ylist)|block(ed)?(list)?|disallow(ed)?|forbid(den)?)\b|denied|blocklist|blacklist/i.test(key[1]!);
+      }
+      return false;
+    }
     const findings = [];
     const content = /\.(sh|bash|zsh)$/i.test(file) ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
@@ -123,15 +134,20 @@ export const rceVectorsRule: Rule = {
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
       const executable = (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file)) && !isCommented(m.index ?? 0);
+      // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
+      // array) is a defensive control, not an execution vector.
+      const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
       findings.push(
         finding(this, {
-          severity: executable ? 'critical' : 'medium',
+          severity: executable ? 'critical' : denyListed ? 'low' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
           message: executable
             ? 'Source pipes a remote download into an interpreter (curl|sh pattern)'
-            : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
+            : denyListed
+              ? 'Text contains a curl|sh pattern under a deny/block list key — likely a defensive control; confirm it blocks rather than runs'
+              : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }

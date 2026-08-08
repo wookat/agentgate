@@ -280,6 +280,18 @@ describe('discoverConfigFiles', () => {
     expect(found.map((f) => path.basename(path.dirname(f.path))).sort()).toEqual(['.kilo', '.kilocode']);
   });
 
+  it('finds Kilo CLI project kilo.json(c) configs (OpenCode schema)', () => {
+    const project = path.join(dir, 'proj-kilo-cli');
+    fs.mkdirSync(project, { recursive: true });
+    fs.writeFileSync(path.join(project, 'kilo.jsonc'), '{\n  // config\n  "mcp": { "fs": { "type": "local", "command": ["npx", "-y", "server-fs"] } },\n}\n');
+
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatchObject({ client: 'kilocode', format: 'opencode-json' });
+    const servers = parseOpenCodeJson(fs.readFileSync(found[0]!.path, 'utf8'), found[0]!);
+    expect(servers).toMatchObject([{ name: 'fs', command: 'npx', args: ['-y', 'server-fs'] }]);
+  });
+
   it('locates the qoder user settings.json', () => {
     const linux = knownConfigLocations('/home/u', 'linux');
     const q = linux.filter((l) => l.client === 'qoder');

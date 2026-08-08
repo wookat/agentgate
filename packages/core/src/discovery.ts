@@ -175,6 +175,9 @@ export function projectConfigLocations(projectDir: string): ClientConfigLocation
     // Kilo Code — project MCP config in `.kilocode/mcp.json` plus the newer `.kilo/mcp.json` (higher precedence)
     { client: 'kilocode', path: path.join(projectDir, '.kilocode', 'mcp.json'), format: 'mcpServers-json' },
     { client: 'kilocode', path: path.join(projectDir, '.kilo', 'mcp.json'), format: 'mcpServers-json' },
+    // Kilo CLI (OpenCode fork) — project `kilo.json(c)` uses the OpenCode config schema (`mcp` block)
+    { client: 'kilocode', path: path.join(projectDir, 'kilo.json'), format: 'opencode-json' },
+    { client: 'kilocode', path: path.join(projectDir, 'kilo.jsonc'), format: 'opencode-json' },
     { client: 'amp', path: path.join(projectDir, '.amp', 'settings.json'), format: 'amp-settings-json' },
     { client: 'warp', path: path.join(projectDir, '.warp', '.mcp.json'), format: 'mcpServers-json' },
     { client: 'trae', path: path.join(projectDir, '.trae', 'mcp.json'), format: 'mcpServers-json' },
@@ -608,9 +611,9 @@ export function parseVsCodeJson(raw: string, location: ClientConfigLocation): Mc
   return [...collectServers(json.servers, location), ...collectServers(json.mcpServers, location)];
 }
 
-/** OpenCode `opencode.json`: `{ "mcp": { name: { type, command: [...], environment, url, headers } } }`. */
+/** OpenCode `opencode.json` (and Kilo CLI `kilo.json(c)`, same schema, JSONC allowed): `{ "mcp": { name: { type, command: [...], environment, url, headers } } }`. */
 export function parseOpenCodeJson(raw: string, location: ClientConfigLocation): McpServerConfig[] {
-  const json = JSON.parse(raw) as Record<string, unknown>;
+  const json = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
   const map = json.mcp;
   if (typeof map !== 'object' || map === null) return [];
   const out: McpServerConfig[] = [];
