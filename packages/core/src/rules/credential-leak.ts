@@ -21,7 +21,10 @@ function isPlaceholder(value: string): boolean {
     /^\$\{?[A-Z0-9_]+\}?$/.test(value) || // ${ENV_VAR} / $ENV_VAR
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
-    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|demo)(\b|_)/i.test(value)
+    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|demo)(\b|_)/i.test(value) ||
+    // AWS reserves credentials ending in the literal EXAMPLE for documentation
+    // (AKIAIOSFODNN7EXAMPLE, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY).
+    /EXAMPLE(KEY)?$/.test(value)
   );
 }
 
@@ -95,10 +98,13 @@ export const credentialLeakRule: Rule = {
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
     const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file);
+    // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
+    // patterns as the rules/baseline they scan for, not as leaked values.
+    const scannerConfig = /(^|\/)\.?gitleaks(\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
-        if (isPlaceholder(m[0])) continue;
+        if (isPlaceholder(m[0]) || scannerConfig) continue;
         const line = content.slice(0, m.index ?? 0).split('\n').length;
         findings.push(
           finding(this, {

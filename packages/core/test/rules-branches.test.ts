@@ -101,14 +101,14 @@ describe('rule branch coverage', () => {
   });
 
   it('credential-leak: secret-shaped strings in test paths are reported quietly', () => {
-    const key = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+    const key = ['AKIA', 'IOSFODNN7QRSTUVW'].join('');
     const findings = repoScan({ 'test/redaction.test.ts': `const fake = "${key}";\n` });
     const hit = findings.find((f) => f.category === 'credential-leak');
     expect(hit?.severity).toBe('low');
   });
 
   it('credential-leak: test_*-named script files are reported quietly too', () => {
-    const key = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+    const key = ['AKIA', 'IOSFODNN7QRSTUVW'].join('');
     const findings = repoScan({ 'skills/helper/scripts/test_discovery.py': `token = "${key}"\n` });
     const hit = findings.find((f) => f.category === 'credential-leak');
     expect(hit?.severity).toBe('low');

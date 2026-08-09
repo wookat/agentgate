@@ -40,6 +40,19 @@ describe('scanRepo', () => {
     expect(hits.some((f) => f.file === 'detector.ts')).toBe(false);
   });
 
+  it('skips AWS documentation EXAMPLE keys and secret-scanner configs (AG-CL-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'canary.py'),
+      'row = "svc-prod-deploy,AKIAIOSFODNN7EXAMPLE,wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"\n',
+    );
+    fs.writeFileSync(path.join(dir, 'real.py'), 'key = "AKIAIOSFODNN7QRSTUVW"\n');
+    fs.writeFileSync(path.join(dir, '.gitleaks.toml'), '[[rules]]\nregex = \'\'\'sk-abcdefgh12345678901234567890\'\'\'\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.some((f) => f.file === 'canary.py')).toBe(false);
+    expect(hits.some((f) => f.file === '.gitleaks.toml')).toBe(false);
+    expect(hits.find((f) => f.file === 'real.py')!.severity).toBe('high');
+  });
+
   it('exfiltration pattern does not span lines onto unrelated keywords (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'review'), { recursive: true });
     fs.writeFileSync(
