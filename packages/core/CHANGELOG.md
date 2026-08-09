@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.29
+
+### Patch Changes
+
+- 1d9b5c9: AG-RC-001: when the only curl|sh match in an executable script sits on a `#`-comment line, grade it low with comment-specific wording instead of medium with the misleading "non-executable file" message — a commented line never executes; live matches still take precedence and stay critical.
+
 ## 0.67.28
 
 ### Patch Changes
