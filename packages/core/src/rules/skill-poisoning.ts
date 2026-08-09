@@ -2042,10 +2042,21 @@ export const skillPoisoningRule: Rule = {
       // ordinary prompt-template structure there — not a concealment channel
       // like they are in a tool description.
       const isStructural = (s: string) => label === 'hidden instruction tag' && /^<(instructions|important)>$/i.test(s);
+      // A tag on a line full of other <placeholder> tokens is template notation
+      // (`[SEV<h>] <system> — status: <investigating|monitoring>`), not concealment.
+      const isTemplateLine = ({ m, line }: { m: RegExpMatchArray; line: number }) => {
+        if (label !== 'hidden instruction tag') return false;
+        const text = content.split('\n')[line - 1] ?? '';
+        return [...text.matchAll(/<[\w|/ -]+>/g)].some((t) => t[0] !== m[0]);
+      };
       // Inline code spans (`...`) and double-quoted spans ("...") quote a pattern the
       // same way a fenced block does — e.g. a path template like `blocks/<name>--<system>.md`
       // or anti-injection guidance citing "ignore previous instructions" as an example.
       const inlineQuoted = ({ m, line }: { m: RegExpMatchArray; line: number }) => {
+        // A match that opens right after a quote character is quoted example
+        // content even when the span crosses a line break (`Attacker submits:
+        // "Ignore all\nprevious instructions…"`) or uses single quotes.
+        if (/["'“‘`]/.test(content[(m.index ?? 0) - 1] ?? '')) return true;
         const col = (m.index ?? 0) - (content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1);
         const text = content.split('\n')[line - 1] ?? '';
         for (const span of text.matchAll(/`[^`\n]*`|"[^"\n]*"|“[^“”\n]*”/g)) {
@@ -2055,12 +2066,12 @@ export const skillPoisoningRule: Rule = {
         return false;
       };
       const best =
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isStructural(c.m[0])) ??
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c)) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !isStructural(c.m[0])) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c)) ??
         all[0];
       if (best) {
         const { m, line } = best;
-        const quoted = codeLines.has(line) || inlineQuoted(best);
+        const quoted = codeLines.has(line) || inlineQuoted(best) || isTemplateLine(best);
         const structural = isStructural(m[0]);
         findings.push(
           finding(this, {
