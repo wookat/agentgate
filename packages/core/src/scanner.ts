@@ -376,7 +376,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(ctx, relPosix) || isDeclaredPluginComponentMd(ctx, relPosix);
     const isPluginBin = !isSkill && isPluginBinFile(ctx, relPosix);
     if (!isSkill && !isPluginBin && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
-    if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
+    if (!isSkill && relPosix.split('/').slice(0, -1).some((seg) => SKILL_ONLY_DOT_DIRS.has(seg)) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
       .split('/')
       .slice(0, -1)

@@ -97,12 +97,12 @@ export const ssrfRule: Rule = {
     // and look a bit further up.
     const allLines = content.split(/\r?\n/);
     const context = allLines.slice(Math.max(0, line - 4), line + 3).join('\n');
-    const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist)(\b|_)/i.test(
-      allLines.slice(Math.max(0, line - 8), line + 3).join('\n'),
+    const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|not allowed)(\b|_)|\bis[_]?private/i.test(
+      allLines.slice(Math.max(0, line - 11), line + 3).join('\n'),
     );
     const defensive =
       blocklistNearby ||
-      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*)\b/i.test(context);
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*)\b/i.test(context);
     if (defensive && !testPath) {
       return [
         finding(this, {

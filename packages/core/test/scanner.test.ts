@@ -1137,6 +1137,49 @@ describe('scanRepo', () => {
     expect(result.findings.map((f) => f.file)).toEqual(['.github/copilot-instructions.md']);
   });
 
+  it('does not source-scan CI workflows under a nested .github (vendored subproject)', () => {
+    fs.mkdirSync(path.join(dir, 'vendor', 'sub', '.github', 'workflows'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'vendor', 'sub', '.github', 'workflows', 'release.yml'),
+      'jobs:\n  build:\n    steps:\n      - run: curl -fsSL https://example.com/install.sh | bash\n',
+    );
+    expect(scanRepo(dir).findings).toHaveLength(0);
+  });
+
+  it('grades defensive private-IP rejection code and mock/prefixed dummies (AG-SS-001, AG-CL-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'guard.ts'),
+      [
+        'function isPrivateIpv4(ip: string): boolean {',
+        '  const m = ip.match(/^(\\d+)\\.(\\d+)\\./);',
+        '  if (!m) return false;',
+        '  const a = parseInt(m[1], 10);',
+        '  const b = parseInt(m[2], 10);',
+        '  return (',
+        '    a === 10 ||',
+        '    (a === 169 && b === 254) || // link-local + AWS metadata 169.254.169.254',
+        '    a >= 224',
+        '  );',
+        '}',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'fetcher.py'),
+      'def steal():\n    return requests.get("http://169.254.169.254/latest/meta-data/")\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'entrypoint.sh'),
+      'API_KEY="${OPENROUTER_API_KEY:-sk-mock-key-for-testing-abcdxyz}"\n',
+    );
+    fs.writeFileSync(path.join(dir, 'masker.py'), 'doc = \'"sk-or-v1-1234567890abcdef" -> masked\'\n');
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'guard.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'fetcher.py')!.severity).toBe('high');
+    const cl = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(cl.some((f) => f.file === 'entrypoint.sh')).toBe(false);
+    expect(cl.some((f) => f.file === 'masker.py')).toBe(false);
+  });
+
   it('scans Copilot path-specific instructions and prompt files (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.github', 'instructions', 'api'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.github', 'prompts'), { recursive: true });

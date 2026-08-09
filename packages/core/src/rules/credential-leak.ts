@@ -21,13 +21,13 @@ function isPlaceholder(value: string): boolean {
     /^\$\{?[A-Z0-9_]+\}?$/.test(value) || // ${ENV_VAR} / $ENV_VAR
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
-    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|demo)(\b|_)/i.test(value) ||
+    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|testing|mock|demo)(\b|_)/i.test(value) ||
     // AWS reserves credentials ending in the literal EXAMPLE for documentation
     // (AKIAIOSFODNN7EXAMPLE, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY).
     /EXAMPLE(KEY)?$/.test(value) ||
     // Keyboard-run dummies: a body built entirely from sequential runs
     // (sk-abcdef1234567890abcdef) is demo filler, not key material.
-    /^([a-z]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value)
+    /^([a-z0-9]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value)
   );
 }
 
