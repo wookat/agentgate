@@ -91,9 +91,18 @@ export const ssrfRule: Rule = {
     // (e.g. "MUST reject ... the metadata IP"); an exfil vector doesn't.
     // Guards often explain themselves in a comment block, so look at the
     // surrounding lines too, not just the one carrying the IP literal.
+    // Blocklist data structures name themselves in identifiers (BLOCKED_V4_RANGES,
+    // _BLOCKED_SAFE_MODE_NETWORKS) and open with a comment a few lines above the
+    // IP literal, so for those unambiguous markers match at underscore boundaries
+    // and look a bit further up.
     const allLines = content.split(/\r?\n/);
     const context = allLines.slice(Math.max(0, line - 4), line + 3).join('\n');
-    const defensive = /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*)\b/i.test(context);
+    const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist)(\b|_)/i.test(
+      allLines.slice(Math.max(0, line - 8), line + 3).join('\n'),
+    );
+    const defensive =
+      blocklistNearby ||
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*)\b/i.test(context);
     if (defensive && !testPath) {
       return [
         finding(this, {
