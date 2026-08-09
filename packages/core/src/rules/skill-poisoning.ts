@@ -2065,13 +2065,25 @@ export const skillPoisoningRule: Rule = {
         }
         return false;
       };
+      // Anti-injection guidance often *describes* the attack rather than mounting it:
+      // reported speech ("emails that ask you to ignore previous instructions"), a
+      // parenthetical pattern list ("scans for known patterns (ignore previous
+      // instructions, hidden text, etc.)"), or markup content that names a parameter
+      // (`<forbidden>conversation_history</forbidden>`). Graded low, not silent.
+      const citedProse = ({ m }: { m: RegExpMatchArray }) => {
+        const i = m.index ?? 0;
+        const before = content.slice(Math.max(0, i - 60), i);
+        if (/\(\s*$/.test(before)) return true;
+        if (/\b(asks?|asked|asking|tells?|told|telling|instructs?|instructed|tr(?:y|ies|ied|ying))\s+(you|the\s+agent|it|them)\s+to\s+$/i.test(before)) return true;
+        return content[i - 1] === '>' && content[i + m[0].length] === '<';
+      };
       const best =
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !isStructural(c.m[0])) ??
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c)) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c) && !isStructural(c.m[0])) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c)) ??
         all[0];
       if (best) {
         const { m, line } = best;
-        const quoted = codeLines.has(line) || inlineQuoted(best) || isTemplateLine(best);
+        const quoted = codeLines.has(line) || inlineQuoted(best) || isTemplateLine(best) || citedProse(best);
         const structural = isStructural(m[0]);
         findings.push(
           finding(this, {
