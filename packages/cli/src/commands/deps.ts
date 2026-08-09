@@ -89,7 +89,7 @@ export async function runDeps(target: string | undefined, opts: DepsOptions): Pr
   if (opts.format === 'json') {
     rendered = JSON.stringify(report, null, 2);
   } else if (opts.format === 'sarif') {
-    rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION }), null, 2);
+    rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION, fallbackBaseDirs: [dir] }), null, 2);
   } else {
     rendered = [
       pc.dim(`Checked ${refs.length} dependency reference(s) across ${scannedFiles.length} file(s)${opts.offline ? ' (offline)' : ''}`),

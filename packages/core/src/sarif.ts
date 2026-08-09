@@ -67,18 +67,32 @@ export interface SarifOptions {
    * GitHub code scanning requires repository-relative paths.
    */
   baseDir?: string;
+  /**
+   * Extra directories tried in order when a file is not under baseDir
+   * (e.g. the scanned target directory when it lies outside cwd).
+   */
+  fallbackBaseDirs?: string[];
 }
 
-function relativeUri(file: string, baseDir: string): string {
-  const base = baseDir.endsWith('/') ? baseDir : `${baseDir}/`;
+function relativeUri(file: string, baseDirs: string[]): string {
   const posix = file.replaceAll('\\', '/');
-  return posix.startsWith(base) ? posix.slice(base.length) : posix;
+  for (const dir of baseDirs) {
+    const base = dir.endsWith('/') ? dir : `${dir}/`;
+    if (posix.startsWith(base)) return posix.slice(base.length);
+  }
+  // SARIF relative references must not begin with a slash; emit absolute
+  // paths that match no base as file:// URIs instead.
+  if (posix.startsWith('/')) return `file://${posix}`;
+  if (/^[A-Za-z]:\//.test(posix)) return `file:///${posix}`;
+  return posix;
 }
 
 /** Convert findings to SARIF 2.1.0 for GitHub code scanning and other consumers. */
 export function toSarif(findings: Finding[], opts: SarifOptions = {}): object {
   const toolVersion = opts.toolVersion ?? '0.0.0';
-  const baseDir = (opts.baseDir ?? process.cwd()).replaceAll('\\', '/');
+  const baseDirs = [opts.baseDir ?? process.cwd(), ...(opts.fallbackBaseDirs ?? [])].map((d) =>
+    d.replaceAll('\\', '/'),
+  );
   return {
     $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
     version: '2.1.0',
@@ -115,7 +129,7 @@ export function toSarif(findings: Finding[], opts: SarifOptions = {}): object {
           },
         },
         results: findings.map((f) => {
-          const uri = relativeUri(f.file ?? f.target, baseDir);
+          const uri = relativeUri(f.file ?? f.target, baseDirs);
           return {
             ruleId: f.ruleId,
             level: SARIF_LEVEL[f.severity],
