@@ -1,6 +1,6 @@
 import { DependencyRef } from '../deps/types.js';
 import { McpServerConfig } from '../types.js';
-import { Rule, finding } from './rule.js';
+import { Rule, finding, snippet } from './rule.js';
 import { COPILOT_SETTINGS_FILE, FACTORY_SETTINGS_FILE, parseGooseRecipeDoc, parseJsonc } from './skill-poisoning.js';
 
 const PKG_RUNNERS = ['npx', 'pnpx', 'pnpm', 'bunx', 'uvx', 'pipx'];
@@ -381,7 +381,7 @@ export const supplyChainRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `${engine} instruction "${entry.slice(0, 100)}" is fetched from a remote URL and injected into the system prompt on every session — the host can change the content at any time (remote prompt injection / rug-pull). Vendor the file into the repo instead`,
+          message: `${engine} instruction "${snippet(entry, 100)}" is fetched from a remote URL and injected into the system prompt on every session — the host can change the content at any time (remote prompt injection / rug-pull). Vendor the file into the repo instead`,
         }),
       );
     }
@@ -399,7 +399,7 @@ export const supplyChainRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `${engine} plugin "${spec.slice(0, 100)}" is fetched from a git URL and executed at startup without a commit pin — every launch fetches whatever the branch points at (rug-pull / compromised-release exposure). Pin a commit (e.g. …#<sha>)`,
+            message: `${engine} plugin "${snippet(spec, 100)}" is fetched from a git URL and executed at startup without a commit pin — every launch fetches whatever the branch points at (rug-pull / compromised-release exposure). Pin a commit (e.g. …#<sha>)`,
           }),
         );
         continue;
