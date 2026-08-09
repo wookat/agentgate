@@ -1,7 +1,7 @@
 import { parse as parseToml } from 'smol-toml';
 import { parse as parseYaml } from 'yaml';
 import { Rule, finding } from './rule.js';
-import { INJECTION_PATTERNS, findHiddenInSource } from './tool-poisoning.js';
+import { INJECTION_PATTERNS, findHiddenInSource, isTrojanHidden, hidesInWord } from './tool-poisoning.js';
 
 /**
  * Agent instruction files executed verbatim by an agent: `SKILL.md` anywhere;
@@ -2014,13 +2014,19 @@ export const skillPoisoningRule: Rule = {
     const hidden = findHiddenInSource(content);
     if (hidden) {
       const codepoint = `U+${hidden.char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+      // Bidi overrides/tag characters and word-splitting zero-widths conceal
+      // instructions; a stray zero-width space or BOM at a word boundary is a
+      // copy-paste artifact from web content, reported quietly.
+      const concealing = isTrojanHidden(hidden.char) || hidesInWord(content);
       findings.push(
         finding(this, {
-          severity: 'critical',
+          severity: concealing ? 'critical' : 'low',
           target: file,
           file,
           line: hidden.line,
-          message: `Skill file contains a hidden/invisible Unicode character (${codepoint}) at line ${hidden.line} — skills are executed as agent instructions`,
+          message: concealing
+            ? `Skill file contains a hidden/invisible Unicode character (${codepoint}) at line ${hidden.line} — skills are executed as agent instructions`
+            : `Skill file contains a stray zero-width/BOM character (${codepoint}) at line ${hidden.line} — at a word boundary this is usually a copy-paste artifact; confirm nothing is concealed`,
         }),
       );
     }
