@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.24
+
+### Patch Changes
+
+- Republish: mcp-agentgate@0.67.23 was published with unresolved `workspace:*` dependency specifiers (published with `npm publish` instead of `pnpm publish`), making the CLI package uninstallable. 0.67.24 is the same code published correctly; the `latest` dist-tag was rolled back to 0.67.20 in the interim.
+- Updated dependencies
+  - mcp-agentgate-core@0.67.24
+
 ## 0.67.23
 
 ### Patch Changes
