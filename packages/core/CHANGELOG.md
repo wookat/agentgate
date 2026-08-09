@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.22
+
+### Patch Changes
+
+- 6a386dc: Residual-high precision: AG-CL-001 skips versioned/vendored gitleaks configs (`gitleaks-v8.30.1.toml`), grades `test-*.sh`-convention files and local-issuer Supabase anon JWTs (`"iss":"supabase-local"`) low; AG-SS-001 recognizes `restrict*` identifiers/imports near a metadata address as defensive context.
+- ba9bab5: Advisory MCPA-2026-0090 — alibabacloud-dataworks-mcp-server ReadResource SSRF (CVE-2026-19339): the MCP ReadResource handler fetches any caller-controlled uri starting with http and returns the body; vulnerable code verified still present in npm latest 1.0.45 (last_affected). 103 → 104.
+
 ## 0.67.21
 
 ### Patch Changes
