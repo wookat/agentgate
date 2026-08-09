@@ -1,5 +1,17 @@
 # mcp-agentgate-core
 
+## 0.67.13
+
+### Patch Changes
+
+- 0148d48: Lockfiles written by `lock` now record the real CLI version in `generatedBy`
+  (e.g. `mcp-agentgate@0.67.12`) instead of the hardcoded `mcp-agentgate@0.1.0`
+  left over from the first release. `generatedBy` is informational and not part
+  of drift comparison, so existing lockfiles keep verifying unchanged.
+- 3d1d7a7: Live scans now advertise the real mcp-agentgate-core version in the MCP
+  initialize handshake (clientInfo) instead of the hardcoded 0.1.0 left over
+  from the first release.
+
 ## 0.67.12
 
 ### Patch Changes
