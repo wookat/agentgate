@@ -1,6 +1,6 @@
 import { parse as parseToml } from 'smol-toml';
 import { parse as parseYaml } from 'yaml';
-import { Rule, finding } from './rule.js';
+import { Rule, finding, snippet } from './rule.js';
 import { INJECTION_PATTERNS, findHiddenInSource, isTrojanHidden, hidesInWord } from './tool-poisoning.js';
 
 /**
@@ -2092,10 +2092,10 @@ export const skillPoisoningRule: Rule = {
             file,
             line,
             message: quoted
-              ? `Skill file matches prompt-injection pattern (${label}) inside a fenced code block: "${m[0].slice(0, 80)}" — likely quoted example content, but review it`
+              ? `Skill file matches prompt-injection pattern (${label}) inside a fenced code block: "${snippet(m[0], 80)}" — likely quoted example content, but review it`
               : structural
                 ? `Skill file uses a "${m[0]}" tag — common prompt-template structure in instruction files, but review that it does not conceal directives`
-                : `Skill file matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
+                : `Skill file matches prompt-injection pattern (${label}): "${snippet(m[0], 80)}"`,
           }),
         );
       }
@@ -2128,7 +2128,7 @@ export const skillPoisoningRule: Rule = {
               target: file,
               file,
               line,
-              message: `Copilot CLI extension description matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — tool/canvas descriptions registered by the extension are injected into the model's context`,
+              message: `Copilot CLI extension description matches prompt-injection pattern (${label}): "${snippet(m[0], 80)}" — tool/canvas descriptions registered by the extension are injected into the model's context`,
             }),
           );
         }
@@ -2188,8 +2188,8 @@ export const skillPoisoningRule: Rule = {
               file,
               ...(line > 0 ? { line } : {}),
               message: quoted
-                ? `Goose recipe ${field} matches prompt-injection pattern (${label}) inside a code span or quotes: "${m[0].slice(0, 80)}" — likely quoted example content, but review it`
-                : `Goose recipe ${field} matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — recipe text becomes the agent's instructions for everyone who runs it`,
+                ? `Goose recipe ${field} matches prompt-injection pattern (${label}) inside a code span or quotes: "${snippet(m[0], 80)}" — likely quoted example content, but review it`
+                : `Goose recipe ${field} matches prompt-injection pattern (${label}): "${snippet(m[0], 80)}" — recipe text becomes the agent's instructions for everyone who runs it`,
             }),
           );
         }
@@ -2226,7 +2226,7 @@ export const skillPoisoningRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `Kiro agent hook prompt matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}" — it is injected automatically on IDE events (file save, prompt submit, tool use)`,
+          message: `Kiro agent hook prompt matches prompt-injection pattern (${label}): "${snippet(m[0], 80)}" — it is injected automatically on IDE events (file save, prompt submit, tool use)`,
         }),
       );
     }

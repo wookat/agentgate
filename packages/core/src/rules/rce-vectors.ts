@@ -1,4 +1,4 @@
-import { Rule, finding, toolText, verbAlt } from './rule.js';
+import { Rule, finding, snippet, toolText, verbAlt } from './rule.js';
 import { COPILOT_EXTENSION_FILE, DEDICATED_COMMAND_SURFACE_FILE, parseGooseRecipeDoc } from './skill-poisoning.js';
 
 export { COPILOT_EXTENSION_FILE };
@@ -259,8 +259,8 @@ export const rceVectorsRule: Rule = {
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
           message: startupPlugin
-            ? `${startupSurfaceLabel(file)} uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
-            : `Source uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review how inputs reach it`,
+            ? `${startupSurfaceLabel(file)} uses a dynamic code-execution primitive ("${snippet(m[0], 40)}") — review what it runs`
+            : `Source uses a dynamic code-execution primitive ("${snippet(m[0], 40)}") — review how inputs reach it`,
         }),
       );
     }
