@@ -37,6 +37,26 @@ Auth options (either works):
 - **Token fallback:** set the `NPM_TOKEN` repository secret (automation
   token with publish rights for both packages).
 
+## Manual publish
+
+Always publish with **`pnpm publish`** (e.g. `pnpm -r publish --access public`),
+never `npm publish`: the CLI package declares its workspace siblings as
+`workspace:*`, which only pnpm rewrites to real versions at pack time. A
+package published with `npm publish` ships the literal `workspace:*` specifier
+and is uninstallable (0.67.23 shipped this way and had to be rolled back via
+`npm dist-tag`).
+
+## Post-publish verification (required)
+
+After every publish, install the CLI in a clean environment before announcing
+the release:
+
+```bash
+cd "$(mktemp -d)" && npm_config_cache="$PWD/cache" npx -y mcp-agentgate@<version> --version
+```
+
+If this fails, roll back immediately: `npm dist-tag add mcp-agentgate@<last-good> latest`.
+
 ## Verifying locally
 
 ```bash
