@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.18
+
+### Patch Changes
+
+- a833b47: AG-TP-001 precision: bidi/trojan characters in suffixed test directories (`browser-tests/`, `e2e_tests/`) and standalone fixture files (`fixtures.mjs`) now report low as likely defensive fixtures; non-test paths (including lookalikes such as `latest/`) stay high.
+
 ## 0.67.17
 
 ### Patch Changes
