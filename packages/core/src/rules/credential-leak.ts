@@ -166,6 +166,10 @@ export const credentialLeakRule: Rule = {
         // API docs quote sample tokens under an `example:` key (OpenAPI/JSON Schema).
         const lineText = allSourceLines[line - 1] ?? '';
         const matchCol = lineText.indexOf(m[0]);
+        // A hyphen/slash-joined continuation of a URL path (…/vasteras-sk-fk-match-…)
+        // is a slug the \b boundary can't tell from a key prefix, not key material.
+        const urlSlug = matchCol > 0 && /[-/]/.test(lineText[matchCol - 1] ?? '') && /https?:\/\/\S*$/.test(lineText.slice(0, matchCol));
+        if (urlSlug) continue;
         // Also match compound keys (`bad_example:`, `"good-example":`) — the
         // example marker can sit after an underscore/hyphen the \b can't see.
         const exampleValue = /(\b|"|[_-])examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
