@@ -159,6 +159,28 @@ function maskInertQuotedStrings(content: string): string {
   });
 }
 
+/**
+ * Mask multi-line quoted strings that clearly open as data: a variable
+ * assignment (`MSG='…'`) or the argument of a plain command at the start of a
+ * line (`error "…"`, `fail "…"`). Shell treats them as text — installers put
+ * their own curl|sh one-liner in multi-line error messages, test suites embed
+ * payload blocks in assignments. Anchoring the opener to the line start keeps
+ * quote pairing sane (a `)"` closing a command substitution mid-line cannot
+ * open a bogus string), interpreters/eval/ssh openers stay live, and bodies
+ * with command substitution or a leading downloader stay live.
+ */
+function maskMultilineDataStrings(content: string): string {
+  const LIVE_WORD = /^(sh|bash|zsh|dash|ksh|python\d*|node|perl|ruby|eval|source|exec|ssh|sudo|xargs)$/i;
+  return content.replace(
+    /(^|\n)([ \t]*)(\w[\w-]*)(=[ \t]*|[ \t]+(?:-\w+[ \t]+)*)('[^']*\n[^']*'|"(?:[^"$`]|\$[^(`])*\n(?:[^"$`]|\$[^(`])*")/g,
+    (whole, _nl: string, _indent: string, word: string, sep: string, str: string) => {
+      if (!sep.startsWith('=') && LIVE_WORD.test(word)) return whole;
+      if (/^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) return whole;
+      return whole.replace(str, str[0]! + str.slice(1, -1).replace(/[^\n]/g, ' ') + str[str.length - 1]!);
+    },
+  );
+}
+
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
   category: 'rce-vectors',
@@ -207,7 +229,7 @@ export const rceVectorsRule: Rule = {
     function isDenyListEntry(content: string, idx: number): boolean {
       const lines = content.slice(0, idx).split('\n');
       for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 30; i--, seen++) {
-        const key = /["']([^"']+)["']\s*:/.exec(lines[i]!);
+        const key = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(lines[i]!);
         if (key) return /\b(den(y|ied|ylist)|block(ed)?(list)?|disallow(ed)?|forbid(den)?)\b|denied|blocklist|blacklist/i.test(key[1]!);
       }
       return false;
@@ -231,7 +253,7 @@ export const rceVectorsRule: Rule = {
     // commands (a pre-commit yaml `entry: bash -c "... || echo 'install: curl … | bash'"`
     // prints the hint exactly like an installer script does).
     const masked = maskEchoedStrings(maskQuotedHeredocs(rawContent));
-    const content = isShellScript ? maskInertQuotedStrings(masked) : masked;
+    const content = isShellScript ? maskInertQuotedStrings(maskMultilineDataStrings(masked)) : masked;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
     // strings run through the risky-command classifier; the generic text warning
     // here would only duplicate that (more accurate) finding.
@@ -241,7 +263,11 @@ export const rceVectorsRule: Rule = {
       // Prefer a live match over a commented one so a comment can't mask it.
       const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
-      const m = all.find((c) => !isCommented(c.index ?? 0)) ?? all[0]!;
+      const isDataFormat = /\.(ya?ml|toml|json)$/i.test(file);
+      const m =
+        all.find((c) => !isCommented(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
+        all.find((c) => !isCommented(c.index ?? 0)) ??
+        all[0]!;
       // A goose-recipe-shaped YAML/JSON file carries prompt text, not commands a
       // runner executes — a curl|sh string in its instructions is prose (the
       // AG-SK rules cover the prompt surface), not a launch vector.
@@ -249,14 +275,19 @@ export const rceVectorsRule: Rule = {
       // A yaml/toml file is "executable" only by extension heuristic; under a
       // test/fixture path it is checked-in test data, not a pipeline anything runs.
       const dataFormatFixture = /\.(ya?ml|toml)$/i.test(file) && /(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file);
+      // A curl|sh string under a deny/block key of a yaml/toml/json file is a
+      // defensive control list (a skill's `blacklist:` of forbidden commands),
+      // not a pipeline anything runs.
+      const dataFormatDenyList = isDataFormat && isDenyListEntry(content, m.index ?? 0);
       const executable =
         (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) &&
         !isRecipeProse &&
         !isCommented(m.index ?? 0) &&
-        !dataFormatFixture;
+        !dataFormatFixture &&
+        !dataFormatDenyList;
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
-      const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
+      const denyListed = !executable && (dataFormatDenyList || isDenyListEntry(content, m.index ?? 0));
       // The only remaining match sits on a `#`-comment line of an otherwise
       // executable script — an installer quoting its own one-liner, never run.
       const commentOnly = !executable && isCommented(m.index ?? 0) && isExecutableFile(file);

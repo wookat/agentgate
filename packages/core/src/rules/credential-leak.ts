@@ -61,6 +61,19 @@ function isPublishableJwt(value: string): boolean {
   }
 }
 
+/** A JWT whose decoded payload names itself a demo/test/example token is doc filler, not a leaked credential. */
+function isDemoJwt(value: string): boolean {
+  if (!/^eyJ/.test(value)) return false;
+  const payload = value.split('.')[1];
+  if (!payload) return false;
+  try {
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    return /(\b|_|")(demo|test|testing|example|sample|dummy|fake|placeholder)(\b|_|")/i.test(decoded);
+  } catch {
+    return false;
+  }
+}
+
 function looksLikeSecret(value: string): boolean {
   if (isPlaceholder(value)) return false;
   if (SECRET_VALUE_PATTERNS.some((re) => re.test(value))) return true;
@@ -147,22 +160,25 @@ export const credentialLeakRule: Rule = {
         // API docs quote sample tokens under an `example:` key (OpenAPI/JSON Schema).
         const lineText = allSourceLines[line - 1] ?? '';
         const matchCol = lineText.indexOf(m[0]);
-        const exampleValue = /(\b|")examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
+        // Also match compound keys (`bad_example:`, `"good-example":`) — the
+        // example marker can sit after an underscore/hyphen the \b can't see.
+        const exampleValue = /(\b|"|[_-])examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
         const publishable = isPublishableJwt(m[0]);
+        const demoJwt = !publishable && isDemoJwt(m[0]);
         // A Firebase *web-app* config object embeds the same client-distributable
         // API key inline (initializeApp({apiKey, authDomain: "x.firebaseapp.com",
         // messagingSenderId, …})) — same design as google-services.json.
         const firebaseWebConfig =
           /\bAIza/.test(m[0]) &&
           /firebaseapp\.com|messagingSenderId|\bauthDomain\b/.test(allSourceLines.slice(Math.max(0, line - 6), line + 5).join('\n'));
-        const quiet = testPath || exampleValue || publishable || firebaseClientConfig || firebaseWebConfig;
+        const quiet = testPath || exampleValue || publishable || demoJwt || firebaseClientConfig || firebaseWebConfig;
         findings.push(
           finding(this, {
             severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${demoJwt ? ' — a JWT whose payload names itself a demo/test token; likely doc filler, confirm' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
           }),
         );
       }
