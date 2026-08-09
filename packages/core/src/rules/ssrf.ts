@@ -97,9 +97,14 @@ export const ssrfRule: Rule = {
     // and look a bit further up.
     const allLines = content.split(/\r?\n/);
     const context = allLines.slice(Math.max(0, line - 4), line + 3).join('\n');
-    const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(
-      allLines.slice(Math.max(0, line - 11), line + 3).join('\n'),
-    );
+    // camelCase blocklist identifiers (DeniedPortForwardingRemoteIPs) hide the
+    // defensive word at a case boundary the word-boundary set can't see, and
+    // safety-rule tables name themselves "trigger patterns" for unsafe actions.
+    const nearWindow = allLines.slice(Math.max(0, line - 11), line + 3).join('\n');
+    const blocklistNearby =
+      /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
+      /\b(Denied|Deny|Blocked|Restricted)[A-Z]/.test(nearWindow) ||
+      /\btrigger[-_ ]?patterns?\b/i.test(nearWindow);
     // Private/blocked-range guard functions (isPrivateIPv4, isBlockedIPv4)
     // annotate the metadata range in a doc comment above the declaration or a
     // body comment below it, either of which can sit well outside the generic

@@ -130,7 +130,7 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?|postman)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
     const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
@@ -138,24 +138,31 @@ export const credentialLeakRule: Rule = {
     // GoogleService-Info.plist by design — access is gated by Firebase security
     // rules, not by the key's secrecy.
     const firebaseClientConfig = /(^|\/)google-services\.json$|(^|\/)GoogleService-Info\.plist$/i.test(file);
+    const allSourceLines = content.split('\n');
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
         if (isPlaceholder(m[0]) || scannerConfig) continue;
         const line = content.slice(0, m.index ?? 0).split('\n').length;
         // API docs quote sample tokens under an `example:` key (OpenAPI/JSON Schema).
-        const lineText = content.split('\n')[line - 1] ?? '';
+        const lineText = allSourceLines[line - 1] ?? '';
         const matchCol = lineText.indexOf(m[0]);
         const exampleValue = /(\b|")examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
         const publishable = isPublishableJwt(m[0]);
-        const quiet = testPath || exampleValue || publishable || firebaseClientConfig;
+        // A Firebase *web-app* config object embeds the same client-distributable
+        // API key inline (initializeApp({apiKey, authDomain: "x.firebaseapp.com",
+        // messagingSenderId, …})) — same design as google-services.json.
+        const firebaseWebConfig =
+          /\bAIza/.test(m[0]) &&
+          /firebaseapp\.com|messagingSenderId|\bauthDomain\b/.test(allSourceLines.slice(Math.max(0, line - 6), line + 5).join('\n'));
+        const quiet = testPath || exampleValue || publishable || firebaseClientConfig || firebaseWebConfig;
         findings.push(
           finding(this, {
             severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${firebaseClientConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
           }),
         );
       }
