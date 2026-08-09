@@ -11,7 +11,7 @@ import { scanConfiguration, scanServers, scanTools } from '../src/scanner.js';
 import { McpServerConfig, ToolSurface } from '../src/types.js';
 
 // assembled at runtime so secret scanners don't flag the test fixture
-const FAKE_SK_KEY = ['sk', 'abc123def456ghi789jkl012mno345'].join('-');
+const FAKE_SK_KEY = ['sk', 'Qq9Rr7'.repeat(5)].join('-');
 const FAKE_AWS_KEY = ['AKIA', 'IOSFODNN7QRSTUVW'].join('');
 
 const server = (overrides: Partial<McpServerConfig>): McpServerConfig => ({

@@ -100,9 +100,32 @@ export const ssrfRule: Rule = {
     const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(
       allLines.slice(Math.max(0, line - 11), line + 3).join('\n'),
     );
+    // A network-security module declares its purpose in the file header
+    // ("Implements URL/host allowlists to prevent SSRF attacks") even when the
+    // IP literal sits in a bare data table further down. Requires explicit
+    // preventive phrasing — a bare "SSRF" header also fits exploitation scripts.
+    const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b/i.test(
+      allLines.slice(0, 12).join('\n'),
+    );
     const defensive =
       blocklistNearby ||
+      headerDefensive ||
       /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*)\b/i.test(context);
+    // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
+    // example) is inert — nothing reads it; still reported, but quietly.
+    const matchLine = allLines[line - 1] ?? '';
+    const commentedOut = /^\s*#(?!!)/.test(matchLine) && !/\b(curl|wget)\s/.test(matchLine);
+    if (commentedOut && !defensive && !testPath) {
+      return [
+        finding(this, {
+          severity: 'low',
+          target: file,
+          file,
+          line,
+          message: 'Commented-out line references a cloud metadata endpoint — inert example config; confirm it stays disabled',
+        }),
+      ];
+    }
     if (defensive && !testPath) {
       return [
         finding(this, {

@@ -6,7 +6,7 @@ import { scanRepo, scanServers, scanTools } from '../src/scanner.js';
 import { McpServerConfig, ToolSurface } from '../src/types.js';
 
 // assembled at runtime so secret scanners don't flag the test fixture
-const FAKE_GH_TOKEN = ['ghp', 'abcdefghijklmnopqrstuvwxyz0123456789'].join('_');
+const FAKE_GH_TOKEN = ['ghp', 'QqRr'.repeat(9)].join('_');
 
 function server(overrides: Partial<McpServerConfig>): McpServerConfig {
   return { name: 's', source: 'test.json', client: 'test', ...overrides };
