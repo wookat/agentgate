@@ -1,0 +1,51 @@
+{
+ "id": "MCPA-2026-0088",
+ "title": "spec-workflow-mcp approvals tool categoryName path traversal (CVE-2026-19336)",
+ "summary": "@pimzino/spec-workflow-mcp (npm): the approvals MCP tool passes the caller-controlled categoryName argument into ApprovalStorage.createApproval() (src/tools/approvals.ts / src/dashboard/approval-storage.ts) without validation — filePath is checked for absolute paths and '..', but categoryName is joined directly under the approvals directory before fs.writeFile(), so a traversal value like '..\\..\\..\\outside' creates directories and writes approval JSON files outside the intended .spec-workflow/approvals tree (public PoC in the upstream issue). Fixed on main by PR #222 (merge commit 1ef0112ba8eda2e1ecc2666c3ad8d1f91393d886, validateSimplePathSegment/safeJoin guards, repo version 2.2.7), but no fixed build is published to npm (latest is 2.2.5), so this is recorded as last_affected 2.2.5.",
+ "type": "path-traversal",
+ "severity": "medium",
+ "aliases": [
+  "CVE-2026-19336",
+  "GHSA-xgwr-j735-3wg4"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-22"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@pimzino/spec-workflow-mcp",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "2.2.5"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-xgwr-j735-3wg4"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19336"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/Pimzino/spec-workflow-mcp/issues/220"
+  },
+  {
+   "type": "fix",
+   "url": "https://github.com/Pimzino/spec-workflow-mcp/pull/222"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

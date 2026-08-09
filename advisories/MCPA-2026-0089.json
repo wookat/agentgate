@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0089",
+ "title": "mcp-google-search read_webpage server-side request forgery (CVE-2026-19337)",
+ "summary": "@adenot/mcp-google-search (npm): the read_webpage MCP tool passes the caller-controlled url argument directly to axios.get in src/index.ts, validating only that it is a string, so a prompt-injected or malicious tool call can make the server request loopback, private-network, or cloud-metadata URLs from the server's network position (private-network SSRF). The upstream issue is open and no fixed release is published (npm latest is 0.3.1), so this is recorded as last_affected 0.3.1.",
+ "type": "ssrf",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19337",
+  "GHSA-jg2j-2qmx-58vq"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-918"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@adenot/mcp-google-search",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "0.3.1"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-jg2j-2qmx-58vq"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19337"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/adenot/mcp-google-search/issues/11"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

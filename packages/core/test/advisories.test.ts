@@ -59,6 +59,14 @@ describe('matchMcpaAdvisories', () => {
     expect(m.some((x) => x.advisory.id === 'MCPA-2025-0001' && x.versionConfirmed)).toBe(true);
     expect(matchMcpaAdvisories('mcp-remote', 'npm', '0.1.16')).toHaveLength(0);
   });
+
+  it('bundled database covers the round-349 batch (MCPA-2026-0088/0089)', () => {
+    const spec = matchMcpaAdvisories('@pimzino/spec-workflow-mcp', 'npm', '2.2.5');
+    expect(spec.some((x) => x.advisory.id === 'MCPA-2026-0088' && x.versionConfirmed)).toBe(true);
+    const search = matchMcpaAdvisories('@adenot/mcp-google-search', 'npm', '0.3.1');
+    expect(search.some((x) => x.advisory.id === 'MCPA-2026-0089' && x.versionConfirmed)).toBe(true);
+    expect(matchMcpaAdvisories('@pimzino/spec-workflow-mcp', 'npm', '9.9.9')).toHaveLength(0);
+  });
 });
 
 describe('scoreMcpaMatches', () => {
