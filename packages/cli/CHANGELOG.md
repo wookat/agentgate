@@ -1,5 +1,26 @@
 # mcp-agentgate
 
+## 0.67.12
+
+### Patch Changes
+
+- 090af4e: SARIF artifact URIs are now always valid relative references: when a scanned
+  target lies outside the working directory, URIs are relativized against the
+  scan target (scan) or checked directory (deps) as a fallback, and any file
+  matching no base is emitted as a `file://` URI instead of a slash-leading
+  relative reference (SARIF1004).
+- e97955a: GitHub Actions annotations relativize absolute `file=` paths under the
+  working directory so findings and drift entries map onto the PR diff when a
+  target was scanned by absolute path; paths outside the workspace are left
+  unchanged.
+- e652db2: Advisory database: add MCPA-2026-0087 — skill-ninja-mcp-server
+  skill-management tools path traversal (CVE-2026-19328), covering the npm
+  package (fixed in 0.1.1) and the @iflow-mcp/aktsmm-skill-ninja-mcp-server
+  republish that only ships the vulnerable 0.1.0 build (100 → 101 entries).
+- Updated dependencies [090af4e]
+- Updated dependencies [e652db2]
+  - mcp-agentgate-core@0.67.12
+
 ## 0.67.11
 
 ### Patch Changes
