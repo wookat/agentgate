@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.27
+
+### Patch Changes
+
+- b51b3b7: AG-RC-001 grades the non-executable curl|sh text warning low in test/fixture paths (tests/, testdata/, **tests**/, fixtures/, _.test._, _\_test._, test\_\*): security test suites quote curl|sh strings as deny-test payloads and sandbox fixtures. Executable files and non-test documentation are unchanged.
+
 ## 0.67.26
 
 ### Patch Changes
