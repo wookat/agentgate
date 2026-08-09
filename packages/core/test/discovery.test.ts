@@ -636,6 +636,22 @@ describe('discoverConfigFiles', () => {
     expect(servers.some((s) => s.name === 'bundled')).toBe(true);
   });
 
+  it('still finds metadata-dir plugin bundles when a bare Agent Plugins manifest coexists', () => {
+    const project = path.join(dir, 'proj-coexist');
+    const pluginDir = path.join(project, 'plugins', 'both');
+    fs.mkdirSync(path.join(pluginDir, '.codex-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginDir, 'plugin.json'),
+      JSON.stringify({ $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', name: 'both' }),
+    );
+    fs.writeFileSync(path.join(pluginDir, '.codex-plugin', 'plugin.json'), JSON.stringify({ name: 'both' }));
+    fs.writeFileSync(path.join(pluginDir, 'mcp.json'), '{"mcpServers":{"portable":{"command":"npx","args":["-y","portable-mcp"]}}}');
+    fs.writeFileSync(path.join(pluginDir, '.mcp.json'), '{"mcpServers":{"legacy":{"command":"npx","args":["-y","legacy-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name).sort()).toEqual(['legacy', 'portable']);
+  });
+
   it('does not read mcp.json next to a non-Agent-Plugins bare plugin.json', () => {
     const project = path.join(dir, 'proj-bare-plugin');
     const pluginDir = path.join(project, 'plugins', 'generic');
