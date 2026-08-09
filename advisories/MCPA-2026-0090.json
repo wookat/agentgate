@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0090",
+ "title": "alibabacloud-dataworks-mcp-server ReadResource server-side request forgery (CVE-2026-19339)",
+ "summary": "alibabacloud-dataworks-mcp-server (npm): the MCP ReadResource handler in src/resources/initResources.ts passes any request.params.uri that starts with 'http' directly to fetch() and returns the response body, with no allowlist or network-range validation, so an MCP client (or a prompt-injected tool call) can make the server request loopback, private-network, or cloud-metadata URLs from the server's network position and read the responses (SSRF). The upstream issue is open and the vulnerable code is still present in npm latest 1.0.45 (verified by unpacking the published tarball), so this is recorded as last_affected 1.0.45.",
+ "type": "ssrf",
+ "severity": "medium",
+ "aliases": [
+  "CVE-2026-19339",
+  "GHSA-jgm8-jqmm-5rc5"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 6.3
+ },
+ "cwe": [
+  "CWE-918"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "alibabacloud-dataworks-mcp-server",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "1.0.45"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-jgm8-jqmm-5rc5"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19339"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/aliyun/alibabacloud-dataworks-mcp-server/issues/27"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

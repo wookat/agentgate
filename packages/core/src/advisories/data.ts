@@ -2216,5 +2216,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0090",
+    "title": "alibabacloud-dataworks-mcp-server ReadResource server-side request forgery (CVE-2026-19339)",
+    "type": "ssrf",
+    "severity": "medium",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "alibabacloud-dataworks-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.45"
+          }
+        ]
+      }
+    ]
   }
 ];

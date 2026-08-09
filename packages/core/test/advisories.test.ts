@@ -67,6 +67,12 @@ describe('matchMcpaAdvisories', () => {
     expect(search.some((x) => x.advisory.id === 'MCPA-2026-0089' && x.versionConfirmed)).toBe(true);
     expect(matchMcpaAdvisories('@pimzino/spec-workflow-mcp', 'npm', '9.9.9')).toHaveLength(0);
   });
+
+  it('bundled database covers the round-358 entry (MCPA-2026-0090)', () => {
+    const dw = matchMcpaAdvisories('alibabacloud-dataworks-mcp-server', 'npm', '1.0.45');
+    expect(dw.some((x) => x.advisory.id === 'MCPA-2026-0090' && x.versionConfirmed)).toBe(true);
+    expect(matchMcpaAdvisories('alibabacloud-dataworks-mcp-server', 'npm', '9.9.9')).toHaveLength(0);
+  });
 });
 
 describe('scoreMcpaMatches', () => {
