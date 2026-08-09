@@ -21,13 +21,13 @@ export function renderFindingsTable(findings: Finding[]): string {
     colWidths: [10, 12, 18, 24, 60],
     style: { head: [] },
   });
-  for (const f of sortFindings(findings)) {
+  for (const { first: f, size } of groupIdenticalFindings(sortFindings(findings))) {
     table.push([
       SEVERITY_COLOR[f.severity](f.severity.toUpperCase()),
       f.ruleId,
       f.category,
       // Paths have no spaces; wrap them mid-word instead of truncating with "…".
-      { content: renderTarget(f), wordWrap: true, wrapOnWordBoundary: false },
+      { content: renderTarget(f, size), wordWrap: true, wrapOnWordBoundary: false },
       renderMessage(f.message),
     ]);
   }
@@ -63,10 +63,44 @@ function renderMessage(message: string): string | { content: string; wordWrap: t
  * is declared in several client configs the rows are otherwise identical, so
  * show which config file each one came from.
  */
-function renderTarget(f: Finding): string {
+function renderTarget(f: Finding, groupSize = 1): string {
   if (!f.file || f.file.endsWith(f.target)) return f.target;
   const rel = path.relative(process.cwd(), f.file);
-  return `${f.target}\n${pc.dim(rel.startsWith('..') ? f.file : rel)}`;
+  const first = rel.startsWith('..') ? f.file : rel;
+  const more = groupSize > 1 ? `\n…and ${groupSize - 1} more file(s)` : '';
+  return `${f.target}\n${pc.dim(first + more)}`;
+}
+
+/**
+ * The same server or component copied verbatim across many config files
+ * produces rows identical except for the file path; collapsing them keeps the
+ * table readable (one repo in the wild ships 650 copies of one manifest).
+ * JSON/SARIF output still lists every finding.
+ */
+const GROUP_MIN = 4;
+
+function groupIdenticalFindings(sorted: Finding[]): { first: Finding; size: number }[] {
+  const keyOf = (f: Finding) =>
+    f.file && !f.file.endsWith(f.target) ? `${f.ruleId}\u0000${f.severity}\u0000${f.target}\u0000${f.message}` : null;
+  const sizes = new Map<string, number>();
+  for (const f of sorted) {
+    const key = keyOf(f);
+    if (key !== null) sizes.set(key, (sizes.get(key) ?? 0) + 1);
+  }
+  const out: { first: Finding; size: number }[] = [];
+  const emitted = new Set<string>();
+  for (const f of sorted) {
+    const key = keyOf(f);
+    const size = key === null ? 1 : (sizes.get(key) ?? 1);
+    if (key !== null && size >= GROUP_MIN) {
+      if (emitted.has(key)) continue;
+      emitted.add(key);
+      out.push({ first: f, size });
+    } else {
+      out.push({ first: f, size: 1 });
+    }
+  }
+  return out;
 }
 
 const ANNOTATION_LEVEL: Record<Severity, 'error' | 'warning' | 'notice'> = {
