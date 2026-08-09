@@ -126,6 +126,23 @@ function maskEchoedStrings(content: string): string {
   );
 }
 
+/**
+ * Mask quoted string literals that are not fed to an interpreter — a curl|sh
+ * span whose pipe sits inside quotes is data (a commit message, a test-case
+ * label, a log line), not a pipeline. Strings that follow `sh|bash -c`,
+ * `python|node -c/-e`, `eval`/`source`/`exec`, `ssh host`, that contain
+ * command substitution, or whose content starts with the downloader itself
+ * (`run 'curl ... | bash'` wrapper idiom) stay live: those quotes do execute.
+ */
+function maskInertQuotedStrings(content: string): string {
+  return content.replace(/'[^'\n]*'|"(?:[^"$`\n]|\$[^(`\n])*"/g, (str: string, offset: number) => {
+    const before = content.slice(Math.max(0, offset - 80), offset);
+    if (/\b(sh|bash|zsh|dash|ksh|python\d*|node|perl|ruby)(\s+-\w+)*\s+-[ce]\s*$|\b(eval|source|exec)\s*$|\bssh\s+\S+\s*$|\$\(\s*$/.test(before)) return str;
+    if (/^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) return str;
+    return str[0]! + str.slice(1, -1).replace(/[^\n]/g, ' ') + str[str.length - 1]!;
+  });
+}
+
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
   category: 'rce-vectors',
@@ -194,7 +211,11 @@ export const rceVectorsRule: Rule = {
       }
     }
     const isShellScript = /\.(sh|bash|zsh)$/i.test(file) || (PLUGIN_BIN_EXEC_FILE.test(file) && /^#!.*\b(sh|bash|zsh)\b/.test(rawContent));
-    const content = isShellScript ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
+    // echo/printf string literals are print-only in any file that embeds shell
+    // commands (a pre-commit yaml `entry: bash -c "... || echo 'install: curl … | bash'"`
+    // prints the hint exactly like an installer script does).
+    const masked = maskEchoedStrings(maskQuotedHeredocs(rawContent));
+    const content = isShellScript ? maskInertQuotedStrings(masked) : masked;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
     // strings run through the risky-command classifier; the generic text warning
     // here would only duplicate that (more accurate) finding.
