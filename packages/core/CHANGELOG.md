@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.11
+
+### Patch Changes
+
+- 1218f55: Agent Plugins spec manifests (a root-level `plugin.json` whose `$schema` points at agent-plugins.org) now gate plugin component scanning: their `skills/` and other component trees are text-scanned and lockable, the implicit bundled `./mcp.json` is discovered for pin/advisory checks, and inline hooks under `extensions["com.openai"].hooks` are classified by AG-SK-003. Generic bare `plugin.json` files (e.g. Jenkins plugins) never gate — the manifest is parsed and matched on its schema, not its filename.
+- 04a1c31: Plugin discovery keeps descending past a bare `plugin.json` that resolves servers, so metadata-dir manifests (`.codex-plugin/` et al.) coexisting at the same root still contribute their bundled configs. AG-CL-001 also reports secret-shaped strings quietly in `test_*` / `*_test.*`-named script files, matching the existing test-path convention.
+
 ## 0.67.10
 
 ### Patch Changes
