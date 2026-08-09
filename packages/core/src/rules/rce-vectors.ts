@@ -235,9 +235,15 @@ export const rceVectorsRule: Rule = {
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
+      // Test suites quote curl|sh strings as fixtures (a hook handler's
+      // deny-test, sandbox-security specs, testdata payloads) — nothing there
+      // executes; still reported, but quietly.
+      const testFixture =
+        !executable &&
+        (/(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file));
       findings.push(
         finding(this, {
-          severity: executable ? 'critical' : denyListed ? 'low' : 'medium',
+          severity: executable ? 'critical' : denyListed || testFixture ? 'low' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
@@ -245,7 +251,9 @@ export const rceVectorsRule: Rule = {
             ? 'Source pipes a remote download into an interpreter (curl|sh pattern)'
             : denyListed
               ? 'Text contains a curl|sh pattern under a deny/block list key — likely a defensive control; confirm it blocks rather than runs'
-              : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
+              : testFixture
+                ? 'Text contains a curl|sh pattern — in a test/fixture path, likely a quoted test payload; confirm it is never executed'
+                : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }
