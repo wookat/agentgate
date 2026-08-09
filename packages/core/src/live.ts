@@ -5,6 +5,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { McpServerConfig, ToolSurface } from './types.js';
+import { CORE_VERSION } from './version.js';
 
 export interface LiveScanOptions {
   /** Milliseconds before giving up on the server. Default 15000. */
@@ -71,7 +72,7 @@ function authHint(server: McpServerConfig, err: Error, usedOAuthTokens: boolean)
 }
 
 async function listAllTools(server: McpServerConfig, transport: Transport, timeoutMs: number): Promise<ToolSurface[]> {
-  const client = new Client({ name: 'agentgate', version: '0.1.0' });
+  const client = new Client({ name: 'agentgate', version: CORE_VERSION });
   try {
     await withTimeout(client.connect(transport, { timeout: timeoutMs }), timeoutMs, `connecting to "${server.name}"`);
     const tools: ToolSurface[] = [];
