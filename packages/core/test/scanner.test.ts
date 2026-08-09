@@ -78,7 +78,7 @@ describe('scanRepo', () => {
     fs.mkdirSync(path.join(dir, 'vendor', 'gitleaks-port'), { recursive: true });
     fs.writeFileSync(
       path.join(dir, 'vendor', 'gitleaks-port', 'gitleaks-v8.30.1.toml'),
-      "[[rules.allowlists]]\nregexes = ['''AIzaSyAnLA7NfeLquW1tJFpx_eQCxoX-oo6YyIs''']\n",
+      "[[rules.allowlists]]\nregexes = ['''AKIAIOSFODNN7QRSTUVX''']\n",
     );
     fs.writeFileSync(
       path.join(dir, 'test-stress-hooks.sh'),
