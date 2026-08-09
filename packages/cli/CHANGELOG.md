@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.31
+
+### Patch Changes
+
+- 4e1a884: AG-RC-001 grades curl|sh text warnings low when the match sits in the value of an example-marked key (`bad_example:` payloads, `"examples": [...]` arrays) in non-executable files, with example-specific wording; live pipelines in executable files are unaffected.
+- Updated dependencies [4e1a884]
+  - mcp-agentgate-core@0.67.31
+
 ## 0.67.30
 
 ### Patch Changes
