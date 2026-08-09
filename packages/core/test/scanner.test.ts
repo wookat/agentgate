@@ -74,6 +74,37 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'openapi.yaml')!.severity).toBe('low');
   });
 
+  it('skips versioned gitleaks configs, grades test-*.sh dummies and local-issuer anon JWTs low (AG-CL-001)', () => {
+    fs.mkdirSync(path.join(dir, 'vendor', 'gitleaks-port'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'vendor', 'gitleaks-port', 'gitleaks-v8.30.1.toml'),
+      "[[rules.allowlists]]\nregexes = ['''AIzaSyAnLA7NfeLquW1tJFpx_eQCxoX-oo6YyIs''']\n",
+    );
+    fs.writeFileSync(
+      path.join(dir, 'test-stress-hooks.sh'),
+      'echo "export T=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij" | bash check.sh\n',
+    );
+    const localAnonJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
+      '{"role":"anon","iss":"supabase-local","iat":1,"exp":2}',
+    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    fs.writeFileSync(path.join(dir, 'capture.py'), `jwt = "${localAnonJwt}"\n`);
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.some((f) => f.file.includes('gitleaks-v8.30.1.toml'))).toBe(false);
+    expect(hits.find((f) => f.file === 'test-stress-hooks.sh')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'capture.py')!.severity).toBe('low');
+  });
+
+  it('recognizes restriction guards near a metadata address as defensive (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'destination.py'),
+      'from restricted_archive_contract import RestrictedDownloadError\n\n_METADATA_ADDRESSES = frozenset({"169.254.169.254"})\n',
+    );
+    fs.writeFileSync(path.join(dir, 'steal.py'), 'creds = fetch("http://169.254.169.254/latest/meta-data/")\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'destination.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'steal.py')!.severity).toBe('high');
+  });
+
   it('exfiltration pattern does not span lines onto unrelated keywords (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'review'), { recursive: true });
     fs.writeFileSync(
