@@ -46,7 +46,7 @@ export function lockSkills(contents: Record<string, string>): SkillsLock {
 
 export function createLockfile(
   surfaces: Record<string, ToolSurface[]>,
-  generatedBy = 'mcp-agentgate@0.1.0',
+  generatedBy = 'mcp-agentgate-core',
   skills?: SkillsLock,
 ): Lockfile {
   const servers: Record<string, ServerLock> = {};

@@ -172,6 +172,8 @@ describe('agentgate scan', () => {
     expect(lock.stdout).toMatch(/1 skill file\(s\)/);
     const lockfile = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
     expect(lockfile.lockfileVersion).toBe(2);
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+    expect(lockfile.generatedBy).toBe(`mcp-agentgate@${pkg.version}`);
     expect(Object.keys(lockfile.skills.files)).toEqual(['.claude/skills/deploy/SKILL.md']);
 
     const clean = await run(['diff', '--config', emptyConfig, '-l', lockPath, '--skills', repo]);

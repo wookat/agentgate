@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import pc from 'picocolors';
 import { LOCKFILE_NAME, SkillsLock, ToolSurface, collectSkillFiles, createLockfile, lockSkills, serializeLockfile } from 'mcp-agentgate-core';
 import { gatherServers, gatherSurfaces } from '../context.js';
+import { CLI_VERSION } from '../version.js';
 
 export interface LockOptions {
   config?: string;
@@ -17,7 +18,7 @@ export function skillsDir(skills: boolean | string | undefined): string | undefi
   return skills === true ? '.' : skills;
 }
 
-export const GENERATED_BY = 'mcp-agentgate@0.1.0';
+export const GENERATED_BY = `mcp-agentgate@${CLI_VERSION}`;
 
 export async function runLock(opts: LockOptions): Promise<number> {
   const dir = skillsDir(opts.skills);
