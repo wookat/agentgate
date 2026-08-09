@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ALL_RULES, Rule } from './rules/index.js';
-import { COPILOT_HOOKS_FILE, COPILOT_SETTINGS_FILE, CRUSHRC_FILE, KIRO_AGENT_HOOK_FILE, PLUGIN_MANIFEST_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
+import { AGENT_PLUGIN_SCHEMA_PREFIX, COPILOT_HOOKS_FILE, COPILOT_SETTINGS_FILE, CRUSHRC_FILE, KIRO_AGENT_HOOK_FILE, PLUGIN_MANIFEST_FILE, SKILL_FILE } from './rules/skill-poisoning.js';
 import { COPILOT_EXTENSION_FILE } from './rules/rce-vectors.js';
 import { MARKETPLACE_CATALOG_FILE } from './rules/supply-chain.js';
 import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
@@ -154,12 +154,24 @@ function isPluginBinFile(ctx: PluginContext, relPosix: string): boolean {
   return m !== null && isPluginRoot(ctx, relPosix.slice(0, m.index));
 }
 
-/** A prefix is a plugin root when it has a plugin manifest or is a local marketplace-entry source root. */
+/** An Agent Plugins spec manifest: a bare `plugin.json` whose `$schema` points at agent-plugins.org. */
+function isAgentPluginManifest(manifestPath: string): boolean {
+  try {
+    const doc = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as { $schema?: unknown };
+    return typeof doc.$schema === 'string' && doc.$schema.startsWith(AGENT_PLUGIN_SCHEMA_PREFIX);
+  } catch {
+    return false;
+  }
+}
+
+/** A prefix is a plugin root when it has a plugin manifest (meta-dir or Agent Plugins spec) or is a local marketplace-entry source root. */
 function isPluginRoot(ctx: PluginContext, rootWithSlash: string): boolean {
   let hit = ctx.rootCache.get(rootWithSlash);
   if (hit === undefined) {
+    const rootParts = rootWithSlash.split('/').filter(Boolean);
     hit =
-      PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(ctx.scanRoot, ...rootWithSlash.split('/').filter(Boolean), meta, 'plugin.json'))) ||
+      PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(ctx.scanRoot, ...rootParts, meta, 'plugin.json'))) ||
+      isAgentPluginManifest(path.join(ctx.scanRoot, ...rootParts, 'plugin.json')) ||
       isMarketplaceSourceRoot(ctx, rootWithSlash.replace(/\/$/, ''));
     ctx.rootCache.set(rootWithSlash, hit);
   }

@@ -1378,6 +1378,8 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 /** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`, Codex `.codex-plugin/` and `.cursor-plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
 export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin|\.goose-plugin)\/plugin\.json$/i;
+/** Agent Plugins spec (agent-plugins.org) manifests: a root-level `plugin.json` whose `$schema` carries this prefix is a portable plugin manifest with implicit `./skills` and `./mcp.json`, plus per-client `extensions` overlays (Codex reads `com.openai` as a legacy manifest for hooks). */
+export const AGENT_PLUGIN_SCHEMA_PREFIX = 'https://agent-plugins.org/schemas/';
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;
 const PLUGIN_MONITORS_FILE = /(^|\/)monitors\/monitors\.json$/i;
 const MARKETPLACE_CATALOG_FILE = /(^|\/)((\.claude-plugin|\.github\/plugin|\.factory-plugin|\.cursor-plugin|\.agents\/plugins)\/marketplace\.json|\.agents\/plugins\/api_marketplace\.json)$/i;
@@ -1612,6 +1614,27 @@ export const skillDynamicContextRule: Rule = {
     const data = parseJsonc(content);
     if (typeof data !== 'object' || data === null) return [];
     const findings = [];
+    if (!isNamedSurface && /(^|\/)plugin\.json$/i.test(file) && typeof (data as { $schema?: unknown }).$schema === 'string' && ((data as { $schema: string }).$schema).startsWith(AGENT_PLUGIN_SCHEMA_PREFIX)) {
+      // Agent Plugins manifests carry client overlays under `extensions`; Codex applies the `com.openai` namespace as a legacy plugin manifest, so its `hooks` field takes the same path/inline hooks-file forms.
+      const ext = (data as { extensions?: unknown }).extensions;
+      const extHooks = typeof ext === 'object' && ext !== null ? ((ext as Record<string, unknown>)['com.openai'] as { hooks?: unknown } | undefined)?.hooks : undefined;
+      const extHookMaps = Array.isArray(extHooks) ? extHooks.map((h) => (h as { hooks?: unknown })?.hooks) : [extHooks, (extHooks as { hooks?: unknown } | null)?.hooks];
+      for (const command of extHookMaps.flatMap((h) => [...extractHookCommands(h), ...extractCopilotHookCommands(h)])) {
+        const hit = classifyRiskyCommand(command);
+        if (!hit) continue;
+        const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
+        findings.push(
+          finding(this, {
+            severity: hit.severity,
+            target: file,
+            file,
+            ...(line > 0 ? { line } : {}),
+            message: `Agent Plugins manifest extension declares a hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+          }),
+        );
+      }
+      return findings;
+    }
     if (!isNamedSurface) {
       const shaped = Array.isArray(data)
         ? extractMonitorCommands(data.filter((m) => typeof (m as { name?: unknown })?.name === 'string' && typeof (m as { description?: unknown })?.description === 'string'))
