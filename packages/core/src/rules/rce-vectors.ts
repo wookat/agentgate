@@ -297,9 +297,13 @@ export const rceVectorsRule: Rule = {
       const testFixture =
         !executable &&
         (/(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file));
+      // A curl|sh string in the value of an example-marked key (a linter KB's
+      // `bad_example:` payload) is documentation of the pattern, not a pipeline.
+      const matchLineStart = content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1;
+      const exampleValue = !executable && /(\b|"|[_-])examples?"?\s*[:=]/i.test(content.slice(matchLineStart, m.index ?? 0));
       findings.push(
         finding(this, {
-          severity: executable ? 'critical' : denyListed || testFixture || commentOnly ? 'low' : 'medium',
+          severity: executable ? 'critical' : denyListed || testFixture || commentOnly || exampleValue ? 'low' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
@@ -311,7 +315,9 @@ export const rceVectorsRule: Rule = {
                 ? 'Comment mentions a curl|sh pattern — a commented line never executes; usually the script quoting its own install one-liner'
                 : testFixture
                   ? 'Text contains a curl|sh pattern — in a test/fixture path, likely a quoted test payload; confirm it is never executed'
-                  : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
+                  : exampleValue
+                    ? 'Text contains a curl|sh pattern in the value of an example-marked key — likely documentation of the pattern; confirm it is never executed'
+                    : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }
