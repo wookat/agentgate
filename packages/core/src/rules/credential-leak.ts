@@ -21,7 +21,13 @@ function isPlaceholder(value: string): boolean {
     /^\$\{?[A-Z0-9_]+\}?$/.test(value) || // ${ENV_VAR} / $ENV_VAR
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
-    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|testing|mock|demo)(\b|_)/i.test(value) ||
+    /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|testing|mock|demo|do[-_]not)(\b|_)/i.test(value) ||
+    // A run of 8+ identical characters (sk-j7caBpkRoxxxxxxxxxxxx…,
+    // ghp_aaaa…) is padded demo filler — real key material is high-entropy.
+    /(.)\1{7,}/.test(value) ||
+    // An all-lowercase kebab body with no digits (sk-user-profile-updated) is
+    // an identifier, not key material — real sk- keys are random base62.
+    /^sk-[a-z]+(-[a-z]+){2,}$/.test(value) ||
     // AWS reserves credentials ending in the literal EXAMPLE for documentation
     // (AKIAIOSFODNN7EXAMPLE, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY).
     /EXAMPLE(KEY)?$/.test(value) ||
@@ -143,7 +149,7 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?|postman)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?|postman)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_(self)?test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
     const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
