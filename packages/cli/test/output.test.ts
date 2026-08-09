@@ -91,13 +91,13 @@ describe('renderFindingsTable', () => {
       category: 'auth-missing',
       severity: 'medium',
       target: 'one',
-      file: `platforms/p${i}/mcp.json`,
+      file: `cfg/p${i}.json`,
       message: 'Remote server "one" is configured without any authentication header',
     }));
     const out = renderFindingsTable(findings);
     const flat = out.replace(/│|\s|\n/g, '');
     expect(flat).toContain('…and5morefile(s)');
-    expect(flat).not.toContain('p1/mcp.json');
+    expect(flat).not.toContain('p1.json');
     expect(out).toContain('6 finding(s)');
   });
 
@@ -107,12 +107,12 @@ describe('renderFindingsTable', () => {
       category: 'auth-missing',
       severity: 'medium',
       target: 'one',
-      file: `platforms/p${i}/mcp.json`,
+      file: `cfg/p${i}.json`,
       message: 'Remote server "one" is configured without any authentication header',
     }));
     const flat = renderFindingsTable(findings).replace(/│|\s|\n/g, '');
-    expect(flat).toContain('p0/mcp.json');
-    expect(flat).toContain('p2/mcp.json');
+    expect(flat).toContain('p0.json');
+    expect(flat).toContain('p2.json');
     expect(flat).not.toContain('morefile(s)');
   });
 });
