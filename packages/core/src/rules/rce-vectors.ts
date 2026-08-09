@@ -6,7 +6,10 @@ export { COPILOT_EXTENSION_FILE };
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
 // The span may only cross a newline via a backslash continuation, so a pipe in a
 // later, unrelated statement is not attributed to the download command.
-const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b/;
+// `| node -e '…'` / `| python -c '…'` runs a *local* inline program with the
+// download on stdin as data (version-lookup idiom), so an inline-program flag
+// right after the interpreter is excluded; a bare `| bash -` still matches.
+const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|eval)\b)/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
  * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
@@ -107,10 +110,23 @@ function isExecutableFile(file: string): boolean {
 /**
  * Mask quoted-heredoc bodies (`<<'EOF' … EOF`) in shell scripts — the shell
  * treats them as literal text (usage banners, embedded docs), never executes
- * them.
+ * them. Unquoted heredocs are also masked when they are pure data: no command
+ * substitution in the body and the heredoc line does not pipe into an
+ * interpreter (a `cat <<USAGE` help banner expands variables but still only
+ * prints; `sh <<EOF` / `<<EOF | bash` bodies stay live).
  */
 function maskQuotedHeredocs(content: string): string {
-  return content.replace(/<<-?\s*(['"])(\w+)\1[^\n]*\n([\s\S]*?)\n\s*\2(\n|$)/g, (whole, _q: string, _tag: string, body: string) => whole.replace(body, body.replace(/[^\n]/g, ' ')));
+  return content
+    .replace(/<<-?\s*(['"])(\w+)\1[^\n]*\n([\s\S]*?)\n\s*\2(\n|$)/g, (whole, _q: string, _tag: string, body: string) => whole.replace(body, body.replace(/[^\n]/g, ' ')))
+    .replace(/(^|\n)([^\n]*<<-?\s*(\w+)[^\n]*)\n([\s\S]*?)\n\s*\3(\n|$)/g, (whole, _pre: string, startLine: string, _tag: string, body: string) => {
+      if (/\$\(|`/.test(body)) return whole;
+      // A body opening with a shebang, or a heredoc redirected into a file
+      // (`cat > script.sh <<EOF`), is a rendered script — stays live.
+      if (/^\s*#!/.test(body)) return whole;
+      const rest = startLine.replace(/<<-?\s*\w+/, '');
+      if (/>/.test(rest) || /\b(sh|bash|zsh|dash|ksh|python\d*|node|perl|ruby|eval|source|exec)\b/.test(rest)) return whole;
+      return whole.replace(body, body.replace(/[^\n]/g, ' '));
+    });
 }
 
 /**
@@ -230,8 +246,14 @@ export const rceVectorsRule: Rule = {
       // runner executes — a curl|sh string in its instructions is prose (the
       // AG-SK rules cover the prompt surface), not a launch vector.
       const isRecipeProse = /\.(ya?ml|json)$/i.test(file) && parseGooseRecipeDoc(file, rawContent) !== undefined;
+      // A yaml/toml file is "executable" only by extension heuristic; under a
+      // test/fixture path it is checked-in test data, not a pipeline anything runs.
+      const dataFormatFixture = /\.(ya?ml|toml)$/i.test(file) && /(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file);
       const executable =
-        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) && !isRecipeProse && !isCommented(m.index ?? 0);
+        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) &&
+        !isRecipeProse &&
+        !isCommented(m.index ?? 0) &&
+        !dataFormatFixture;
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);

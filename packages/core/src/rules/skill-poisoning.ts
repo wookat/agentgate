@@ -2047,7 +2047,11 @@ export const skillPoisoningRule: Rule = {
       const isTemplateLine = ({ m, line }: { m: RegExpMatchArray; line: number }) => {
         if (label !== 'hidden instruction tag') return false;
         const text = content.split('\n')[line - 1] ?? '';
-        return [...text.matchAll(/<[\w|/ -]+>/g)].some((t) => t[0] !== m[0]);
+        if ([...text.matchAll(/<[\w|/ -]+>/g)].some((t) => t[0] !== m[0])) return true;
+        // A tag directly after a command word (`scaffold <system> — …`) with no
+        // closing tag anywhere is a usage metavariable, not an instruction block.
+        const i = m.index ?? 0;
+        return /\w /.test(content.slice(Math.max(0, i - 2), i)) && !content.includes(`</${m[0].slice(1)}`);
       };
       // Inline code spans (`...`) and double-quoted spans ("...") quote a pattern the
       // same way a fenced block does — e.g. a path template like `blocks/<name>--<system>.md`
