@@ -1391,6 +1391,56 @@ describe('scanRepo', () => {
     expect(cl.find((f) => f.file === 'live.py')!.severity).toBe('high');
   });
 
+  it('recognizes camelCase denied identifiers and trigger-pattern tables as defensive (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'agent-config.json'),
+      '{\n  "SessionWorkersLimit": 1000,\n  "DeniedPortForwardingRemoteIPs": [\n    "169.254.169.254",\n    "fd00:ec2::254"\n  ]\n}\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'trigger-patterns.ts'),
+      [
+        '/**',
+        ' * Common trigger patterns for network-related unsafe control actions.',
+        ' */',
+        'export const NETWORK_TRIGGER_PATTERNS: readonly TriggerPattern[] = [',
+        '  {',
+        "    parameter: 'url',",
+        "    matchType: 'contains',",
+        "    pattern: '169.254.169.254',",
+        "    reason: 'AWS/cloud metadata endpoint access',",
+        '  },',
+        '];',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'harvest.sh'),
+      'TOKEN=$(curl -s http://169.254.169.254/latest/api/token)\n',
+    );
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'agent-config.json')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'trigger-patterns.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'harvest.sh')!.severity).toBe('high');
+  });
+
+  it('grades Firebase web-app configs and postman/ paths quietly (AG-CL-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'app.config.ts'),
+      `export const appConfig = { providers: [provideFirebaseApp(() => initializeApp({ projectId: "join-x", apiKey: "AIzaSy${'Qq'.repeat(16)}Z", authDomain: "join-x.firebaseapp.com", messagingSenderId: "7" }))] };\n`,
+    );
+    fs.mkdirSync(path.join(dir, 'resources', 'postman'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'resources', 'postman', 'GraphQLTests.json'),
+      `{"exec": "pm.expect(host[\\"googleMap\\"]).equal(\\"AIzaSy${'Qq'.repeat(16)}Z\\");"}\n`,
+    );
+    fs.writeFileSync(path.join(dir, 'main.py'), `GOOGLE_KEY = "AIzaSy${'Qq'.repeat(16)}Z"\n`);
+    const cl = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    const fb = cl.find((f) => f.file === 'app.config.ts')!;
+    expect(fb.severity).toBe('low');
+    expect(fb.message).toContain('Firebase client config');
+    expect(cl.find((f) => f.file === 'resources/postman/GraphQLTests.json')!.severity).toBe('low');
+    expect(cl.find((f) => f.file === 'main.py')!.severity).toBe('high');
+  });
+
   it('scans Copilot path-specific instructions and prompt files (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.github', 'instructions', 'api'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.github', 'prompts'), { recursive: true });
