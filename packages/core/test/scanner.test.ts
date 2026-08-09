@@ -607,6 +607,22 @@ describe('scanRepo', () => {
     expect(hits[0]!.severity).toBe('low');
   });
 
+  it('recognizes blocklist identifiers and headers up to seven lines above the AG-SS-001 hit', () => {
+    fs.writeFileSync(
+      path.join(dir, 'url-validation.ts'),
+      "const BLOCKED_METADATA_HOSTS = new Set([\n  '169.254.169.254',  // AWS/GCP/Azure instance metadata\n]);\n",
+    );
+    fs.writeFileSync(
+      path.join(dir, 'safe-ranges.ts'),
+      '/** IPv4 CIDR blocked ranges: [network_uint32, prefix] */\nconst BLOCKED_V4_RANGES = [\n  [0x7f000000, 8],   // loopback\n  [0x0a000000, 8],   // RFC 1918\n  [0xac100000, 12],  // RFC 1918\n  [0xc0a80000, 16],  // RFC 1918\n  [0xa9fe0000, 16],  // link-local\n  // Note: 169.254.169.254/32 is subsumed by 169.254.0.0/16 above.\n];\n',
+    );
+    fs.writeFileSync(path.join(dir, 'grab.sh'), 'curl http://169.254.169.254/latest/meta-data/iam/\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'url-validation.ts')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'safe-ranges.ts')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'grab.sh')!.severity).toBe('high');
+  });
+
   it('sees a blocklist header comment three lines above the AG-SS-001 hit', () => {
     fs.writeFileSync(
       path.join(dir, 'ssrf-protection.ts'),
