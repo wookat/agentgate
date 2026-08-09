@@ -22,6 +22,15 @@ export function finding(rule: Rule, partial: Omit<Finding, 'ruleId' | 'category'
   return { ruleId: rule.id, category: rule.category, ...partial };
 }
 
+/**
+ * Matched-content excerpt safe to embed in a finding message: runs of
+ * whitespace (including newlines from multi-line matches) collapse to single
+ * spaces so messages stay one line in tables, annotations, and SARIF.
+ */
+export function snippet(text: string, max: number): string {
+  return text.trim().replace(/\s+/g, ' ').slice(0, max);
+}
+
 export function toolText(tool: ToolSurface): string {
   // Drop the "$schema" meta-URL: its "http://json-schema.org/…" value would give
   // every zod/JSON-Schema-generated tool a network capability.
