@@ -264,8 +264,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
       continue;
     }
     if (stat.size > MAX_FILE_BYTES) continue;
-    const content = fs.readFileSync(file, 'utf8');
-    if (isPluginBin && content.includes('\u0000')) continue;
+    let content = fs.readFileSync(file, 'utf8');
+    // A compiled binary in plugin bin/ can't be text-scanned, but its name
+    // still matters (system-command shadowing) — run rules with empty content.
+    if (isPluginBin && content.includes('\u0000')) content = '';
     scannedFiles.push(file);
     // Posix-style so path-based rule heuristics (test/fixture trees) work on Windows too.
     for (const rule of rules) {
