@@ -27,7 +27,8 @@ function isPlaceholder(value: string): boolean {
     /EXAMPLE(KEY)?$/.test(value) ||
     // Keyboard-run dummies: a body built entirely from sequential runs
     // (sk-abcdef1234567890abcdef) is demo filler, not key material.
-    /^([a-z0-9]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value) ||
+    // A truncated final run (sk-abcdef0123456789abcdef0123) is still a dummy.
+    /^([a-z0-9]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+(abcd(ef?)?|0123(4(56?)?)?)?$/i.test(value) ||
     // Interleaved-run dummies (ghp_A1bC2dE3fH4iJ5kL6…): the letters walk the
     // alphabet and the digits count 1-9-0 in lockstep — demo filler, not key
     // material. Real tokens are random, never monotone.
@@ -129,7 +130,7 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
     const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);

@@ -100,6 +100,15 @@ export const ssrfRule: Rule = {
     const blocklistNearby = /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(
       allLines.slice(Math.max(0, line - 11), line + 3).join('\n'),
     );
+    // Private/blocked-range guard functions (isPrivateIPv4, isBlockedIPv4)
+    // annotate the metadata range in a doc comment above the declaration or a
+    // body comment below it, either of which can sit well outside the generic
+    // window. Requires a declaration shape (`name =` / `name(`), not a bare
+    // mention, so exploitation scripts that merely reference such helpers in
+    // prose stay hot.
+    const guardDeclNearby = /\bis[_]?(private|blocked|denied|reserved|internal)[a-z0-9_]*\s*[=(]/i.test(
+      allLines.slice(Math.max(0, line - 21), line + 20).join('\n'),
+    );
     // A network-security module declares its purpose in the file header
     // ("Implements URL/host allowlists to prevent SSRF attacks") even when the
     // IP literal sits in a bare data table further down. Requires explicit
@@ -109,6 +118,7 @@ export const ssrfRule: Rule = {
     );
     const defensive =
       blocklistNearby ||
+      guardDeclNearby ||
       headerDefensive ||
       /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*)\b/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
