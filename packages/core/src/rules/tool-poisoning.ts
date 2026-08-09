@@ -28,6 +28,17 @@ export function findHiddenInSource(content: string): { char: string; line: numbe
   return { char: m[0], line: cleaned.slice(0, m.index ?? 0).split('\n').length };
 }
 
+/** Bidi overrides/isolates and Unicode tag characters are Trojan-Source-grade concealment. */
+export function isTrojanHidden(char: string): boolean {
+  const cp = char.codePointAt(0)!;
+  return (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069) || cp >= 0xe0000;
+}
+
+/** A zero-width character wedged inside a word splits keywords to dodge pattern matching. */
+export function hidesInWord(content: string): boolean {
+  return /\w[\u200b-\u200f\u2060-\u2064\u206a-\u206f\ufeff]+\w/u.test(content);
+}
+
 export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /<(instructions|important|system|secret|hidden)>/i, label: 'hidden instruction tag' },
   { re: /\bignore\s+(all\s+)?(previous|prior|above)\s+(instructions|rules)/i, label: 'instruction override' },
@@ -82,7 +93,7 @@ export const toolPoisoningRule: Rule = {
     const codepoint = `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
     // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
     // zero-width space or BOM is usually editor noise, so it is reported quietly.
-    const trojan = (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069) || cp >= 0xe0000;
+    const trojan = isTrojanHidden(hit.char);
     // Test/fixture trees embed these characters as fixtures for the very
     // defenses under test; still reported, but quietly.
     const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
