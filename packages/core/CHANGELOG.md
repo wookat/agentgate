@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.26
+
+### Patch Changes
+
+- d4b6257: Precision fixes from fresh-corpus verification: AG-SS-001 recognizes private/blocked-range guard declarations (isPrivateIPv4/isBlockedIPv4) whose metadata-range comment sits outside the generic defensive window; AG-CL-001 skips sequential-run dummies with a truncated final run (sk-abcdef0123456789abcdef0123) and reports secret-shaped values under demo/ directories and in .postman_collection.json files quietly.
+- 975c1fd: Precision fixes from r363 residual-high verification: AG-SS-001 recognizes camelCase denied/blocked identifiers (DeniedPortForwardingRemoteIPs) and safety trigger-pattern tables as defensive context; AG-CL-001 grades inline Firebase web-app configs (initializeApp with authDomain/messagingSenderId) and postman/ directory API-test files quietly.
+
 ## 0.67.25
 
 ### Patch Changes
