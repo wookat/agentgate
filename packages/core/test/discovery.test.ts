@@ -621,6 +621,31 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name)).toEqual(['bundled']);
   });
 
+  it('discovers the implicit ./mcp.json bundled by Agent Plugins spec manifests', () => {
+    const project = path.join(dir, 'proj-agent-plugin');
+    const pluginDir = path.join(project, 'plugins', 'portable');
+    fs.mkdirSync(pluginDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginDir, 'plugin.json'),
+      JSON.stringify({ $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', name: 'portable' }),
+    );
+    fs.writeFileSync(path.join(pluginDir, 'mcp.json'), '{"mcpServers":{"bundled":{"command":"npx","args":["-y","bundled-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.some((f) => f.client === 'claude-plugin' && f.path === path.join(pluginDir, 'mcp.json'))).toBe(true);
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.some((s) => s.name === 'bundled')).toBe(true);
+  });
+
+  it('does not read mcp.json next to a non-Agent-Plugins bare plugin.json', () => {
+    const project = path.join(dir, 'proj-bare-plugin');
+    const pluginDir = path.join(project, 'plugins', 'generic');
+    fs.mkdirSync(pluginDir, { recursive: true });
+    fs.writeFileSync(path.join(pluginDir, 'plugin.json'), JSON.stringify({ name: 'generic' }));
+    fs.writeFileSync(path.join(pluginDir, 'mcp.json'), '{"mcpServers":{"stray":{"command":"npx","args":["-y","stray-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    expect(found.some((f) => f.path === path.join(pluginDir, 'mcp.json'))).toBe(false);
+  });
+
   it('finds mcpServers in Copilot CLI plugin manifests (.plugin/, .github/plugin/)', () => {
     const project = path.join(dir, 'proj11');
     fs.mkdirSync(path.join(project, 'plugins', 'dotplugin', '.plugin'), { recursive: true });

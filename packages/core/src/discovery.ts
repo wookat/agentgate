@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import YAML from 'yaml';
+import { AGENT_PLUGIN_SCHEMA_PREFIX } from './rules/skill-poisoning.js';
 import { McpServerConfig } from './types.js';
 
 export interface ClientConfigLocation {
@@ -397,6 +398,10 @@ function pluginManifestServerLocations(pluginRoot: string, manifestPath: string)
     return [];
   }
   let field = manifest?.mcpServers;
+  // Agent Plugins spec manifests bundle their MCP servers implicitly at ./mcp.json (Codex resolves the format to that default path).
+  if (field === undefined && typeof manifest?.$schema === 'string' && manifest.$schema.startsWith(AGENT_PLUGIN_SCHEMA_PREFIX)) {
+    field = './mcp.json';
+  }
   let componentPaths = false;
   if (typeof field === 'object' && field !== null && !Array.isArray(field) && Array.isArray((field as Record<string, unknown>).paths)) {
     componentPaths = true;
