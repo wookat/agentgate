@@ -107,6 +107,13 @@ describe('rule branch coverage', () => {
     expect(hit?.severity).toBe('low');
   });
 
+  it('credential-leak: test_*-named script files are reported quietly too', () => {
+    const key = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+    const findings = repoScan({ 'skills/helper/scripts/test_discovery.py': `token = "${key}"\n` });
+    const hit = findings.find((f) => f.category === 'credential-leak');
+    expect(hit?.severity).toBe('low');
+  });
+
   it('rce-vectors: eval in ordinary non-MCP source is out of scope', () => {
     const findings = repoScan({ 'app.js': 'const r = eval(userInput);\n' });
     expect(findings.some((f) => f.category === 'rce-vectors')).toBe(false);

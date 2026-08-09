@@ -330,13 +330,9 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
       continue;
     }
     const bare = path.join(dir, 'plugin.json');
-    if (fs.existsSync(bare)) {
-      const locs = pluginManifestServerLocations(dir, bare);
-      if (locs.length > 0) {
-        out.push(...locs);
-        continue;
-      }
-    }
+    // Keep descending even when the bare manifest resolves servers: the same root can
+    // also carry metadata-dir manifests (.codex-plugin/ et al.) with their own bundles.
+    if (fs.existsSync(bare)) out.push(...pluginManifestServerLocations(dir, bare));
     out.push(...pluginServerLocations(dir, depth + 1));
   }
   if (depth > 0) return out;

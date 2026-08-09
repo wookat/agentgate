@@ -94,7 +94,7 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file);
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
