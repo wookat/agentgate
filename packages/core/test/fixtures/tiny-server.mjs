@@ -12,4 +12,15 @@ server.registerTool(
   async ({ msg }) => ({ content: [{ type: 'text', text: `pong: ${msg}` }] }),
 );
 
+// Expose the clientInfo received during initialize so tests can assert the
+// version agentgate advertises in the MCP handshake.
+server.server.oninitialized = () => {
+  const client = server.server.getClientVersion();
+  server.registerTool(
+    'client-info',
+    { description: `client: ${client?.name}@${client?.version}` },
+    async () => ({ content: [{ type: 'text', text: 'ok' }] }),
+  );
+};
+
 await server.connect(new StdioServerTransport());

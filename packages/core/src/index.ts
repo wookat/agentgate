@@ -22,3 +22,4 @@ export * from './advisories/live.js';
 export * from './advisories/score.js';
 export * from './deps/score.js';
 export type { Rule } from './rules/rule.js';
+export * from './version.js';

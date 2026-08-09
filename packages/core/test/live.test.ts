@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
 import path from 'node:path';
@@ -19,11 +20,15 @@ function server(overrides: Partial<McpServerConfig> = {}): McpServerConfig {
 }
 
 describe('fetchToolSurface', () => {
-  it('lists tools from a live stdio server', async () => {
+  it('lists tools from a live stdio server and advertises the real core version', async () => {
     const tools = await fetchToolSurface(server(), { timeoutMs: 30000 });
-    expect(tools.map((t) => t.name)).toEqual(['ping']);
+    expect(tools.map((t) => t.name)).toEqual(['ping', 'client-info']);
     expect(tools[0]!.description).toBe('Reply with pong');
     expect(tools[0]!.inputSchema).toMatchObject({ type: 'object' });
+    const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8')) as {
+      version: string;
+    };
+    expect(tools[1]!.description).toBe(`client: agentgate@${pkg.version}`);
   }, 60000);
 
   it('rejects servers with neither a stdio command nor a url', async () => {
