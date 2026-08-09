@@ -279,12 +279,27 @@ export const rceVectorsRule: Rule = {
       // defensive control list (a skill's `blacklist:` of forbidden commands),
       // not a pipeline anything runs.
       const dataFormatDenyList = isDataFormat && isDenyListEntry(content, m.index ?? 0);
+      // A curl|sh string in the value of an example-marked key (a linter KB's
+      // `bad_example:` payload, a threat DB's `examples:` list of quoted idioms)
+      // is documentation of the pattern, not a pipeline.
+      const matchLineStart = content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1;
+      const enclosingExampleKey = (() => {
+        const lines = content.slice(0, matchLineStart).split('\n').filter((l) => l.trim() !== '');
+        for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 10; i--, seen++) {
+          const key = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(lines[i]!);
+          if (key) return /(\b|[_-])examples?$/i.test(key[1]!);
+          if (!/^\s*-\s/.test(lines[i]!)) return false;
+        }
+        return false;
+      })();
+      const exampleMarked = /(\b|"|[_-])examples?"?\s*[:=]/i.test(content.slice(matchLineStart, m.index ?? 0)) || (isDataFormat && enclosingExampleKey);
       const executable =
         (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) &&
         !isRecipeProse &&
         !isCommented(m.index ?? 0) &&
         !dataFormatFixture &&
-        !dataFormatDenyList;
+        !dataFormatDenyList &&
+        !(isDataFormat && exampleMarked);
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && (dataFormatDenyList || isDenyListEntry(content, m.index ?? 0));
@@ -297,10 +312,7 @@ export const rceVectorsRule: Rule = {
       const testFixture =
         !executable &&
         (/(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file));
-      // A curl|sh string in the value of an example-marked key (a linter KB's
-      // `bad_example:` payload) is documentation of the pattern, not a pipeline.
-      const matchLineStart = content.lastIndexOf('\n', (m.index ?? 0) - 1) + 1;
-      const exampleValue = !executable && /(\b|"|[_-])examples?"?\s*[:=]/i.test(content.slice(matchLineStart, m.index ?? 0));
+      const exampleValue = !executable && exampleMarked;
       findings.push(
         finding(this, {
           severity: executable ? 'critical' : denyListed || testFixture || commentOnly || exampleValue ? 'low' : 'medium',

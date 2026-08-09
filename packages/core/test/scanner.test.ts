@@ -57,11 +57,11 @@ describe('scanRepo', () => {
     fs.writeFileSync(path.join(dir, 'demo.py'), 'api_key = "sk-abcdef1234567890abcdef"\n');
     const anonJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
       '{"iss":"supabase","ref":"abcdxyz","role":"anon","iat":1,"exp":2}',
-    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    ).toString('base64url')}.sIgQq9Rr7Qq9Rr7Q`;
     fs.writeFileSync(path.join(dir, 'client.js'), `const SUPABASE_KEY = "${anonJwt}";\n`);
     const svcJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
       '{"iss":"supabase","ref":"abcdxyz","role":"service_role","iat":1,"exp":2}',
-    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    ).toString('base64url')}.sIgQq9Rr7Qq9Rr7Q`;
     fs.writeFileSync(path.join(dir, 'server.js'), `const SUPABASE_SECRET = "${svcJwt}";\n`);
     fs.writeFileSync(
       path.join(dir, 'openapi.yaml'),
@@ -86,7 +86,7 @@ describe('scanRepo', () => {
     );
     const localAnonJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
       '{"role":"anon","iss":"supabase-local","iat":1,"exp":2}',
-    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    ).toString('base64url')}.sIgQq9Rr7Qq9Rr7Q`;
     fs.writeFileSync(path.join(dir, 'capture.py'), `jwt = "${localAnonJwt}"\n`);
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
     expect(hits.some((f) => f.file.includes('gitleaks-v8.30.1.toml'))).toBe(false);
@@ -99,7 +99,7 @@ describe('scanRepo', () => {
     fs.mkdirSync(path.join(dir, 'testdata', 'secrets'), { recursive: true });
     fs.writeFileSync(
       path.join(dir, 'testdata', 'secrets', 'rsa.js'),
-      `const k = "-----BEGIN RSA PRIVATE KEY-----\\n${'Q'.repeat(48)}";\n`,
+      `const k = "-----BEGIN RSA PRIVATE KEY-----\\n${'Qq'.repeat(24)}";\n`,
     );
     fs.writeFileSync(
       path.join(dir, 'google-services.json'),

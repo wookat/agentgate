@@ -86,7 +86,7 @@ export const ssrfRule: Rule = {
     }
     // Test/fixture trees reference the metadata IP as a fixture for the very
     // SSRF protections under test; still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec|selfcheck)\.\w+$/i.test(file);
     // Security guidance / defensive code references the endpoint to block it
     // (e.g. "MUST reject ... the metadata IP"); an exfil vector doesn't.
     // Guards often explain themselves in a comment block, so look at the
@@ -121,7 +121,9 @@ export const ssrfRule: Rule = {
     // ("Implements URL/host allowlists to prevent SSRF attacks") even when the
     // IP literal sits in a bare data table further down. Requires explicit
     // preventive phrasing — a bare "SSRF" header also fits exploitation scripts.
-    const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b/i.test(
+    // A threat-intel scanner's header names its purpose ("Scan … for active
+    // supply-chain incident indicators") while its IOC table sits far below.
+    const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b|\b(scan|detect|check)\w*\b[\s\S]{0,160}\b(incident indicators?|IOCs?)\b/i.test(
       allLines.slice(0, 12).join('\n'),
     );
     const defensive =

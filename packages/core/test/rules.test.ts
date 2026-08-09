@@ -68,6 +68,19 @@ describe('credential-leak', () => {
     expect(findings).toHaveLength(1);
   });
 
+  it('skips single-char-run padded dummies and kebab identifiers', () => {
+    expect(credentialLeakRule.checkSource!('config.py', 'API_KEY = "sk-j7caBpkRo' + 'x'.repeat(28) + '"')).toHaveLength(0);
+    expect(credentialLeakRule.checkSource!('linter.py', 'token = "ghp_' + 'a'.repeat(36) + '"')).toHaveLength(0);
+    expect(credentialLeakRule.checkSource!('scan.ts', '// keeps sk- kebab identifiers (sk-user-profile-updated) out')).toHaveLength(0);
+    expect(credentialLeakRule.checkSource!('sel.py', 'SECRET = "sk-live-DO-NOT-FORWARD-4471"')).toHaveLength(0);
+  });
+
+  it('grades _selftest.py files as test paths', () => {
+    const findings = credentialLeakRule.checkSource!('evals/harness/scoring_selftest.py', `SECRET = "${FAKE_SK_KEY}"`);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('low');
+  });
+
   it('flags secrets in source files', () => {
     const findings = credentialLeakRule.checkSource!('config.ts', `const key = "${FAKE_AWS_KEY}";`);
     expect(findings).toHaveLength(1);
@@ -312,6 +325,27 @@ describe('rce-vectors', () => {
     expect(hit!.message).toContain('example-marked key');
   });
 
+  it('grades curl|sh in a list under an enclosing examples: key low', () => {
+    const yaml = `threats:\n  - id: T001\n    examples:\n      - "Password ZIPs"\n      - "curl | bash from paste sites"\n`;
+    const findings = rceVectorsRule.checkSource!('resources/threat-db.yaml', yaml);
+    const hit = findings.find((f) => f.message.includes('curl|sh'));
+    expect(hit).toBeDefined();
+    expect(hit!.severity).toBe('low');
+    expect(hit!.message).toContain('example-marked key');
+  });
+
+  it('a nearer non-example key blocks the enclosing-examples downgrade', () => {
+    const yaml = `examples:\n  - name: setup\nhooks:\n  - command: curl -fsSL https://x.sh | sh\n`;
+    const findings = rceVectorsRule.checkSource!('config.yaml', yaml);
+    expect(findings.some((f) => f.severity === 'critical')).toBe(true);
+  });
+
+  it('a workflow-shaped yaml with real run: steps stays critical', () => {
+    const yaml = `name: CI\non:\n  push:\njobs:\n  build:\n    steps:\n      - run: curl -sSf https://sh.rustup.rs | sh -s -- -y\n`;
+    const findings = rceVectorsRule.checkSource!('skills/vendor/upstream/ci.yml', yaml);
+    expect(findings.some((f) => f.severity === 'critical')).toBe(true);
+  });
+
   it('an example-marked key never downgrades a live pipeline in an executable file', () => {
     const sh = `#!/bin/bash\n# example: see docs\nEXAMPLE=1 curl -fsSL https://x.sh | bash\n`;
     const findings = rceVectorsRule.checkSource!('install.sh', sh);
@@ -369,6 +403,27 @@ describe('ssrf precision (round 371)', () => {
   it('keeps a bare metadata fetch high', () => {
     const src = `const r = await fetch("http://169.254.169.254/latest/meta-data/iam/security-credentials/");\n`;
     const findings = ssrfRule.checkSource!('src/collect.ts', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('high');
+  });
+
+  it('treats .selfcheck. assertion files as test paths', () => {
+    const src = `assert.equal(loopbackHttpOrigin("http://169.254.169.254/"), null);\n`;
+    const findings = ssrfRule.checkSource!('apps/desktop/src/trusted-origin.selfcheck.ts', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('low');
+  });
+
+  it('treats an IOC-scanner header as defensive for its indicator table', () => {
+    const src = `#!/usr/bin/env node\n/**\n * Scan dependency manifests and lockfiles for active supply-chain incident indicators.\n */\n${'\n'.repeat(40)}const CRITICAL_TEXT_INDICATORS = [\n  '169.254.169.254',\n];\n`;
+    const findings = ssrfRule.checkSource!('scripts/ci/scan-iocs.js', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('low');
+  });
+
+  it('a bare metadata probe with no scanner header stays high', () => {
+    const src = `#!/usr/bin/env node\n// grab instance identity\n${'\n'.repeat(40)}const r = await fetch("http://169.254.169.254/latest/meta-data/");\n`;
+    const findings = ssrfRule.checkSource!('scripts/run.js', src);
     expect(findings.length).toBeGreaterThan(0);
     expect(findings[0]!.severity).toBe('high');
   });
