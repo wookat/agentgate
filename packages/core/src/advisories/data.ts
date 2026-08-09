@@ -2178,5 +2178,43 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0088",
+    "title": "spec-workflow-mcp approvals tool categoryName path traversal (CVE-2026-19336)",
+    "type": "path-traversal",
+    "severity": "medium",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@pimzino/spec-workflow-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "2.2.5"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0089",
+    "title": "mcp-google-search read_webpage server-side request forgery (CVE-2026-19337)",
+    "type": "ssrf",
+    "severity": "low",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@adenot/mcp-google-search",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "0.3.1"
+          }
+        ]
+      }
+    ]
   }
 ];
