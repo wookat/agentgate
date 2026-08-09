@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.34
+
+### Patch Changes
+
+- 441ebf5: Round 375 fresh-corpus precision: AG-RC-001 treats `matches:`/`not_matches:` pattern-table keys as deny-list data, excludes `| python -m <module>` local-module pipes, and grades commented curl|sh in plugin bin/ executables with comment wording; AG-CL-001 skips secret-shaped URL path slugs; AG-SK-001 recognizes line-wrapped template placeholders and relative-clause "that do not tell the user" prose; AG-SS-001 recognizes `_is_link_local` guard declarations, `refused` inflections, and camelCase ssrfGuard identifiers as defensive context.
+- Updated dependencies [441ebf5]
+  - mcp-agentgate-core@0.67.34
+
 ## 0.67.33
 
 ### Patch Changes
