@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.10
+
+### Patch Changes
+
+- 019c22a: Marketplace component-declaration parsing now covers Codex catalogs (`.agents/plugins/marketplace.json` and `api_marketplace.json`) and the Codex object-form local source (`{"source":"local","path":"./..."}`): entry-declared `skills`/`commands`/`agents`/`outputStyles` gate the source root even without a plugin manifest (Codex fallback-manifest semantics), and multiple catalogs in one repo are merged.
+- c2f8155: Codex inline hooks-file forms are now visible to AG-SK-003: marketplace entries and plugin manifests carrying `hooks` as a single inline hooks-file object (`{ description?, hooks: { Event: [...] } }`) or a list of them are unwrapped before command classification. Discovery also follows path-form `mcpServers` on local-source marketplace entries (Codex fallback-manifest semantics), resolving refs inside the entry's source root so pin/advisory checks reach the referenced servers.
+
 ## 0.67.9
 
 ### Patch Changes
