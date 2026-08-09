@@ -1377,13 +1377,13 @@ describe('scanRepo', () => {
     fs.mkdirSync(path.join(dir, 'demo'), { recursive: true });
     fs.writeFileSync(
       path.join(dir, 'demo', 'appstore.json'),
-      '{"key": "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"}\n',
+      `{"key": "AIzaSy${'Qq'.repeat(16)}Z"}\n`,
     );
     fs.writeFileSync(
       path.join(dir, 'API_Tests.postman_collection.json'),
-      '{"auth": "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"}\n',
+      `{"auth": "AIzaSy${'Qq'.repeat(16)}Z"}\n`,
     );
-    fs.writeFileSync(path.join(dir, 'live.py'), 'KEY = "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"\n');
+    fs.writeFileSync(path.join(dir, 'live.py'), `KEY = "AIzaSy${'Qq'.repeat(16)}Z"\n`);
     const cl = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
     expect(cl.some((f) => f.file === 'corpus_gen.py')).toBe(false);
     expect(cl.find((f) => f.file === 'demo/appstore.json')!.severity).toBe('low');
