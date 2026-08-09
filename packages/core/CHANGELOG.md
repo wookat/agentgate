@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.14
+
+### Patch Changes
+
+- 1d76a64: AG-SK-001 exfiltration-instruction precision: generic sensitive words (key/token/secret) only match with credential context — a qualifier ("ssh keys", "your token", "api key") or a file target ("token file") — so ordinary documentation language ("Keyspaces", "condition key", "key tradeoffs", "thousands of tokens", "this token injection") no longer reports critical findings.
+- 3474434: AG-RC-001 curl|sh precision: quoted string literals that are plain data — commit-message examples, test-case labels, printed installation hints — no longer report critical findings. Strings fed to an interpreter (`bash -c '...'`, `eval`, command substitution) or whose content starts with the downloader itself stay live, and echoed/printf hint strings are masked in every file that embeds shell commands (e.g. a pre-commit YAML `bash -c "... || echo 'install: curl ... | bash'"`).
+
 ## 0.67.13
 
 ### Patch Changes
