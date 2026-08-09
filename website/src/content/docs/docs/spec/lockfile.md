@@ -12,7 +12,7 @@ Canonical JSON Schemas: [`docs/spec/agentgate.lock.schema.json`](https://github.
 ```json
 {
   "lockfileVersion": 1,
-  "generatedBy": "agentgate@0.1.0",
+  "generatedBy": "mcp-agentgate@x.y.z",
   "generatedAt": "2026-08-03T12:00:00.000Z",
   "servers": {
     "filesystem": {
@@ -35,7 +35,7 @@ Canonical JSON Schemas: [`docs/spec/agentgate.lock.schema.json`](https://github.
 | Field | Description |
 |---|---|
 | `lockfileVersion` | Format version: `1` (servers only, frozen) or `2` (adds the optional `skills` section). |
-| `generatedBy` | Tool and version that wrote the file, e.g. `agentgate@0.1.0`. |
+| `generatedBy` | Tool and version that wrote the file, e.g. `mcp-agentgate@x.y.z`. |
 | `generatedAt` | ISO-8601 timestamp. Informational only — not part of drift comparison. |
 | `servers.<name>` | Locked surface per server, keyed by the server name from the client config. |
 | `servers.<name>.surfaceHash` | SHA-256 over the canonical JSON array of `[nameHash, descriptionHash, inputSchemaHash]` triples of all tools, sorted by tool name — a fast whole-server comparison. |
