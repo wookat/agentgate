@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.15
+
+### Patch Changes
+
+- cdf5d71: AG-SK-001 hidden-unicode grading: a stray zero-width space/BOM at a word boundary in a skill file — a copy-paste artifact from web content — now reports low instead of critical. Bidi overrides/isolates, Unicode tag characters, and zero-width characters wedged inside a word (keyword-splitting evasion) stay critical.
+
 ## 0.67.14
 
 ### Patch Changes
