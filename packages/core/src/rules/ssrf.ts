@@ -111,7 +111,10 @@ export const ssrfRule: Rule = {
     // window. Requires a declaration shape (`name =` / `name(`), not a bare
     // mention, so exploitation scripts that merely reference such helpers in
     // prose stay hot.
-    const guardDeclNearby = /\bis[_]?(private|blocked|denied|reserved|internal)[a-z0-9_]*\s*[=(]/i.test(
+    // A safe-fetch wrapper invocation (safeFetch(url), safe_request(…)) is the
+    // guard itself — the code routes the URL through a validator instead of a
+    // bare fetch — even when the explanatory comment isn't in English.
+    const guardDeclNearby = /\bis[_]?(private|blocked|denied|reserved|internal)[a-z0-9_]*\s*[=(]|\bsafe[_]?(fetch|request|get|http)[a-z0-9_]*\s*\(/i.test(
       allLines.slice(Math.max(0, line - 21), line + 20).join('\n'),
     );
     // A network-security module declares its purpose in the file header
@@ -125,7 +128,7 @@ export const ssrfRule: Rule = {
       blocklistNearby ||
       guardDeclNearby ||
       headerDefensive ||
-      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*)\b/i.test(context);
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
     // example) is inert — nothing reads it; still reported, but quietly.
     const matchLine = allLines[line - 1] ?? '';
