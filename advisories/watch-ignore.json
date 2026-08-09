@@ -46,7 +46,9 @@
   "GHSA-rgqf-fgw4-cmhv",
   "GHSA-92x2-9gq9-2w2v",
   "GHSA-pq7w-6xmw-3jgj",
-  "GHSA-5pgh-4pr5-mhm8"
+  "GHSA-5pgh-4pr5-mhm8",
+  "GHSA-qp9j-gfjj-6h3v",
+  "GHSA-q9qj-38cq-3792"
  ],
  "packages": [
   "npm:flowise",
@@ -96,6 +98,8 @@
   "GHSA-rgqf-fgw4-cmhv": "angrysky56/advanced-reasoning-mcp: GitHub-only, no npm/PyPI package (GAP-ROUND-349)",
   "GHSA-92x2-9gq9-2w2v": "NellyW8/MCP4EDA: GitHub-only, no npm/PyPI package (GAP-ROUND-349)",
   "GHSA-pq7w-6xmw-3jgj": "NightTrek/Ollama-mcp: commit-addressed GitHub-only project, no npm/PyPI package (the npm ollama-mcp is rawveg's different project) (GAP-ROUND-349)",
-  "GHSA-5pgh-4pr5-mhm8": "andreahaku/codex_mcp: commit-addressed GitHub-only project, not published to npm (the npm codex-mcp is a different project) (GAP-ROUND-349)"
+  "GHSA-5pgh-4pr5-mhm8": "andreahaku/codex_mcp: commit-addressed GitHub-only project, not published to npm (the npm codex-mcp is a different project) (GAP-ROUND-349)",
+  "GHSA-qp9j-gfjj-6h3v": "anubissbe/ProjectHub-Mcp: GitHub-only web app (Docker images), no npm/PyPI package to map (GAP-ROUND-358)",
+  "GHSA-q9qj-38cq-3792": "automateyournetwork/MCPyATS: GitHub-only project, not published to npm or PyPI (GAP-ROUND-358)"
  }
 }
