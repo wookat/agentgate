@@ -192,7 +192,8 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   if (opts.format === 'json') {
     rendered = JSON.stringify(report, null, 2);
   } else if (opts.format === 'sarif') {
-    rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION }), null, 2);
+    const fallbackBaseDirs = [projectDir, ...(opts.config ? [path.dirname(path.resolve(opts.config))] : [])];
+    rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION, fallbackBaseDirs }), null, 2);
   } else {
     rendered = [
       pc.dim(

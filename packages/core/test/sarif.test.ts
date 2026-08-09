@@ -37,11 +37,25 @@ describe('toSarif', () => {
     expect(run.tool.driver.version).toBe('1.2.3');
     const uris = run.results.map((r) => r.locations[0]!.physicalLocation.artifactLocation.uri);
     expect(uris[0]).toBe('sub/config.json');
-    expect(uris[1]).toBe('C:/repo/sub/mcp.json');
-    expect(uris[2]).toBe('/elsewhere/mcp.json');
+    expect(uris[1]).toBe('file:///C:/repo/sub/mcp.json');
+    expect(uris[2]).toBe('file:///elsewhere/mcp.json');
 
     const winSarif = toSarif([findings[1]!], { baseDir: 'C:\\repo' }) as typeof sarif;
     expect(winSarif.runs[0]!.results[0]!.locations[0]!.physicalLocation.artifactLocation.uri).toBe('sub/mcp.json');
+  });
+
+  it('relativizes against fallback base dirs and never emits slash-leading relative URIs', () => {
+    const findings: Finding[] = [
+      { ruleId: 'AG-AM-001', category: 'auth-missing', severity: 'medium', message: 'no auth', target: 'srv', file: '/scanned/target/mcp.json' },
+      { ruleId: 'AG-AM-001', category: 'auth-missing', severity: 'medium', message: 'no auth', target: 'srv2', file: '/unrelated/mcp.json' },
+    ];
+    const sarif = toSarif(findings, { baseDir: '/cwd', fallbackBaseDirs: ['/scanned/target'] }) as {
+      runs: { results: { locations: { physicalLocation: { artifactLocation: { uri: string } } }[] }[] }[];
+    };
+    const uris = sarif.runs[0]!.results.map((r) => r.locations[0]!.physicalLocation.artifactLocation.uri);
+    expect(uris[0]).toBe('mcp.json');
+    expect(uris[1]).toBe('file:///unrelated/mcp.json');
+    for (const uri of uris) expect(uri.startsWith('/')).toBe(false);
   });
 
   it('emits per-rule security-severity and stable result fingerprints', () => {
