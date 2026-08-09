@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.16
+
+### Patch Changes
+
+- a138203: AG-CL-001 precision: AWS documentation example credentials (values ending in the reserved literal `EXAMPLE`/`EXAMPLEKEY`, e.g. `AKIAIOSFODNN7EXAMPLE`) are treated as placeholders, and secret-scanner configs (`.gitleaks.toml`, `.secrets.baseline`) that quote secret-shaped patterns as scan rules are skipped. Real-shaped keys keep reporting high.
+- 4171a62: AG-SS-001 precision: metadata-endpoint hits inside blocklist data structures (identifiers like `BLOCKED_METADATA_HOSTS`, `_BLOCKED_SAFE_MODE_NETWORKS`, denylist/blacklist markers, matched at underscore boundaries and up to seven lines above the IP literal) now report low as defensive context. Offensive payload lists (e.g. `SSRF_PAYLOADS`) and code that actually fetches the metadata endpoint stay high.
+
 ## 0.67.15
 
 ### Patch Changes
