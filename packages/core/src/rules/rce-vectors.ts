@@ -45,6 +45,52 @@ const STARTUP_PLUGIN_FILE = /(^|\/)\.(opencode|kilo(code)?)\/(plugin|plugins)\/[
  */
 const PLUGIN_BIN_EXEC_FILE = /(^|\/)bin\/[^/.]+$/;
 
+/**
+ * Core commands an agent's Bash tool routinely runs. A plugin bin/ entry with
+ * one of these names shadows the system command for every Bash call while the
+ * plugin is enabled — the classic PATH-hijack move; legitimate plugin tools
+ * use their own names.
+ */
+const SHADOWED_COMMAND_NAMES = new Set([
+  'sh',
+  'bash',
+  'zsh',
+  'git',
+  'ls',
+  'cat',
+  'cp',
+  'mv',
+  'rm',
+  'grep',
+  'sed',
+  'awk',
+  'find',
+  'curl',
+  'wget',
+  'node',
+  'npm',
+  'npx',
+  'pnpm',
+  'yarn',
+  'bun',
+  'deno',
+  'python',
+  'python3',
+  'pip',
+  'pip3',
+  'uv',
+  'uvx',
+  'pipx',
+  'go',
+  'cargo',
+  'make',
+  'docker',
+  'kubectl',
+  'gh',
+  'ssh',
+  'sudo',
+]);
+
 /** Surface label + execution context for a plugin/extension path, for finding messages. */
 function startupSurfaceLabel(file: string): string {
   if (COPILOT_EXTENSION_FILE.test(file)) return 'Copilot CLI extension (auto-executed at startup)';
@@ -134,6 +180,19 @@ export const rceVectorsRule: Rule = {
       return false;
     }
     const findings = [];
+    if (PLUGIN_BIN_EXEC_FILE.test(file)) {
+      const name = file.split('/').pop()!;
+      if (SHADOWED_COMMAND_NAMES.has(name.toLowerCase())) {
+        findings.push(
+          finding(this, {
+            severity: 'high',
+            target: file,
+            file,
+            message: `Plugin bin/ file "${name}" shadows the system "${name}" command on the Bash tool PATH while the plugin is enabled — every agent call to "${name}" runs this file instead`,
+          }),
+        );
+      }
+    }
     const isShellScript = /\.(sh|bash|zsh)$/i.test(file) || (PLUGIN_BIN_EXEC_FILE.test(file) && /^#!.*\b(sh|bash|zsh)\b/.test(rawContent));
     const content = isShellScript ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
