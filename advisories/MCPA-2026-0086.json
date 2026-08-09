@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0086",
+ "title": "react-analyzer-mcp analyze-project path traversal (CVE-2026-19323)",
+ "summary": "react-analyzer-mcp (npm) up to 1.0.0: the analyze-project MCP tool passes the caller-controlled projectName argument into path.join(PROJECT_ROOT, subFolder) in src/index.ts without normalization or containment checks, so generateProjectDocs/listReactFiles can escape the configured project root and recursively enumerate and read arbitrary .jsx/.tsx files from attacker-selected directories on the host. The project was informed through a public issue but has not responded; the repository uses rolling releases and no fixed release exists, so the range is recorded as last_affected 1.0.0 (the only npm release) per the public advisory.",
+ "type": "path-traversal",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19323",
+  "GHSA-g23h-49jw-gw6q"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-22"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "react-analyzer-mcp",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "1.0.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-g23h-49jw-gw6q"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19323"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/azer/react-analyzer-mcp/issues/3"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}

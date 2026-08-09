@@ -2130,5 +2130,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0086",
+    "title": "react-analyzer-mcp analyze-project path traversal (CVE-2026-19323)",
+    "type": "path-traversal",
+    "severity": "low",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "react-analyzer-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
   }
 ];
