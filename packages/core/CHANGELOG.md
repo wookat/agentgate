@@ -1,5 +1,13 @@
 # mcp-agentgate-core
 
+## 0.67.17
+
+### Patch Changes
+
+- 6c0a889: AG-SK-001 precision: injection-pattern hits that open immediately after a quote character (single quotes, or double-quoted spans crossing a line break) grade as quoted examples (low), and a hidden-instruction tag on a line of other `<placeholder>` tokens grades as template notation (low). Unquoted injections elsewhere in the file still win and stay critical.
+- 7ef4990: Advisory database: add MCPA-2026-0088 (@pimzino/spec-workflow-mcp approvals categoryName path traversal, CVE-2026-19336 — fixed on main but unreleased to npm, last_affected 2.2.5) and MCPA-2026-0089 (@adenot/mcp-google-search read_webpage SSRF, CVE-2026-19337 — no fixed release, last_affected 0.3.1). 101 → 103 advisories.
+- 9ce7589: AG-CL-001 precision: sequential-run dummy values (sk-abcdef1234567890…) are skipped as placeholders, secret-shaped strings under an OpenAPI/JSON-Schema `example:` key report low, and Supabase anon-role JWTs (publishable by design) report low with an RLS reminder. Service-role JWTs and real key material stay high.
+
 ## 0.67.16
 
 ### Patch Changes
