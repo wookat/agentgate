@@ -1306,6 +1306,91 @@ describe('scanRepo', () => {
     expect(cl.some((f) => f.file === 'masker.py')).toBe(false);
   });
 
+  it('recognizes guard declarations well outside the generic window (AG-SS-001)', () => {
+    // Doc comment listing blocked ranges 13 lines above the declaration.
+    fs.writeFileSync(
+      path.join(dir, 'url-validation.ts'),
+      [
+        '/**',
+        ' * Returns `true` if the given IPv4 address string falls within a',
+        ' * reserved range that should not be reachable from server-side fetches:',
+        ' *',
+        ' * - `0.0.0.0/8`         (current network)',
+        ' * - `10.0.0.0/8`        (RFC 1918)',
+        ' * - `100.64.0.0/10`     (CGNAT, RFC 6598)',
+        ' * - `127.0.0.0/8`       (loopback)',
+        ' * - `169.254.0.0/16`    (link-local, includes AWS metadata at 169.254.169.254)',
+        ' * - `172.16.0.0/12`     (RFC 1918)',
+        ' * - `192.0.0.0/24`      (IETF protocol assignments)',
+        ' * - `224.0.0.0/4`       (multicast)',
+        ' * - `240.0.0.0/4`       (reserved)',
+        ' */',
+        'const isPrivateIPv4 = (ip: string): boolean => {',
+        '  return false;',
+        '};',
+      ].join('\n'),
+    );
+    // Body comment 14 lines below the declaration.
+    fs.writeFileSync(
+      path.join(dir, 'attach-image.ts'),
+      [
+        "const isBlockedIPv4 = (host: string): boolean => {",
+        "  const ipv4 = host.split('.').map(Number);",
+        '  if (ipv4.length !== 4) {',
+        '    return false;',
+        '  }',
+        '  const [a, b] = ipv4;',
+        '  // 10.0.0.0/8',
+        '  if (a === 10) {',
+        '    return true;',
+        '  }',
+        '  // 127.0.0.0/8',
+        '  if (a === 127) {',
+        '    return true;',
+        '  }',
+        '  // 169.254.0.0/16 (link-local; includes cloud metadata at 169.254.169.254).',
+        '  if (a === 169 && b === 254) {',
+        '    return true;',
+        '  }',
+        '  return false;',
+        '};',
+      ].join('\n'),
+    );
+    // A bare prose mention of such a helper in a fetch script stays hot.
+    fs.writeFileSync(
+      path.join(dir, 'probe.py'),
+      '# bypasses isPrivateIp() checks upstream\nfor _ in range(20):\n    pass\n' +
+        '\n'.repeat(20) +
+        'creds = fetch("http://169.254.169.254/latest/meta-data/")\n',
+    );
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'url-validation.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'attach-image.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'probe.py')!.severity).toBe('high');
+  });
+
+  it('skips truncated-tail run dummies and quiets demo/postman-collection paths (AG-CL-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'corpus_gen.py'),
+      'entry = "config: api_key=sk-abcdef0123456789abcdef0123 loaded from env"\n',
+    );
+    fs.mkdirSync(path.join(dir, 'demo'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'demo', 'appstore.json'),
+      '{"key": "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"}\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'API_Tests.postman_collection.json'),
+      '{"auth": "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"}\n',
+    );
+    fs.writeFileSync(path.join(dir, 'live.py'), 'KEY = "AIzaSyAF9zKXv-fxus9GNqn40SHzTn6F8A7h-Yo"\n');
+    const cl = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(cl.some((f) => f.file === 'corpus_gen.py')).toBe(false);
+    expect(cl.find((f) => f.file === 'demo/appstore.json')!.severity).toBe('low');
+    expect(cl.find((f) => f.file === 'API_Tests.postman_collection.json')!.severity).toBe('low');
+    expect(cl.find((f) => f.file === 'live.py')!.severity).toBe('high');
+  });
+
   it('scans Copilot path-specific instructions and prompt files (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.github', 'instructions', 'api'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.github', 'prompts'), { recursive: true });
