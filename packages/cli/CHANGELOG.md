@@ -1,5 +1,19 @@
 # mcp-agentgate
 
+## 0.67.8
+
+### Patch Changes
+
+- 953eb34: Plugin component scanning follows manifest-declared custom `commands`/`agents`/`skills` paths (files, directories, and glob patterns relative to the plugin root, per the Claude Code plugins reference), so markdown installed through non-conventional paths like `./ads/` or `./command/` is text-scanned and lockable; declarations escaping the plugin root are ignored.
+- 0eeec7e: Output-style markdown is now scanned as model-facing instruction content: project-level `.claude/output-styles/*.md`, the plugin `output-styles/` component dir (manifest-gated, including marketplace `plugins/<name>/output-styles/`), and manifest-declared `outputStyles` paths — output styles inject directly into the system prompt, so poisoned styles report like poisoned skills and are lockable via `lock --skills`.
+- 4820d85: Plugin `bin/` executables are now scanned (manifest-gated, any extension, binary blobs skipped): files under a plugin root's `bin/` join the Bash tool's PATH while the plugin is enabled, so AG-RC-001 treats extensionless bin scripts as executable — live `curl|sh` reports critical and dynamic code-execution primitives report medium with a plugin-bin label.
+- 10b565c: AG-RC-001 flags plugin `bin/` entries that shadow core system commands (`git`, `curl`, `python`, …) on the Bash tool PATH as high — the classic PATH-hijack move; compiled binaries in plugin bin/ are no longer skipped, so name-based shadowing checks fire even when the content cannot be text-scanned.
+- Updated dependencies [953eb34]
+- Updated dependencies [0eeec7e]
+- Updated dependencies [4820d85]
+- Updated dependencies [10b565c]
+  - mcp-agentgate-core@0.67.8
+
 ## 0.67.7
 
 ### Patch Changes
