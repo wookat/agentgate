@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.19
+
+### Patch Changes
+
+- d7ac4fc: Fresh-corpus precision batch: CI workflows under a _nested_ `.github/` (vendored subprojects) are no longer source-scanned, matching the existing top-level exemption; AG-SS-001 recognizes private-IP rejection code (`isPrivate*` helpers, `reject`/`not allowed` wording, `mitigat…` prose) as defensive context (low); AG-CL-001 treats `mock`/`testing` segments and digit-bearing prefixes on keyboard-run dummies (`sk-or-v1-1234567890abcdef`) as placeholders. Real metadata fetches and real key material stay high.
+- e05a506: Concealment-instruction precision: "do not tell/show the user …" now matches only when the object hides the interaction itself (`about …`, `this/these …`, `anything`, `what …`, `you …`, or no object) — forbidding a specific claim ("do not tell the user it will deploy", "…that no file was provided") is prose guidance and no longer reports.
+
 ## 0.67.18
 
 ### Patch Changes
