@@ -169,7 +169,7 @@ function readPluginComponentDecl(scanRoot: string, rootPrefix: string): PluginCo
   if (typeof manifest !== 'object' || manifest === null) return null;
   const decl: PluginComponentDecl = { files: new Set(), dirs: [], globs: [] };
   let any = false;
-  for (const key of ['commands', 'agents', 'skills'] as const) {
+  for (const key of ['commands', 'agents', 'skills', 'outputStyles'] as const) {
     const value = (manifest as Record<string, unknown>)[key];
     const entries = Array.isArray(value) ? value : [value];
     for (const entry of entries) {
