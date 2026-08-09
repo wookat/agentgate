@@ -12,6 +12,8 @@ const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', 
 const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.cursor', '.codex', '.goose', '.opencode', '.windsurf', '.cline', '.clinerules', '.kilocode', '.kilo', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.codex-plugin', '.cursor-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin', '.goose-plugin']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
+/** CI pipeline configs of other CI systems — build automation, not MCP server source (same rationale as .github/workflows). */
+const CI_CONFIG_FILE = /(^|\/)(\.gitlab-ci\.yml|\.travis\.yml|azure-pipelines(\.[\w-]+)?\.ya?ml|bitbucket-pipelines\.yml|Jenkinsfile|\.circleci\/config\.yml|\.buildkite\/[^/]+\.ya?ml|\.drone\.yml|appveyor\.yml|cloudbuild\.ya?ml)$/;
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
 const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json', 'tasks.json'])], ['.zed', new Set(['settings.json'])]]);
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -376,6 +378,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(ctx, relPosix) || isDeclaredPluginComponentMd(ctx, relPosix);
     const isPluginBin = !isSkill && isPluginBinFile(ctx, relPosix);
     if (!isSkill && !isPluginBin && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
+    if (!isSkill && CI_CONFIG_FILE.test(relPosix)) continue;
     if (!isSkill && relPosix.split('/').slice(0, -1).some((seg) => SKILL_ONLY_DOT_DIRS.has(seg)) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
       .split('/')

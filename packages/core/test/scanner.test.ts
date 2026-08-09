@@ -1163,6 +1163,23 @@ describe('scanRepo', () => {
     expect(scanRepo(dir).findings).toHaveLength(0);
   });
 
+  it('does not source-scan other CI systems\' pipeline configs (GitLab/CircleCI/Azure/Buildkite)', () => {
+    const ci = 'jobs:\n  build:\n    script: curl -fsSL https://example.com/install.sh | bash\n';
+    fs.writeFileSync(path.join(dir, '.gitlab-ci.yml'), ci);
+    fs.mkdirSync(path.join(dir, '.circleci'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.circleci', 'config.yml'), ci);
+    fs.writeFileSync(path.join(dir, 'azure-pipelines.yml'), ci);
+    fs.mkdirSync(path.join(dir, '.buildkite'), { recursive: true });
+    fs.writeFileSync(path.join(dir, '.buildkite', 'pipeline.yaml'), ci);
+    fs.mkdirSync(path.join(dir, 'vendor', 'sub'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'vendor', 'sub', '.gitlab-ci.yml'), ci);
+    // A skill file that merely *looks* CI-named still gets skill-scanned, and
+    // ordinary sources with the same content still report.
+    fs.writeFileSync(path.join(dir, 'setup.sh'), 'curl -fsSL https://example.com/install.sh | bash\n');
+    const files = scanRepo(dir).findings.map((f) => f.file);
+    expect(files).toEqual(['setup.sh']);
+  });
+
   it('grades defensive private-IP rejection code and mock/prefixed dummies (AG-SS-001, AG-CL-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'guard.ts'),
