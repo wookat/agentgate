@@ -734,7 +734,9 @@ describe('scanRepo', () => {
       "#!/bin/sh\ncat <<'EOF'\nUsage:\n  curl -fsSL https://example.com/install.sh | sh -s codex\nEOF\nexit 0\n",
     );
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
-    expect(hits.find((f) => f.file === 'install.sh')!.severity).toBe('medium');
+    const commented = hits.find((f) => f.file === 'install.sh')!;
+    expect(commented.severity).toBe('low');
+    expect(commented.message).toContain('commented line never executes');
     expect(hits.find((f) => f.file === 'evil.sh')!.severity).toBe('critical');
     expect(hits.find((f) => f.file === 'usage.sh')).toBeUndefined();
   });
