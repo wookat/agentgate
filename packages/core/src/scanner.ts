@@ -132,16 +132,10 @@ const PLUGIN_COMPONENT_MD = /(^|\/)(skills|commands|agents|output-styles)\/.+\.m
  * generic `commands/` or `agents/` doc trees are not misread as agent
  * instructions.
  */
-function isPluginComponentSkill(scanRoot: string, relPosix: string, cache: Map<string, boolean>): boolean {
+function isPluginComponentSkill(ctx: PluginContext, relPosix: string): boolean {
   PLUGIN_COMPONENT_MD.lastIndex = 0;
   for (let m = PLUGIN_COMPONENT_MD.exec(relPosix); m; m = PLUGIN_COMPONENT_MD.exec(relPosix)) {
-    const root = relPosix.slice(0, m.index);
-    let hit = cache.get(root);
-    if (hit === undefined) {
-      hit = PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(scanRoot, ...root.split('/').filter(Boolean), meta, 'plugin.json')));
-      cache.set(root, hit);
-    }
-    if (hit) return true;
+    if (isPluginRoot(ctx, relPosix.slice(0, m.index))) return true;
     PLUGIN_COMPONENT_MD.lastIndex = m.index + 1;
   }
   return false;
@@ -155,14 +149,19 @@ const PLUGIN_BIN_FILE = /(^|\/)bin\/[^/]+$/i;
  * script content is an executable surface regardless of file extension.
  * Same manifest gate as component markdown.
  */
-function isPluginBinFile(scanRoot: string, relPosix: string, cache: Map<string, boolean>): boolean {
+function isPluginBinFile(ctx: PluginContext, relPosix: string): boolean {
   const m = PLUGIN_BIN_FILE.exec(relPosix);
-  if (!m) return false;
-  const root = relPosix.slice(0, m.index);
-  let hit = cache.get(root);
+  return m !== null && isPluginRoot(ctx, relPosix.slice(0, m.index));
+}
+
+/** A prefix is a plugin root when it has a plugin manifest or is a local marketplace-entry source root. */
+function isPluginRoot(ctx: PluginContext, rootWithSlash: string): boolean {
+  let hit = ctx.rootCache.get(rootWithSlash);
   if (hit === undefined) {
-    hit = PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(scanRoot, ...root.split('/').filter(Boolean), meta, 'plugin.json')));
-    cache.set(root, hit);
+    hit =
+      PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(ctx.scanRoot, ...rootWithSlash.split('/').filter(Boolean), meta, 'plugin.json'))) ||
+      isMarketplaceSourceRoot(ctx, rootWithSlash.replace(/\/$/, ''));
+    ctx.rootCache.set(rootWithSlash, hit);
   }
   return hit;
 }
@@ -173,24 +172,24 @@ interface PluginComponentDecl {
   globs: RegExp[];
 }
 
-/** Read the manifest-declared commands/agents/skills paths for a plugin root, if any. */
-function readPluginComponentDecl(scanRoot: string, rootPrefix: string): PluginComponentDecl | null {
-  let manifest: unknown;
-  for (const meta of PLUGIN_META_NAMES) {
-    const p = path.join(scanRoot, ...rootPrefix.split('/').filter(Boolean), meta, 'plugin.json');
-    if (!fs.existsSync(p)) continue;
-    try {
-      manifest = JSON.parse(fs.readFileSync(p, 'utf8'));
-    } catch {
-      return null;
-    }
-    break;
-  }
-  if (typeof manifest !== 'object' || manifest === null) return null;
+/** Per-scan caches for plugin-root and component-declaration lookups. */
+interface PluginContext {
+  scanRoot: string;
+  rootCache: Map<string, boolean>;
+  declCache: Map<string, PluginComponentDecl | null>;
+  marketplaceCache: Map<string, MarketplaceDecls | null>;
+}
+
+function newPluginContext(scanRoot: string): PluginContext {
+  return { scanRoot, rootCache: new Map(), declCache: new Map(), marketplaceCache: new Map() };
+}
+
+/** Parse declared component paths (string, array, or `{path}` entries) into a decl; null when none. */
+function componentDeclFromFields(fields: Record<string, unknown>): PluginComponentDecl | null {
   const decl: PluginComponentDecl = { files: new Set(), dirs: [], globs: [] };
   let any = false;
   for (const key of ['commands', 'agents', 'skills', 'outputStyles'] as const) {
-    const value = (manifest as Record<string, unknown>)[key];
+    const value = fields[key];
     const entries = Array.isArray(value) ? value : [value];
     for (const entry of entries) {
       const raw = typeof entry === 'string' ? entry : typeof entry === 'object' && entry !== null && typeof (entry as { path?: unknown }).path === 'string' ? (entry as { path: string }).path : undefined;
@@ -206,20 +205,118 @@ function readPluginComponentDecl(scanRoot: string, rootPrefix: string): PluginCo
   return any ? decl : null;
 }
 
+/** Marketplace catalog dirs whose `marketplace.json` entries can carry component declarations. */
+const MARKETPLACE_META_DIRS = ['.claude-plugin', '.github/plugin', '.factory-plugin', '.cursor-plugin'];
+
+interface MarketplaceDecls {
+  /** Local plugin-entry source roots, posix-relative to the scan root ('' = catalog root). */
+  sourceRoots: Set<string>;
+  /** Component declarations per source root, paths relative to that root. */
+  decls: Map<string, PluginComponentDecl>;
+}
+
+/**
+ * Marketplace entries with a local `source` install that directory as a plugin;
+ * the entry itself may declare component paths (and with `strict: false` it is
+ * the plugin's entire definition — the source needs no plugin.json at all).
+ */
+function readMarketplaceDecls(ctx: PluginContext, prefix: string): MarketplaceDecls | null {
+  let doc: unknown;
+  for (const meta of MARKETPLACE_META_DIRS) {
+    const p = path.join(ctx.scanRoot, ...prefix.split('/').filter(Boolean), ...meta.split('/'), 'marketplace.json');
+    if (!fs.existsSync(p)) continue;
+    try {
+      doc = JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch {
+      return null;
+    }
+    break;
+  }
+  const plugins = (doc as { plugins?: unknown } | undefined)?.plugins;
+  if (!Array.isArray(plugins)) return null;
+  const out: MarketplaceDecls = { sourceRoots: new Set(), decls: new Map() };
+  for (const entry of plugins) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const source = (entry as { source?: unknown }).source;
+    if (typeof source !== 'string' || source.includes('://')) continue;
+    const norm = source.replace(/^\.\//, '').replace(/\/+$/, '').replace(/^\.$/, '');
+    if (norm.startsWith('/') || norm.split('/').includes('..')) continue;
+    const rootPrefix = [prefix, norm].filter(Boolean).join('/');
+    out.sourceRoots.add(rootPrefix);
+    const decl = componentDeclFromFields(entry as Record<string, unknown>);
+    if (!decl) continue;
+    const prev = out.decls.get(rootPrefix);
+    if (prev) {
+      for (const f of decl.files) prev.files.add(f);
+      prev.dirs.push(...decl.dirs);
+      prev.globs.push(...decl.globs);
+    } else out.decls.set(rootPrefix, decl);
+  }
+  return out.sourceRoots.size ? out : null;
+}
+
+function getMarketplaceDecls(ctx: PluginContext, prefix: string): MarketplaceDecls | null {
+  let decls = ctx.marketplaceCache.get(prefix);
+  if (decls === undefined) {
+    decls = readMarketplaceDecls(ctx, prefix);
+    ctx.marketplaceCache.set(prefix, decls);
+  }
+  return decls;
+}
+
+/** Ancestor prefixes of a root ('' first), where a marketplace catalog could live. */
+function ancestorPrefixes(root: string): string[] {
+  const segs = root.split('/').filter(Boolean);
+  const out = [''];
+  for (let i = 1; i <= segs.length; i++) out.push(segs.slice(0, i).join('/'));
+  return out;
+}
+
+function isMarketplaceSourceRoot(ctx: PluginContext, root: string): boolean {
+  return ancestorPrefixes(root).some((a) => getMarketplaceDecls(ctx, a)?.sourceRoots.has(root) ?? false);
+}
+
+/** Read the manifest- and marketplace-declared component paths for a plugin root, if any. */
+function readPluginComponentDecl(ctx: PluginContext, rootPrefix: string): PluginComponentDecl | null {
+  let manifest: unknown;
+  for (const meta of PLUGIN_META_NAMES) {
+    const p = path.join(ctx.scanRoot, ...rootPrefix.split('/').filter(Boolean), meta, 'plugin.json');
+    if (!fs.existsSync(p)) continue;
+    try {
+      manifest = JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch {
+      manifest = undefined;
+    }
+    break;
+  }
+  const decl = typeof manifest === 'object' && manifest !== null ? componentDeclFromFields(manifest as Record<string, unknown>) : null;
+  const merged = decl ?? { files: new Set<string>(), dirs: [], globs: [] };
+  let any = decl !== null;
+  for (const a of ancestorPrefixes(rootPrefix)) {
+    const mkt = getMarketplaceDecls(ctx, a)?.decls.get(rootPrefix);
+    if (!mkt) continue;
+    any = true;
+    for (const f of mkt.files) merged.files.add(f);
+    merged.dirs.push(...mkt.dirs);
+    merged.globs.push(...mkt.globs);
+  }
+  return any ? merged : null;
+}
+
 /**
  * Plugin manifests may point `commands`/`agents`/`skills` at custom paths
  * (files, directories, or globs) outside the conventional component dirs;
  * markdown reachable through those declarations is installed content too.
  */
-function isDeclaredPluginComponentMd(scanRoot: string, relPosix: string, cache: Map<string, PluginComponentDecl | null>): boolean {
+function isDeclaredPluginComponentMd(ctx: PluginContext, relPosix: string): boolean {
   if (!relPosix.toLowerCase().endsWith('.md')) return false;
   const segs = relPosix.split('/');
   for (let i = 0; i < segs.length; i++) {
     const rootPrefix = segs.slice(0, i).join('/');
-    let decl = cache.get(rootPrefix);
+    let decl = ctx.declCache.get(rootPrefix);
     if (decl === undefined) {
-      decl = readPluginComponentDecl(scanRoot, rootPrefix);
-      cache.set(rootPrefix, decl);
+      decl = readPluginComponentDecl(ctx, rootPrefix);
+      ctx.declCache.set(rootPrefix, decl);
     }
     if (!decl) continue;
     const inner = segs.slice(i).join('/');
@@ -242,12 +339,11 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const findings: Finding[] = [];
   const scannedFiles: string[] = [];
-  const pluginRootCache = new Map<string, boolean>();
-  const pluginDeclCache = new Map<string, PluginComponentDecl | null>();
+  const ctx = newPluginContext(dir);
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(dir, relPosix, pluginRootCache) || isDeclaredPluginComponentMd(dir, relPosix, pluginDeclCache);
-    const isPluginBin = !isSkill && isPluginBinFile(dir, relPosix, pluginRootCache);
+    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(ctx, relPosix) || isDeclaredPluginComponentMd(ctx, relPosix);
+    const isPluginBin = !isSkill && isPluginBinFile(ctx, relPosix);
     if (!isSkill && !isPluginBin && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
     if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
@@ -285,11 +381,10 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
 export function collectSkillFiles(dir: string, opts: { ignore?: string[] } = {}): Record<string, string> {
   const ignoreRes = (opts.ignore ?? []).map(globToRegExp);
   const out: Record<string, string> = {};
-  const pluginRootCache = new Map<string, boolean>();
-  const pluginDeclCache = new Map<string, PluginComponentDecl | null>();
+  const ctx = newPluginContext(dir);
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(dir, relPosix, pluginRootCache) && !isDeclaredPluginComponentMd(dir, relPosix, pluginDeclCache)) continue;
+    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(ctx, relPosix) && !isDeclaredPluginComponentMd(ctx, relPosix)) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
