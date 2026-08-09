@@ -2149,5 +2149,34 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0087",
+    "title": "skill-ninja-mcp-server skill-management tools path traversal (CVE-2026-19328)",
+    "type": "path-traversal",
+    "severity": "low",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "skill-ninja-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "0.1.1"
+          }
+        ]
+      },
+      {
+        "ecosystem": "npm",
+        "name": "@iflow-mcp/aktsmm-skill-ninja-mcp-server",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "0.1.0"
+          }
+        ]
+      }
+    ]
   }
 ];

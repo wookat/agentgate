@@ -1,0 +1,61 @@
+{
+ "id": "MCPA-2026-0087",
+ "title": "skill-ninja-mcp-server skill-management tools path traversal (CVE-2026-19328)",
+ "summary": "skill-ninja-mcp-server (npm) 0.1.0: the getInstalledSkills/installSkill/updateAgentsMd/uninstallSkill MCP tools pass the caller-controlled workspacePath argument into filesystem operations in src/installer.ts without trusted-root enforcement, so a prompt-injected or malicious tool call can read, write, and delete files outside the intended workspace (path traversal). Fixed in 0.1.1, which adds trusted-root workspace guards (patch 855b46739e0f6e8388f17f9d0066ac4298a3965d). The @iflow-mcp/aktsmm-skill-ninja-mcp-server republish mirrors only the vulnerable 0.1.0 build (installer.js byte-identical) and has no fixed release, so it is recorded as last_affected 0.1.0.",
+ "type": "path-traversal",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19328",
+  "GHSA-866p-rrc7-6r5x"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-22"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "skill-ninja-mcp-server",
+   "ranges": [
+    {
+     "introduced": "0",
+     "fixed": "0.1.1"
+    }
+   ]
+  },
+  {
+   "ecosystem": "npm",
+   "name": "@iflow-mcp/aktsmm-skill-ninja-mcp-server",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "0.1.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-866p-rrc7-6r5x"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19328"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/aktsmm/skill-ninja-mcp-server/issues/2"
+  },
+  {
+   "type": "fix",
+   "url": "https://github.com/aktsmm/skill-ninja-mcp-server/commit/855b46739e0f6e8388f17f9d0066ac4298a3965d"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}
