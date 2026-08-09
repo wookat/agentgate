@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.25
+
+### Patch Changes
+
+- a531b93: Finding messages stay single-line: matched-content excerpts embedded in AG-RC-001 dynamic-exec and AG-SK-001 prompt-injection messages now collapse internal newlines/whitespace runs to single spaces, so multi-line regex matches (e.g. `child_process` … `exec(` spanning lines) no longer break findings-table rows, GitHub annotations, or SARIF message text.
+- 78e18b2: Extend single-line message normalization to the remaining excerpt-embedding message sites: AG-TP-001 tool-description injection matches, all AG-SK-003 hook/monitor/LSP command excerpts, and AG-SC-001 remote instruction/plugin specifiers now collapse embedded newlines to spaces, matching the round-361 fix for AG-RC-001/AG-SK-001.
+
 ## 0.67.24
 
 ### Patch Changes
