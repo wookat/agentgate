@@ -1,5 +1,14 @@
 # mcp-agentgate
 
+## 0.67.17
+
+### Patch Changes
+
+- Updated dependencies [6c0a889]
+- Updated dependencies [7ef4990]
+- Updated dependencies [9ce7589]
+  - mcp-agentgate-core@0.67.17
+
 ## 0.67.16
 
 ### Patch Changes
