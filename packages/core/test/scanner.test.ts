@@ -805,6 +805,18 @@ describe('scanRepo', () => {
     expect(hits[0].message).toContain('U+202E');
   });
 
+  it('grades trojan chars in suffixed test dirs and fixture files quietly (AG-TP-001)', () => {
+    fs.mkdirSync(path.join(dir, 'browser-tests'), { recursive: true });
+    fs.mkdirSync(path.join(dir, 'latest'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'browser-tests', 'fixtures.mjs'), 'const s = "bidi:\u202eabc";\n');
+    fs.writeFileSync(path.join(dir, 'fixture.js'), 'const s = "bidi:\u202eabc";\n');
+    fs.writeFileSync(path.join(dir, 'latest', 'app.js'), 'const s = "bidi:\u202eabc";\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-TP-001');
+    expect(hits.find((f) => f.file === 'browser-tests/fixtures.mjs')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'fixture.js')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'latest/app.js')!.severity).toBe('high');
+  });
+
   it('grades skill hidden-unicode severity: stray boundary zero-width low, concealing critical (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'a'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'b'), { recursive: true });

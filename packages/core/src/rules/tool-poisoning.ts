@@ -96,7 +96,10 @@ export const toolPoisoningRule: Rule = {
     const trojan = isTrojanHidden(hit.char);
     // Test/fixture trees embed these characters as fixtures for the very
     // defenses under test; still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file);
+    const testPath =
+      /(^|\/)([\w.]+[-_])?(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) ||
+      /\.(test|spec)\.\w+$/i.test(file) ||
+      /(^|\/)fixtures?\.\w+$/i.test(file);
     return [
       finding(this, {
         severity: trojan && !testPath ? 'high' : 'low',
