@@ -84,4 +84,35 @@ describe('renderFindingsTable', () => {
     const out = renderFindingsTable([f]);
     expect(out).toContain('a perfectly ordinary message with short words only');
   });
+
+  it('collapses 4+ rows identical except for the config file into one row', () => {
+    const findings: Finding[] = Array.from({ length: 6 }, (_, i) => ({
+      ruleId: 'AG-AM-001',
+      category: 'auth-missing',
+      severity: 'medium',
+      target: 'one',
+      file: `platforms/p${i}/mcp.json`,
+      message: 'Remote server "one" is configured without any authentication header',
+    }));
+    const out = renderFindingsTable(findings);
+    const flat = out.replace(/│|\s|\n/g, '');
+    expect(flat).toContain('…and5morefile(s)');
+    expect(flat).not.toContain('p1/mcp.json');
+    expect(out).toContain('6 finding(s)');
+  });
+
+  it('keeps per-file rows below the collapse threshold', () => {
+    const findings: Finding[] = Array.from({ length: 3 }, (_, i) => ({
+      ruleId: 'AG-AM-001',
+      category: 'auth-missing',
+      severity: 'medium',
+      target: 'one',
+      file: `platforms/p${i}/mcp.json`,
+      message: 'Remote server "one" is configured without any authentication header',
+    }));
+    const flat = renderFindingsTable(findings).replace(/│|\s|\n/g, '');
+    expect(flat).toContain('p0/mcp.json');
+    expect(flat).toContain('p2/mcp.json');
+    expect(flat).not.toContain('morefile(s)');
+  });
 });
