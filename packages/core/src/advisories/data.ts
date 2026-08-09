@@ -2235,5 +2235,43 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0091",
+    "title": "LudusMCP read_range_config server-side request forgery (CVE-2026-19367)",
+    "type": "ssrf",
+    "severity": "medium",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "ludus-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.24"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0092",
+    "title": "LudusMCP insert_creds_range_config path traversal (CVE-2026-19366)",
+    "type": "path-traversal",
+    "severity": "low",
+    "published": "2026-08-09",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "ludus-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.24"
+          }
+        ]
+      }
+    ]
   }
 ];
