@@ -1640,7 +1640,9 @@ export const skillDynamicContextRule: Rule = {
         const name = (entry as { name?: unknown })?.name;
         const entryHooks = (entry as { hooks?: unknown })?.hooks;
         // Claude marketplaces use the nested settings-hooks shape; Copilot marketplaces use the flat event → [{ type: "command", bash, powershell }] shape.
-        for (const command of [...extractHookCommands(entryHooks), ...extractCopilotHookCommands(entryHooks)]) {
+        // Codex entries carry manifest-fallback hooks: an inline hooks-file object (or list of them), each wrapping the nested shape under its own `hooks` key.
+        const entryHookMaps = Array.isArray(entryHooks) ? entryHooks.map((h) => (h as { hooks?: unknown })?.hooks) : [entryHooks, (entryHooks as { hooks?: unknown } | null)?.hooks];
+        for (const command of entryHookMaps.flatMap((h) => [...extractHookCommands(h), ...extractCopilotHookCommands(h)])) {
           const hit = classifyRiskyCommand(command);
           if (!hit) continue;
           const line = content.split(/\r?\n/).findIndex((l) => l.includes(command.slice(0, 40))) + 1;
@@ -1859,9 +1861,9 @@ export const skillDynamicContextRule: Rule = {
     }
     if (isPluginHooks) {
       // Claude plugins use the nested settings-hooks shape; Copilot plugins use the flat event shape. A manifest's `hooks` field may also be inline config —
-      // Codex plugin manifests inline a list of hooks-file objects, each wrapping the nested shape under its own `hooks` key.
+      // Codex plugin manifests inline a hooks-file object or a list of them, each wrapping the nested shape under its own `hooks` key.
       const pluginHooks = (data as { hooks?: unknown }).hooks;
-      const hookMaps = Array.isArray(pluginHooks) ? pluginHooks.map((h) => (h as { hooks?: unknown })?.hooks) : [pluginHooks];
+      const hookMaps = Array.isArray(pluginHooks) ? pluginHooks.map((h) => (h as { hooks?: unknown })?.hooks) : [pluginHooks, (pluginHooks as { hooks?: unknown } | null)?.hooks];
       for (const command of hookMaps.flatMap((h) => [...extractHookCommands(h), ...extractCopilotHookCommands(h)])) {
         const hit = classifyRiskyCommand(command);
         if (!hit) continue;

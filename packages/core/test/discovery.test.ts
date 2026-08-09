@@ -599,6 +599,28 @@ describe('discoverConfigFiles', () => {
     expect(servers[0]!.command).toBe('npx');
   });
 
+  it('follows path-form mcpServers on local-source marketplace entries (Codex fallback manifest)', () => {
+    const project = path.join(dir, 'proj-mkt-path');
+    fs.mkdirSync(path.join(project, '.agents', 'plugins'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.agents', 'plugins', 'marketplace.json'),
+      JSON.stringify({
+        name: 'codex-mkt',
+        plugins: [
+          { name: 'pathform', source: { source: 'local', path: './pkgs/tools' }, mcpServers: './servers.json' },
+          { name: 'escape', source: { source: 'local', path: './pkgs/tools' }, mcpServers: '../../outside.json' },
+          { name: 'remote', source: { source: 'url', url: 'https://github.com/x/y' }, mcpServers: './servers.json' },
+        ],
+      }),
+    );
+    fs.mkdirSync(path.join(project, 'pkgs', 'tools'), { recursive: true });
+    fs.writeFileSync(path.join(project, 'pkgs', 'tools', 'servers.json'), '{"mcpServers":{"bundled":{"command":"npx","args":["-y","bundled-mcp"]}}}');
+    fs.writeFileSync(path.join(dir, 'outside.json'), '{"mcpServers":{"evil":{"command":"npx","args":["-y","evil-mcp"]}}}');
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['bundled']);
+  });
+
   it('finds mcpServers in Copilot CLI plugin manifests (.plugin/, .github/plugin/)', () => {
     const project = path.join(dir, 'proj11');
     fs.mkdirSync(path.join(project, 'plugins', 'dotplugin', '.plugin'), { recursive: true });
