@@ -27,8 +27,25 @@ function isPlaceholder(value: string): boolean {
     /EXAMPLE(KEY)?$/.test(value) ||
     // Keyboard-run dummies: a body built entirely from sequential runs
     // (sk-abcdef1234567890abcdef) is demo filler, not key material.
-    /^([a-z0-9]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value)
+    /^([a-z0-9]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value) ||
+    // Interleaved-run dummies (ghp_A1bC2dE3fH4iJ5kL6…): the letters walk the
+    // alphabet and the digits count 1-9-0 in lockstep — demo filler, not key
+    // material. Real tokens are random, never monotone.
+    isInterleavedRun(value)
   );
+}
+
+function isInterleavedRun(value: string): boolean {
+  const body = value.replace(/^[a-z0-9]{1,8}[_-]/i, '');
+  const digits = body.replace(/[^0-9]/g, '');
+  const letters = body.replace(/[^a-z]/gi, '').toLowerCase();
+  if (digits.length < 8 || letters.length < 10) return false;
+  if (!'12345678901234567890123456789012345678901234567890'.includes(digits)) return false;
+  for (let i = 1; i < letters.length; i++) {
+    const step = (letters.charCodeAt(i) - letters.charCodeAt(i - 1) + 26) % 26;
+    if (step < 1 || step > 2) return false;
+  }
+  return true;
 }
 
 /** Supabase anon/publishable JWTs are designed to be shipped to clients. */
@@ -112,10 +129,14 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_test\.\w+$/i.test(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
     const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
+    // Firebase distributes its client API key inside google-services.json /
+    // GoogleService-Info.plist by design — access is gated by Firebase security
+    // rules, not by the key's secrecy.
+    const firebaseClientConfig = /(^|\/)google-services\.json$|(^|\/)GoogleService-Info\.plist$/i.test(file);
     for (const re of SECRET_VALUE_PATTERNS) {
       const m = content.match(re);
       if (m) {
@@ -126,14 +147,14 @@ export const credentialLeakRule: Rule = {
         const matchCol = lineText.indexOf(m[0]);
         const exampleValue = /(\b|")examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
         const publishable = isPublishableJwt(m[0]);
-        const quiet = testPath || exampleValue || publishable;
+        const quiet = testPath || exampleValue || publishable || firebaseClientConfig;
         findings.push(
           finding(this, {
             severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${firebaseClientConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
           }),
         );
       }

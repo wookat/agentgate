@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const exec = promisify(execFile);
 
 // assembled at runtime so secret scanners don't flag the test fixture
-const FAKE_SK_KEY = ['sk', 'abc123def456ghi789jkl012mno345'].join('-');
+const FAKE_SK_KEY = ['sk', 'Qq9Rr7'.repeat(5)].join('-');
 const CLI = path.resolve(__dirname, '..', 'dist', 'index.js');
 const FIXTURE_SERVER = path.resolve(__dirname, 'fixtures', 'toy-server.mjs');
 const FIXTURE_HTTP_SERVER = path.resolve(__dirname, 'fixtures', 'toy-http-server.mjs');

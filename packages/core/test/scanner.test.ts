@@ -6,7 +6,7 @@ import { collectSkillFiles, globToRegExp, scanRepo, sortFindings } from '../src/
 import { Finding } from '../src/types.js';
 
 // assembled at runtime so secret scanners don't flag the test fixture
-const FAKE_SK_KEY = ['sk', 'abc123def456ghi789jkl012mno345'].join('-');
+const FAKE_SK_KEY = ['sk', 'Qq9Rr7'.repeat(5)].join('-');
 
 describe('scanRepo', () => {
   let dir: string;
@@ -92,6 +92,44 @@ describe('scanRepo', () => {
     expect(hits.some((f) => f.file.includes('gitleaks-v8.30.1.toml'))).toBe(false);
     expect(hits.find((f) => f.file === 'test-stress-hooks.sh')!.severity).toBe('low');
     expect(hits.find((f) => f.file === 'capture.py')!.severity).toBe('low');
+  });
+
+  it('skips interleaved-run dummies, grades testdata/ and Firebase client configs low (AG-CL-001)', () => {
+    fs.writeFileSync(path.join(dir, 'goof.js'), 'const t = "ghp_A1bC2dE3fH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3aB4c";\n');
+    fs.mkdirSync(path.join(dir, 'testdata', 'secrets'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'testdata', 'secrets', 'rsa.js'),
+      `const k = "-----BEGIN RSA PRIVATE KEY-----\\n${'Q'.repeat(48)}";\n`,
+    );
+    fs.writeFileSync(
+      path.join(dir, 'google-services.json'),
+      `{"client":[{"api_key":[{"current_key":"AIzaSy${'Qq'.repeat(16)}Z"}]}]}\n`,
+    );
+    fs.writeFileSync(path.join(dir, 'real.js'), `const t = "ghp_${'Qq'.repeat(18)}";\n`);
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.some((f) => f.file === 'goof.js')).toBe(false);
+    expect(hits.find((f) => f.file.includes('testdata'))!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'google-services.json')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'real.js')!.severity).toBe('high');
+  });
+
+  it('grades defensive-header modules and commented-out metadata config low (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'netsec.py'),
+      '"""Network security controls.\n\nImplements URL/host allowlists to prevent:\n- SSRF attacks\n"""\n\nMETADATA_IPS = [\n    "169.254.169.254",\n]\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'cloud-init-defaults.yml'),
+      'ec2:\n  #   metadata_urls:    ["http://169.254.169.254"]\n  timeout: 10\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'detect.sh'),
+      '#!/usr/bin/env bash\\n# Platform detection\\nelif curl -s -m 1 http://169.254.169.254/latest/meta-data/instance-id &>/dev/null; then\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'netsec.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'cloud-init-defaults.yml')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'detect.sh')!.severity).toBe('high');
   });
 
   it('recognizes restriction guards near a metadata address as defensive (AG-SS-001)', () => {
