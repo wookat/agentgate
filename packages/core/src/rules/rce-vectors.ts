@@ -6,10 +6,11 @@ export { COPILOT_EXTENSION_FILE };
 const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell', 'powershell.exe'];
 // The span may only cross a newline via a backslash continuation, so a pipe in a
 // later, unrelated statement is not attributed to the download command.
-// `| node -e '…'` / `| python -c '…'` runs a *local* inline program with the
-// download on stdin as data (version-lookup idiom), so an inline-program flag
-// right after the interpreter is excluded; a bare `| bash -` still matches.
-const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|eval)\b)/;
+// `| node -e '…'` / `| python -c '…'` / `| python -m json.tool` runs a *local*
+// inline program or module with the download on stdin as data (version-lookup
+// and pretty-print idioms), so an inline-program/module flag right after the
+// interpreter is excluded; a bare `| bash -` still matches.
+const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
  * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
@@ -230,7 +231,9 @@ export const rceVectorsRule: Rule = {
       const lines = content.slice(0, idx).split('\n');
       for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 30; i--, seen++) {
         const key = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(lines[i]!);
-        if (key) return /\b(den(y|ied|ylist)|block(ed)?(list)?|disallow(ed)?|forbid(den)?)\b|denied|blocklist|blacklist/i.test(key[1]!);
+        // `matches:`/`not_matches:` under a detection-rule/policy yaml are
+        // pattern tables the rule engine tests against, never commands it runs.
+        if (key) return /\b(den(y|ied|ylist)|block(ed)?(list)?|disallow(ed)?|forbid(den)?)\b|denied|blocklist|blacklist|^(not[_-]?)?matches$/i.test(key[1]!);
       }
       return false;
     }
@@ -305,7 +308,10 @@ export const rceVectorsRule: Rule = {
       const denyListed = !executable && (dataFormatDenyList || isDenyListEntry(content, m.index ?? 0));
       // The only remaining match sits on a `#`-comment line of an otherwise
       // executable script — an installer quoting its own one-liner, never run.
-      const commentOnly = !executable && isCommented(m.index ?? 0) && isExecutableFile(file);
+      const commentOnly =
+        !executable &&
+        isCommented(m.index ?? 0) &&
+        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file));
       // Test suites quote curl|sh strings as fixtures (a hook handler's
       // deny-test, sandbox-security specs, testdata payloads) — nothing there
       // executes; still reported, but quietly.

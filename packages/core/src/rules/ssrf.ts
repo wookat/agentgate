@@ -104,7 +104,10 @@ export const ssrfRule: Rule = {
     const blocklistNearby =
       /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
       /\b(Denied|Deny|Blocked|Restricted)[A-Z]/.test(nearWindow) ||
-      /\btrigger[-_ ]?patterns?\b/i.test(nearWindow);
+      /\btrigger[-_ ]?patterns?\b/i.test(nearWindow) ||
+      // A named guard identifier (ssrfGuard, classifyIp routing) hides "guard"
+      // at a camelCase boundary the word-boundary set can't see.
+      /ssrf[._-]?guard/i.test(nearWindow);
     // Private/blocked-range guard functions (isPrivateIPv4, isBlockedIPv4)
     // annotate the metadata range in a doc comment above the declaration or a
     // body comment below it, either of which can sit well outside the generic
@@ -114,7 +117,7 @@ export const ssrfRule: Rule = {
     // A safe-fetch wrapper invocation (safeFetch(url), safe_request(…)) is the
     // guard itself — the code routes the URL through a validator instead of a
     // bare fetch — even when the explanatory comment isn't in English.
-    const guardDeclNearby = /\bis[_]?(private|blocked|denied|reserved|internal)[a-z0-9_]*\s*[=(]|\bsafe[_]?(fetch|request|get|http)[a-z0-9_]*\s*\(/i.test(
+    const guardDeclNearby = /(\b|_)is[_]?(private|blocked|denied|reserved|internal|link[_]?local)[a-z0-9_]*\s*[=(]|\bsafe[_]?(fetch|request|get|http)[a-z0-9_]*\s*\(/i.test(
       allLines.slice(Math.max(0, line - 21), line + 20).join('\n'),
     );
     // A network-security module declares its purpose in the file header
@@ -130,7 +133,7 @@ export const ssrfRule: Rule = {
       blocklistNearby ||
       guardDeclNearby ||
       headerDefensive ||
-      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refuse|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
     // example) is inert — nothing reads it; still reported, but quietly.
     const matchLine = allLines[line - 1] ?? '';

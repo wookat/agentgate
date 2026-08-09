@@ -47,7 +47,9 @@ export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   // Forbidding a specific (often false) claim — "do not tell the user it will deploy",
   // "…that no file was provided", "…the helper's JSON" — is prose guidance, as are
   // "tell the user to <verb>", quoted objects, and until/only workflow gating.
-  { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+the\s+user\b|the\s+user\s+(about\b|anything\b|what\b|(of\s+|that\s+)?(this|these)\b|(that\s+)?you\b)|the\s+user\b\s*(?=[.!;)\u2014-]|\r?\n|$))(?!\s+to\s)(?!\s*["'\u201c])(?![^.\n]*\b(until|only)\b)/i, label: 'concealment instruction' },
+  // A relative clause ("buttons that do not tell the user what will happen")
+  // describes a subject's behavior — descriptive prose, not an instruction.
+  { re: /(?<!\b(?:that|which|who)\s)\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+the\s+user\b|the\s+user\s+(about\b|anything\b|what\b|(of\s+|that\s+)?(this|these)\b|(that\s+)?you\b)|the\s+user\b\s*(?=[.!;)\u2014-]|\r?\n|$))(?!\s+to\s)(?!\s*["'\u201c])(?![^.\n]*\b(until|only)\b)/i, label: 'concealment instruction' },
   { re: /\bbefore\s+using\s+this\s+tool[^.]*\b(read|send|pass|include)\b/i, label: 'cross-tool coercion' },
   // Requires a sensitive target: "you must read/include the <reference|extension> file" is ordinary
   // skill-doc structure, while real exfiltration names keys, tokens, or credential paths. Generic
