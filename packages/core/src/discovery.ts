@@ -308,10 +308,12 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
     if (isPluginMeta && fs.existsSync(path.join(dir, 'marketplace.json'))) {
       // Marketplace entries can define plugins entirely inline (strict: false), including mcpServers.
       out.push({ client: 'claude-plugin', path: path.join(dir, 'marketplace.json'), format: 'marketplace-json' });
+      out.push(...marketplaceEntryServerLocations(projectDir, path.join(dir, 'marketplace.json')));
     }
     // Codex also reads an API-curated catalog next to the repo marketplace.
     if (entry.name === '.agents' && fs.existsSync(path.join(dir, 'api_marketplace.json'))) {
       out.push({ client: 'claude-plugin', path: path.join(dir, 'api_marketplace.json'), format: 'marketplace-json' });
+      out.push(...marketplaceEntryServerLocations(projectDir, path.join(dir, 'api_marketplace.json')));
     }
     if (isPluginMeta && fs.existsSync(path.join(dir, 'plugin.json'))) {
       if (depth > 0) {
@@ -339,6 +341,45 @@ function pluginServerLocations(projectDir: string, depth = 0): ClientConfigLocat
   if (depth > 0) return out;
   const seen = new Set<string>();
   return out.filter((l) => !seen.has(l.path) && seen.add(l.path));
+}
+
+/**
+ * Marketplace entries with a local `source` act as fallback plugin manifests
+ * (Codex): an entry-level `mcpServers` path (or path list) resolves against
+ * the entry's source root, and the referenced document holds the server config.
+ * Inline entry `mcpServers` objects are handled by the marketplace-json format.
+ */
+function marketplaceEntryServerLocations(catalogRoot: string, catalogPath: string): ClientConfigLocation[] {
+  let doc: { plugins?: unknown };
+  try {
+    doc = JSON.parse(fs.readFileSync(catalogPath, 'utf8')) as { plugins?: unknown };
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(doc.plugins)) return [];
+  const out: ClientConfigLocation[] = [];
+  for (const entry of doc.plugins) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const rawSource = (entry as { source?: unknown }).source;
+    const src =
+      typeof rawSource === 'string' && !rawSource.includes('://')
+        ? rawSource
+        : typeof rawSource === 'object' && rawSource !== null && (rawSource as { source?: unknown }).source === 'local' && typeof (rawSource as { path?: unknown }).path === 'string'
+          ? ((rawSource as { path: string }).path)
+          : null;
+    if (src === null || src.startsWith('/') || src.split('/').includes('..')) continue;
+    const sourceRoot = path.resolve(catalogRoot, src);
+    if (!sourceRoot.startsWith(path.resolve(catalogRoot))) continue;
+    const field = (entry as { mcpServers?: unknown }).mcpServers;
+    for (const ref of typeof field === 'string' ? [field] : Array.isArray(field) ? field : []) {
+      if (typeof ref !== 'string') continue;
+      const resolved = path.resolve(sourceRoot, ref);
+      if (resolved.startsWith(path.resolve(sourceRoot)) && fs.existsSync(resolved)) {
+        out.push({ client: 'claude-plugin', path: resolved, format: 'mcpServers-json' });
+      }
+    }
+  }
+  return out;
 }
 
 /**
