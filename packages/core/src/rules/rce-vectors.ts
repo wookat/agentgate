@@ -37,11 +37,20 @@ const MCP_MARKER_RE = /modelcontextprotocol|fastmcp|\bmcp[._-]?server\b|\bMcpSer
  */
 const STARTUP_PLUGIN_FILE = /(^|\/)\.(opencode|kilo(code)?)\/(plugin|plugins)\/[^/]+\.(ts|js)$|(^|\/)\.cline\/plugins\/.+\.(ts|js)$/i;
 
-/** Surface label for an auto-executed plugin/extension path, for finding messages. */
+/**
+ * Extensionless executables under a plugin `bin/` are added to the Bash
+ * tool's PATH and invokable as bare commands while the plugin is enabled.
+ * Only manifest-gated plugin bin files reach source scanning without an
+ * extension, so this pattern cannot fire on generic repo `bin/` trees.
+ */
+const PLUGIN_BIN_EXEC_FILE = /(^|\/)bin\/[^/.]+$/;
+
+/** Surface label + execution context for a plugin/extension path, for finding messages. */
 function startupSurfaceLabel(file: string): string {
-  if (COPILOT_EXTENSION_FILE.test(file)) return 'Copilot CLI extension';
-  if (/(^|\/)\.cline\//i.test(file)) return 'Cline plugin';
-  return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI plugin' : 'OpenCode plugin';
+  if (COPILOT_EXTENSION_FILE.test(file)) return 'Copilot CLI extension (auto-executed at startup)';
+  if (PLUGIN_BIN_EXEC_FILE.test(file)) return 'Plugin bin/ executable (on the Bash tool PATH while the plugin is enabled)';
+  if (/(^|\/)\.cline\//i.test(file)) return 'Cline plugin (auto-executed at startup)';
+  return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI plugin (auto-executed at startup)' : 'OpenCode plugin (auto-executed at startup)';
 }
 
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
@@ -125,7 +134,8 @@ export const rceVectorsRule: Rule = {
       return false;
     }
     const findings = [];
-    const content = /\.(sh|bash|zsh)$/i.test(file) ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
+    const isShellScript = /\.(sh|bash|zsh)$/i.test(file) || (PLUGIN_BIN_EXEC_FILE.test(file) && /^#!.*\b(sh|bash|zsh)\b/.test(rawContent));
+    const content = isShellScript ? maskEchoedStrings(maskQuotedHeredocs(rawContent)) : rawContent;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
     // strings run through the risky-command classifier; the generic text warning
     // here would only duplicate that (more accurate) finding.
@@ -141,7 +151,7 @@ export const rceVectorsRule: Rule = {
       // AG-SK rules cover the prompt surface), not a launch vector.
       const isRecipeProse = /\.(ya?ml|json)$/i.test(file) && parseGooseRecipeDoc(file, rawContent) !== undefined;
       const executable =
-        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file)) && !isRecipeProse && !isCommented(m.index ?? 0);
+        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) && !isRecipeProse && !isCommented(m.index ?? 0);
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
@@ -159,9 +169,9 @@ export const rceVectorsRule: Rule = {
         }),
       );
     }
-    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file))) {
+    if (EVAL_RE.test(content) && (MCP_MARKER_RE.test(content) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file))) {
       const m = content.match(EVAL_RE)!;
-      const startupPlugin = STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file);
+      const startupPlugin = STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file);
       findings.push(
         finding(this, {
           severity: 'medium',
@@ -169,7 +179,7 @@ export const rceVectorsRule: Rule = {
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
           message: startupPlugin
-            ? `${startupSurfaceLabel(file)} (auto-executed at startup) uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
+            ? `${startupSurfaceLabel(file)} uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review what it runs`
             : `Source uses a dynamic code-execution primitive ("${m[0].trim().slice(0, 40)}") — review how inputs reach it`,
         }),
       );

@@ -147,6 +147,26 @@ function isPluginComponentSkill(scanRoot: string, relPosix: string, cache: Map<s
   return false;
 }
 
+const PLUGIN_BIN_FILE = /(^|\/)bin\/[^/]+$/i;
+
+/**
+ * Files directly under a plugin root's `bin/` are added to the Bash tool's
+ * PATH and invokable as bare commands while the plugin is enabled, so their
+ * script content is an executable surface regardless of file extension.
+ * Same manifest gate as component markdown.
+ */
+function isPluginBinFile(scanRoot: string, relPosix: string, cache: Map<string, boolean>): boolean {
+  const m = PLUGIN_BIN_FILE.exec(relPosix);
+  if (!m) return false;
+  const root = relPosix.slice(0, m.index);
+  let hit = cache.get(root);
+  if (hit === undefined) {
+    hit = PLUGIN_META_NAMES.some((meta) => fs.existsSync(path.join(scanRoot, ...root.split('/').filter(Boolean), meta, 'plugin.json')));
+    cache.set(root, hit);
+  }
+  return hit;
+}
+
 interface PluginComponentDecl {
   files: Set<string>;
   dirs: string[];
@@ -227,7 +247,8 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
     const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(dir, relPosix, pluginRootCache) || isDeclaredPluginComponentMd(dir, relPosix, pluginDeclCache);
-    if (!isSkill && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
+    const isPluginBin = !isSkill && isPluginBinFile(dir, relPosix, pluginRootCache);
+    if (!isSkill && !isPluginBin && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
     if (!isSkill && SKILL_ONLY_DOT_DIRS.has(relPosix.split('/')[0]!) && !COPILOT_HOOKS_FILE.test(relPosix) && !COPILOT_SETTINGS_FILE.test(relPosix) && !PLUGIN_MANIFEST_FILE.test(relPosix) && !MARKETPLACE_CATALOG_FILE.test(relPosix) && !COPILOT_EXTENSION_FILE.test(relPosix)) continue;
     const settingsOnly = relPosix
       .split('/')
@@ -244,6 +265,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
     }
     if (stat.size > MAX_FILE_BYTES) continue;
     const content = fs.readFileSync(file, 'utf8');
+    if (isPluginBin && content.includes('\u0000')) continue;
     scannedFiles.push(file);
     // Posix-style so path-based rule heuristics (test/fixture trees) work on Windows too.
     for (const rule of rules) {
