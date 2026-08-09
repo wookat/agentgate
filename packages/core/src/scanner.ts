@@ -205,8 +205,28 @@ function componentDeclFromFields(fields: Record<string, unknown>): PluginCompone
   return any ? decl : null;
 }
 
-/** Marketplace catalog dirs whose `marketplace.json` entries can carry component declarations. */
-const MARKETPLACE_META_DIRS = ['.claude-plugin', '.github/plugin', '.factory-plugin', '.cursor-plugin'];
+/** Marketplace catalog files whose `plugins[]` entries can carry component declarations. */
+const MARKETPLACE_CATALOG_PATHS = [
+  '.claude-plugin/marketplace.json',
+  '.github/plugin/marketplace.json',
+  '.factory-plugin/marketplace.json',
+  '.cursor-plugin/marketplace.json',
+  '.agents/plugins/marketplace.json',
+  '.agents/plugins/api_marketplace.json',
+];
+
+/**
+ * Local plugin-source path from a marketplace entry `source`: a plain string
+ * (Claude Code) or the Codex object form `{ source: "local", path: "./..." }`.
+ * Remote sources (url/git/npm) return null.
+ */
+function localSourcePath(source: unknown): string | null {
+  if (typeof source === 'string') return source.includes('://') ? null : source;
+  if (typeof source !== 'object' || source === null) return null;
+  const obj = source as { source?: unknown; path?: unknown };
+  if (obj.source !== 'local' || typeof obj.path !== 'string') return null;
+  return obj.path;
+}
 
 interface MarketplaceDecls {
   /** Local plugin-entry source roots, posix-relative to the scan root ('' = catalog root). */
@@ -221,36 +241,35 @@ interface MarketplaceDecls {
  * the plugin's entire definition — the source needs no plugin.json at all).
  */
 function readMarketplaceDecls(ctx: PluginContext, prefix: string): MarketplaceDecls | null {
-  let doc: unknown;
-  for (const meta of MARKETPLACE_META_DIRS) {
-    const p = path.join(ctx.scanRoot, ...prefix.split('/').filter(Boolean), ...meta.split('/'), 'marketplace.json');
+  const out: MarketplaceDecls = { sourceRoots: new Set(), decls: new Map() };
+  for (const catalog of MARKETPLACE_CATALOG_PATHS) {
+    const p = path.join(ctx.scanRoot, ...prefix.split('/').filter(Boolean), ...catalog.split('/'));
     if (!fs.existsSync(p)) continue;
+    let doc: unknown;
     try {
       doc = JSON.parse(fs.readFileSync(p, 'utf8'));
     } catch {
-      return null;
+      continue;
     }
-    break;
-  }
-  const plugins = (doc as { plugins?: unknown } | undefined)?.plugins;
-  if (!Array.isArray(plugins)) return null;
-  const out: MarketplaceDecls = { sourceRoots: new Set(), decls: new Map() };
-  for (const entry of plugins) {
-    if (typeof entry !== 'object' || entry === null) continue;
-    const source = (entry as { source?: unknown }).source;
-    if (typeof source !== 'string' || source.includes('://')) continue;
-    const norm = source.replace(/^\.\//, '').replace(/\/+$/, '').replace(/^\.$/, '');
-    if (norm.startsWith('/') || norm.split('/').includes('..')) continue;
-    const rootPrefix = [prefix, norm].filter(Boolean).join('/');
-    out.sourceRoots.add(rootPrefix);
-    const decl = componentDeclFromFields(entry as Record<string, unknown>);
-    if (!decl) continue;
-    const prev = out.decls.get(rootPrefix);
-    if (prev) {
-      for (const f of decl.files) prev.files.add(f);
-      prev.dirs.push(...decl.dirs);
-      prev.globs.push(...decl.globs);
-    } else out.decls.set(rootPrefix, decl);
+    const plugins = (doc as { plugins?: unknown } | undefined)?.plugins;
+    if (!Array.isArray(plugins)) continue;
+    for (const entry of plugins) {
+      if (typeof entry !== 'object' || entry === null) continue;
+      const source = localSourcePath((entry as { source?: unknown }).source);
+      if (source === null) continue;
+      const norm = source.replace(/^\.\//, '').replace(/\/+$/, '').replace(/^\.$/, '');
+      if (norm.startsWith('/') || norm.split('/').includes('..')) continue;
+      const rootPrefix = [prefix, norm].filter(Boolean).join('/');
+      out.sourceRoots.add(rootPrefix);
+      const decl = componentDeclFromFields(entry as Record<string, unknown>);
+      if (!decl) continue;
+      const prev = out.decls.get(rootPrefix);
+      if (prev) {
+        for (const f of decl.files) prev.files.add(f);
+        prev.dirs.push(...decl.dirs);
+        prev.globs.push(...decl.globs);
+      } else out.decls.set(rootPrefix, decl);
+    }
   }
   return out.sourceRoots.size ? out : null;
 }
