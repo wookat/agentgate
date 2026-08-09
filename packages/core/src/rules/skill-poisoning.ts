@@ -1513,7 +1513,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             line,
-            message: `Skill dynamic-context command ${hit.risk}: "${command.slice(0, 80)}" — it runs before anyone reviews the rendered prompt`,
+            message: `Skill dynamic-context command ${hit.risk}: "${snippet(command, 80)}" — it runs before anyone reviews the rendered prompt`,
           }),
         );
       }
@@ -1561,7 +1561,7 @@ export const skillDynamicContextRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `Kiro agent hook command ${hit.risk.replace('at skill load time', 'automatically on IDE events (file save, prompt submit, tool use)')}: "${command.slice(0, 80)}"`,
+          message: `Kiro agent hook command ${hit.risk.replace('at skill load time', 'automatically on IDE events (file save, prompt submit, tool use)')}: "${snippet(command, 80)}"`,
         }),
       ];
     }
@@ -1584,7 +1584,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Codex hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, tool use, prompt submit)')}: "${command.slice(0, 80)}"`,
+            message: `Codex hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, tool use, prompt submit)')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1629,7 +1629,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Agent Plugins manifest extension declares a hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+            message: `Agent Plugins manifest extension declares a hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs the plugin')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1650,7 +1650,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Agent ${kind}-config-shaped file declares a command ${hit.risk.replace('at skill load time', 'that runs automatically if this config is referenced by a plugin manifest')}: "${command.slice(0, 80)}"`,
+            message: `Agent ${kind}-config-shaped file declares a command ${hit.risk.replace('at skill load time', 'that runs automatically if this config is referenced by a plugin manifest')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1675,7 +1675,7 @@ export const skillDynamicContextRule: Rule = {
               target: file,
               file,
               ...(line > 0 ? { line } : {}),
-              message: `Marketplace plugin "${typeof name === 'string' ? name : 'unknown'}" declares an inline hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs it')}: "${command.slice(0, 80)}"`,
+              message: `Marketplace plugin "${typeof name === 'string' ? name : 'unknown'}" declares an inline hook command ${hit.risk.replace('at skill load time', 'that runs automatically on lifecycle events for everyone who installs it')}: "${snippet(command, 80)}"`,
             }),
           );
         }
@@ -1695,7 +1695,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Kiro hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
+            message: `Kiro hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1712,7 +1712,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `VS Code folderOpen task ${hit.risk.replace('at skill load time', 'automatically when the folder is opened')}: "${command.slice(0, 80)}"`,
+            message: `VS Code folderOpen task ${hit.risk.replace('at skill load time', 'automatically when the folder is opened')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1729,7 +1729,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Antigravity hook command ${hit.risk.replace('at skill load time', 'automatically on tool/model lifecycle events')}: "${command.slice(0, 80)}"`,
+            message: `Antigravity hook command ${hit.risk.replace('at skill load time', 'automatically on tool/model lifecycle events')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1747,7 +1747,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${command.slice(0, 80)}"`,
+            message: `Cursor hook command ${hit.risk.replace('at skill load time', 'automatically during agent-loop stages')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1764,7 +1764,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Cursor cloud-agent environment "${key}" command ${hit.risk.replace('at skill load time', 'automatically when a cloud agent builds or boots this repo')}: "${command.slice(0, 80)}"`,
+            message: `Cursor cloud-agent environment "${key}" command ${hit.risk.replace('at skill load time', 'automatically when a cloud agent builds or boots this repo')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1782,7 +1782,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Crush hook command ${hit.risk.replace('at skill load time', 'automatically on hook events (e.g. PreToolUse)')}: "${command.slice(0, 80)}"`,
+            message: `Crush hook command ${hit.risk.replace('at skill load time', 'automatically on hook events (e.g. PreToolUse)')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1799,7 +1799,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Copilot CLI hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, prompt submit, tool use)')}: "${command.slice(0, 80)}"`,
+            message: `Copilot CLI hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, prompt submit, tool use)')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1817,7 +1817,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Codex hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, tool use, prompt submit)')}: "${command.slice(0, 80)}"`,
+            message: `Codex hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events (session start, tool use, prompt submit)')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1835,7 +1835,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Factory Droid hook command ${hit.risk.replace('at skill load time', 'automatically on Droid lifecycle events (session start, tool use, prompt submit)')}: "${command.slice(0, 80)}"`,
+            message: `Factory Droid hook command ${hit.risk.replace('at skill load time', 'automatically on Droid lifecycle events (session start, tool use, prompt submit)')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1856,7 +1856,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Claude Code plugin monitor command ${hit.risk.replace('at skill load time', 'as a persistent background process for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+            message: `Claude Code plugin monitor command ${hit.risk.replace('at skill load time', 'as a persistent background process for everyone who installs the plugin')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1876,7 +1876,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Claude Code plugin LSP server command ${hit.risk.replace('at skill load time', 'automatically while matching files are edited, for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+            message: `Claude Code plugin LSP server command ${hit.risk.replace('at skill load time', 'automatically while matching files are edited, for everyone who installs the plugin')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1897,7 +1897,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Claude Code plugin hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events for everyone who installs the plugin')}: "${command.slice(0, 80)}"`,
+            message: `Claude Code plugin hook command ${hit.risk.replace('at skill load time', 'automatically on lifecycle events for everyone who installs the plugin')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1916,7 +1916,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `${client} hook command ${hit.risk.replace('at skill load time', 'automatically on agent-loop events for anyone opening this project')}: "${command.slice(0, 80)}"`,
+            message: `${client} hook command ${hit.risk.replace('at skill load time', 'automatically on agent-loop events for anyone opening this project')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1933,7 +1933,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Amazon Q agent hook command ${hit.risk.replace('at skill load time', 'automatically on agent lifecycle events')}: "${command.slice(0, 80)}"`,
+            message: `Amazon Q agent hook command ${hit.risk.replace('at skill load time', 'automatically on agent lifecycle events')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1949,7 +1949,7 @@ export const skillDynamicContextRule: Rule = {
             target: file,
             file,
             ...(line > 0 ? { line } : {}),
-            message: `Claude Code hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${command.slice(0, 80)}"`,
+            message: `Claude Code hook command ${hit.risk.replace('at skill load time', 'automatically on session events')}: "${snippet(command, 80)}"`,
           }),
         );
       }
@@ -1973,7 +1973,7 @@ export const skillDynamicContextRule: Rule = {
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `Claude Code "${key}" command ${hit.risk.replace('at skill load time', 'automatically through the system shell')}: "${value.slice(0, 80)}"`,
+          message: `Claude Code "${key}" command ${hit.risk.replace('at skill load time', 'automatically through the system shell')}: "${snippet(value, 80)}"`,
         }),
       );
     }

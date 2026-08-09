@@ -1,4 +1,4 @@
-import { Rule, finding, toolText } from './rule.js';
+import { Rule, finding, snippet, toolText } from './rule.js';
 
 /** Zero-width / bidi / tag characters that can hide instructions from human review. */
 const HIDDEN_UNICODE =
@@ -81,7 +81,7 @@ export const toolPoisoningRule: Rule = {
           finding(this, {
             severity: 'critical',
             target: `${serverName}/${tool.name}`,
-            message: `Tool "${tool.name}" description matches prompt-injection pattern (${label}): "${m[0].slice(0, 80)}"`,
+            message: `Tool "${tool.name}" description matches prompt-injection pattern (${label}): "${snippet(m[0], 80)}"`,
           }),
         );
       }
