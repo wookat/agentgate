@@ -123,6 +123,16 @@ function escapeAnnotationProp(s: string): string {
 const ANNOTATIONS_PER_LEVEL = 10;
 
 /**
+ * GitHub maps annotation `file=` paths relative to the workspace root, so
+ * absolute paths under cwd are relativized; paths outside the workspace are
+ * left as-is (GitHub cannot map them either way).
+ */
+function annotationPath(file: string): string {
+  const rel = path.relative(process.cwd(), file);
+  return rel.startsWith('..') || path.isAbsolute(rel) ? file : rel.split(path.sep).join('/');
+}
+
+/**
  * GitHub Actions workflow-command annotations (`::error file=…,line=…::msg`),
  * so findings surface inline on the PR diff. Emitted only when running under
  * GitHub Actions. Capped at 10 per level (GitHub's per-step display limit) in
@@ -140,7 +150,7 @@ export function renderGitHubAnnotations(findings: Finding[]): string {
     }
     perLevel[level] += 1;
     const props = [
-      ...(f.file ? [`file=${escapeAnnotationProp(f.file)}`] : []),
+      ...(f.file ? [`file=${escapeAnnotationProp(annotationPath(f.file))}`] : []),
       ...(f.line ? [`line=${f.line}`] : []),
       `title=${escapeAnnotationProp(`agentgate ${f.ruleId} (${f.severity})`)}`,
     ].join(',');
@@ -165,7 +175,7 @@ export function renderDriftAnnotations(entries: DriftEntry[]): string {
     .slice(0, ANNOTATIONS_PER_LEVEL)
     .map((e) => {
       const props = [
-        ...(e.file ? [`file=${escapeAnnotationProp(e.file)}`] : []),
+        ...(e.file ? [`file=${escapeAnnotationProp(annotationPath(e.file))}`] : []),
         `title=${escapeAnnotationProp(`agentgate drift (${e.kind})`)}`,
       ].join(',');
       return `::error ${props}::${escapeAnnotation(e.detail)}`;

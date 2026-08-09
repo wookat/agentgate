@@ -46,6 +46,14 @@ describe('renderGitHubAnnotations', () => {
     expect(lines[0]).toContain('(critical)');
     expect(lines.filter((l) => l.startsWith('::error '))).toHaveLength(10);
   });
+
+  it('relativizes absolute file paths under cwd for GitHub file mapping', () => {
+    const inside: Finding = { ...finding(1, 'high'), file: `${process.cwd()}/skills/inside.md` };
+    const outside: Finding = { ...finding(2, 'high'), file: '/somewhere/else/outside.md' };
+    const lines = renderGitHubAnnotations([inside, outside]).split('\n');
+    expect(lines[0]).toContain('file=skills/inside.md,');
+    expect(lines[1]).toContain('file=/somewhere/else/outside.md,');
+  });
 });
 
 describe('renderDriftAnnotations', () => {
