@@ -24,8 +24,23 @@ function isPlaceholder(value: string): boolean {
     /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|demo)(\b|_)/i.test(value) ||
     // AWS reserves credentials ending in the literal EXAMPLE for documentation
     // (AKIAIOSFODNN7EXAMPLE, wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY).
-    /EXAMPLE(KEY)?$/.test(value)
+    /EXAMPLE(KEY)?$/.test(value) ||
+    // Keyboard-run dummies: a body built entirely from sequential runs
+    // (sk-abcdef1234567890abcdef) is demo filler, not key material.
+    /^([a-z]{1,8}-)*(abcdef(gh)?|0?1234567(89?0?)?|deadbeef)+$/i.test(value)
   );
+}
+
+/** Supabase anon/publishable JWTs are designed to be shipped to clients. */
+function isPublishableJwt(value: string): boolean {
+  const payload = value.split('.')[1];
+  if (!payload) return false;
+  try {
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    return /"iss"\s*:\s*"supabase"/.test(decoded) && /"role"\s*:\s*"anon"/.test(decoded);
+  } catch {
+    return false;
+  }
 }
 
 function looksLikeSecret(value: string): boolean {
@@ -106,13 +121,19 @@ export const credentialLeakRule: Rule = {
       if (m) {
         if (isPlaceholder(m[0]) || scannerConfig) continue;
         const line = content.slice(0, m.index ?? 0).split('\n').length;
+        // API docs quote sample tokens under an `example:` key (OpenAPI/JSON Schema).
+        const lineText = content.split('\n')[line - 1] ?? '';
+        const matchCol = lineText.indexOf(m[0]);
+        const exampleValue = /(\b|")examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
+        const publishable = isPublishableJwt(m[0]);
+        const quiet = testPath || exampleValue || publishable;
         findings.push(
           finding(this, {
-            severity: testPath ? 'low' : 'high',
+            severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}`,
           }),
         );
       }

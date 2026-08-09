@@ -53,6 +53,27 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'real.py')!.severity).toBe('high');
   });
 
+  it('skips sequential-run dummies, grades example: values and Supabase anon JWTs low (AG-CL-001)', () => {
+    fs.writeFileSync(path.join(dir, 'demo.py'), 'api_key = "sk-abcdef1234567890abcdef"\n');
+    const anonJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
+      '{"iss":"supabase","ref":"abcdxyz","role":"anon","iat":1,"exp":2}',
+    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    fs.writeFileSync(path.join(dir, 'client.js'), `const SUPABASE_KEY = "${anonJwt}";\n`);
+    const svcJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
+      '{"iss":"supabase","ref":"abcdxyz","role":"service_role","iat":1,"exp":2}',
+    ).toString('base64url')}.aaaaaaaaaaaaaaaa`;
+    fs.writeFileSync(path.join(dir, 'server.js'), `const SUPABASE_SECRET = "${svcJwt}";\n`);
+    fs.writeFileSync(
+      path.join(dir, 'openapi.yaml'),
+      'token:\n  type: string\n  example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbGFiY2RlZmdoaWprbG1ub3A.c2lnbmF0dXJlYWJjZGVmZ2g\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.some((f) => f.file === 'demo.py')).toBe(false);
+    expect(hits.find((f) => f.file === 'client.js')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'server.js')!.severity).toBe('high');
+    expect(hits.find((f) => f.file === 'openapi.yaml')!.severity).toBe('low');
+  });
+
   it('exfiltration pattern does not span lines onto unrelated keywords (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'review'), { recursive: true });
     fs.writeFileSync(
