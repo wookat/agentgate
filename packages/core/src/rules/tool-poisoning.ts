@@ -37,8 +37,11 @@ export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   { re: /\bdo\s+not\s+(tell|mention|inform|reveal|show)\s+(this\s+to\s+)?the\s+user\b(?!\s+to\s)(?!\s*["'\u201c])(?![^.\n]*\b(until|only)\b)/i, label: 'concealment instruction' },
   { re: /\bbefore\s+using\s+this\s+tool[^.]*\b(read|send|pass|include)\b/i, label: 'cross-tool coercion' },
   // Requires a sensitive target: "you must read/include the <reference|extension> file" is ordinary
-  // skill-doc structure, while real exfiltration names keys, tokens, or credential paths.
-  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*\b(ssh|key|token|secret|credential|\.env|id_rsa)/i, label: 'exfiltration instruction' },
+  // skill-doc structure, while real exfiltration names keys, tokens, or credential paths. Generic
+  // words (key/token/secret) only count with credential context — a qualifier ("ssh keys",
+  // "your token") or a file target ("token file") — so "Keyspaces", "condition key",
+  // "key tradeoffs", "thousands of tokens", and "this token injection" stay silent.
+  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*(\b(ssh|credentials?|id_rsa)\b|\.env\b|\b(api|access|auth|private|gpg|aws|oauth|bearer|session|user(?:'s)?|your|my)\s+(keys?|tokens?|secrets?)\b|\b(keys?|tokens?|secrets?)\s+files?\b)/i, label: 'exfiltration instruction' },
   { re: /\bsidenote\b|\bconversation_history\b/i, label: 'known poisoning marker' },
 ];
 
