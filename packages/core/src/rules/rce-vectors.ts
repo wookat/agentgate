@@ -257,6 +257,9 @@ export const rceVectorsRule: Rule = {
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && isDenyListEntry(content, m.index ?? 0);
+      // The only remaining match sits on a `#`-comment line of an otherwise
+      // executable script — an installer quoting its own one-liner, never run.
+      const commentOnly = !executable && isCommented(m.index ?? 0) && isExecutableFile(file);
       // Test suites quote curl|sh strings as fixtures (a hook handler's
       // deny-test, sandbox-security specs, testdata payloads) — nothing there
       // executes; still reported, but quietly.
@@ -265,7 +268,7 @@ export const rceVectorsRule: Rule = {
         (/(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file));
       findings.push(
         finding(this, {
-          severity: executable ? 'critical' : denyListed || testFixture ? 'low' : 'medium',
+          severity: executable ? 'critical' : denyListed || testFixture || commentOnly ? 'low' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
@@ -273,9 +276,11 @@ export const rceVectorsRule: Rule = {
             ? 'Source pipes a remote download into an interpreter (curl|sh pattern)'
             : denyListed
               ? 'Text contains a curl|sh pattern under a deny/block list key — likely a defensive control; confirm it blocks rather than runs'
-              : testFixture
-                ? 'Text contains a curl|sh pattern — in a test/fixture path, likely a quoted test payload; confirm it is never executed'
-                : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
+              : commentOnly
+                ? 'Comment mentions a curl|sh pattern — a commented line never executes; usually the script quoting its own install one-liner'
+                : testFixture
+                  ? 'Text contains a curl|sh pattern — in a test/fixture path, likely a quoted test payload; confirm it is never executed'
+                  : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }
