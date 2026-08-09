@@ -1,0 +1,47 @@
+{
+ "id": "MCPA-2026-0092",
+ "title": "LudusMCP insert_creds_range_config path traversal (CVE-2026-19366)",
+ "summary": "LudusMCP (npm: ludus-mcp) up to and including 1.0.24 is vulnerable to path traversal: src/tools/insertCredsRangeConfig.ts (component insert_creds_range_config) resolves the configPath and outputPath arguments against the range-config-templates directory with path.join/path.resolve and no traversal sanitization, so a poisoned tool call can read from and write credential-bearing config output to files outside the intended directory (verified by unpacking the published ludus-mcp@1.0.24 tarball). The maintainer was notified via a public issue but no fixed release exists as of 2026-08-09, so this is recorded as last_affected 1.0.24.",
+ "type": "path-traversal",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19366",
+  "GHSA-hj87-3g9g-3832"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-22"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "ludus-mcp",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "1.0.24"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-hj87-3g9g-3832"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19366"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/NocteDefensor/LudusMCP"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-09"
+ }
+}
