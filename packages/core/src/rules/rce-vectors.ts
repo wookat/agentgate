@@ -19,11 +19,13 @@ const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell',
 const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:\.(?!\s)|[^.|;&\n]|\\\n)*\s(?:\.(?!\s)|[^.|;&\n]|\\\n)*(?<!\\)\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
- * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
+ * char, otherwise every `regex.exec(input)` in a codebase is reported. A hyphen
+ * before it is a compound noun in prose ("code-exec (…)", "olmo-eval (…)"),
+ * never a call site — hyphens are not valid in identifiers. A bare
  * `child_process` import is likewise only interesting next to an actual exec/spawn call.
  */
 const EVAL_RE =
-  /(^|[^.\w])(eval|exec)\s*\(|new\s+Function\s*\(|\bexecSync\s*\(|\bspawnSync\s*\(\s*['"`](sh|bash)|\bchild_process\b[\s\S]{0,400}?\b(exec|execFile|spawn)(Sync)?\s*\(/;
+  /(^|[^.\w-])(eval|exec)\s*\(|new\s+Function\s*\(|\bexecSync\s*\(|\bspawnSync\s*\(\s*['"`](sh|bash)|\bchild_process\b[\s\S]{0,400}?\b(exec|execFile|spawn)(Sync)?\s*\(/;
 
 const EXEC_TOOL_RE = new RegExp(
   `\\b${verbAlt(['execute', 'run', 'eval', 'invoke'])}\\b[^.]{0,40}\\b(shell|command|commands|script|scripts|code|python|javascript|sql)\\b|\\bshell[-_ ]?(command|exec)\\b`,

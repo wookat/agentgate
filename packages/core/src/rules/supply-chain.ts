@@ -405,13 +405,15 @@ export const supplyChainRule: Rule = {
         continue;
       }
       if (isPinned(spec)) continue;
+      // Strip a trailing tag/range (`@latest`, `@^1`) so the pin example stays a valid spec.
+      const bareName = spec.replace(/(?!^)@[^@/]*$/, '');
       findings.push(
         finding(this, {
           severity: 'medium',
           target: file,
           file,
           ...(line > 0 ? { line } : {}),
-          message: `${engine} plugin "${spec}" is auto-installed from npm and executed at startup without a pinned version — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${spec}@1.2.3)`,
+          message: `${engine} plugin "${spec}" is auto-installed from npm and executed at startup without a pinned version — every launch fetches whatever is latest (rug-pull / compromised-release exposure). Pin an exact version (e.g. ${bareName}@1.2.3)`,
         }),
       );
     }

