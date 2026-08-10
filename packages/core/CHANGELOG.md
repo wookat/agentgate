@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.36
+
+### Patch Changes
+
+- d74769a: Round 377 advisories: MCPA-2026-0093 (KoboldCPP-MCP-Server / npm server-koboldai SSRF, CVE-2026-19373) and MCPA-2026-0094 (article-scraper-mcp PyPI SSRF, CVE-2026-19375) — 106 → 108.
+
 ## 0.67.35
 
 ### Patch Changes
