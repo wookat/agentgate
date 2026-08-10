@@ -103,6 +103,10 @@
   "GHSA-q9qj-38cq-3792": "automateyournetwork/MCPyATS: GitHub-only project, not published to npm or PyPI (GAP-ROUND-358)",
   "GHSA-5r3x-hrv2-fg58": "PV-Bhat/gemsuite-mcp: GitHub-only, package.json name gemsuite-mcp never published to npm (GAP-ROUND-374)",
   "GHSA-rmrp-j9qh-xwh9": "KS-GEN-AI/jira-mcp-server: GitHub-only, package.json name jira_communication_server never published (the npm/PyPI jira-mcp-server packages are different projects) (GAP-ROUND-374)",
-  "GHSA-xm38-q6p9-jrgg": "Ichigo3766/image-gen-mcp: GitHub-only, package.json name image-gen never published to npm (the PyPI image-gen-mcp is simonChoi034's different project) (GAP-ROUND-374)"
+  "GHSA-xm38-q6p9-jrgg": "Ichigo3766/image-gen-mcp: GitHub-only, package.json name image-gen never published to npm (the PyPI image-gen-mcp is simonChoi034's different project) (GAP-ROUND-374)",
+  "GHSA-g33v-9g6g-xm9p": "adafap/api-mcp: GitHub-only (commit-addressed range); the npm api-mcp is an empty 'Reserved for future use' placeholder with none of the project code (GAP-ROUND-377)",
+  "GHSA-pxv6-pv74-gcg3": "Handwriting-OCR/handwriting-ocr-mcp-server: GitHub-only, package.json name handwriting-ocr never published to npm (GAP-ROUND-377)",
+  "GHSA-g57q-682f-hr5f": "Nikolaibibo/claude-comfyui-mcp: GitHub-only, package.json name comfyui-mcp maps to artokun's different npm project (GAP-ROUND-377)",
+  "GHSA-w5g7-c885-pm69": "bartekke8it56w2/new-mcp: GitHub-only, package.json name @modelcontextprotocol/server-gemini-thinking never published to npm (GAP-ROUND-377)"
  }
 }
