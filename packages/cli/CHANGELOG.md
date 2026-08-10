@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.52
+
+### Patch Changes
+
+- a9e2b93: AG-TP-001 grades trojan-grade hidden Unicode characters low when they sit on a comment line whose surrounding prose discusses hidden-unicode attacks (bidi/RLO/homoglyph documentation in security tooling). Comment lines without attack prose, and code lines anywhere in the file, stay high — the scanner now surfaces the first non-defensive hit instead of stopping at the first hit.
+- Updated dependencies [a9e2b93]
+  - mcp-agentgate-core@0.67.52
+
 ## 0.67.51
 
 ### Patch Changes
