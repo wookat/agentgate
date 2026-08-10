@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.35
+
+### Patch Changes
+
+- dfe38a4: Round 376 precision: AG-RC-001 recognizes deny/guard pattern tables declared by assignment (`const denyBashPatterns = [`, `DANGEROUS = [`) as deny-list data, scanning past rule-table entry fields (`name:`/`re:`/`pattern:`) to the enclosing declaration.
+- Updated dependencies [dfe38a4]
+  - mcp-agentgate-core@0.67.35
+
 ## 0.67.34
 
 ### Patch Changes
