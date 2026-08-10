@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.47
+
+### Patch Changes
+
+- f4b2b99: Round 393 precision: AG-RC-001 no longer reports hyphenated compound nouns in prose ("code-exec (…)", "olmo-eval (…)") as dynamic code-execution primitives, and AG-SC-001 pin advice for unpinned OpenCode/Kilo npm plugins strips the trailing tag so the example is a valid spec (`@scope/plugin@1.2.3`, not `@scope/plugin@latest@1.2.3`).
+- Updated dependencies [f4b2b99]
+  - mcp-agentgate-core@0.67.47
+
 ## 0.67.46
 
 ### Patch Changes
