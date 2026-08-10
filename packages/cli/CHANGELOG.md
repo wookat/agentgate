@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.46
+
+### Patch Changes
+
+- 72d63b1: Round-391 fresh-corpus precision: AG-RC-001 treats TOML rule-test expectation keys (should*match/must_not_match) as pattern data and grades backtick-quoted curl|sh prose in yaml/toml data files as text; AG-SS-001 recognizes deny-named domain config (denied_domains/deniedDomains/\_DENY*) and guard wording as defensive context and grades evals/ trees quietly; AG-CL-001 grades nosec/fake-fixture-commented values and the canonical jwt.io token low.
+- Updated dependencies [72d63b1]
+  - mcp-agentgate-core@0.67.46
+
 ## 0.67.45
 
 ### Patch Changes
