@@ -10,7 +10,11 @@ const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell',
 // inline program or module with the download on stdin as data (version-lookup
 // and pretty-print idioms), so an inline-program/module flag right after the
 // interpreter is excluded; a bare `| bash -` still matches.
-const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:[^|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
+// A real pipeline fetches *something*: the span must contain whitespace (a bare
+// `curl|bash` token is a category label, not a command) and may not cross a
+// sentence boundary (`.` followed by whitespace) — prose that lists commands and
+// later says "pipe patterns like | sh" is describing patterns, not running one.
+const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:\.(?!\s)|[^.|;&\n]|\\\n)*\s(?:\.(?!\s)|[^.|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
  * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
