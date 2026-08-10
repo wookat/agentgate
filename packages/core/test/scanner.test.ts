@@ -1614,6 +1614,51 @@ describe('scanRepo', () => {
     expect(ss.find((f) => f.file === 'imds_steal.py')!.severity).toBe('high');
   });
 
+  it('recognizes boolean host-classifier predicates comparing the metadata literal (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'local-only-host.ts'),
+      [
+        'export function isUnsafeHostedOutboundHost(rawHost: string): boolean {',
+        '  const host = rawHost.toLowerCase();',
+        '  if (',
+        '    host === "metadata" ||',
+        '    host === "metadata.google.internal" ||',
+        '    host === "metadata.goog"',
+        '  ) {',
+        '    return true;',
+        '  }',
+        '  return false;',
+        '}',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'favicon-host.ts'),
+      [
+        'function isPublicHttpHost(host: string): boolean {',
+        '  const ipv4 = /^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$/.exec(host);',
+        '  if (ipv4) {',
+        '    const a = Number(ipv4[1]);',
+        '    const b = Number(ipv4[2]);',
+        '    if (a === 169 && b === 254) return false; // link-local (incl. cloud metadata 169.254.169.254)',
+        '  }',
+        '  return true;',
+        '}',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'imds_region.py'),
+      [
+        'import urllib.request',
+        'req = urllib.request.Request("http://169.254.169.254/latest/api/token", method="PUT")',
+        'token = urllib.request.urlopen(req, timeout=1).read().decode()',
+      ].join('\n'),
+    );
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'local-only-host.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'favicon-host.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'imds_region.py')!.severity).toBe('high');
+  });
+
   it('grades Firebase web-app configs and postman/ paths quietly (AG-CL-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'app.config.ts'),
