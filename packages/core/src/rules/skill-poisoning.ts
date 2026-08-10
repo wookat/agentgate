@@ -1387,7 +1387,7 @@ const CODEX_HOOKS_FILE = /(^|\/)\.codex\/hooks\.json$/i;
 
 /** Plugin hook config (`hooks/hooks.json` in plugin root) and plugin manifests with inline hooks (Claude Code `.claude-plugin/`, Copilot CLI `.plugin/` and `.github/plugin/`, Factory Droid `.factory-plugin/`, Codex `.codex-plugin/` and `.cursor-plugin/`). */
 const PLUGIN_HOOKS_FILE = /(^|\/)hooks\/hooks\.json$/i;
-export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin|\.goose-plugin)\/plugin\.json$/i;
+export const PLUGIN_MANIFEST_FILE = /(^|\/)(\.claude-plugin|\.plugin|\.github\/plugin|\.factory-plugin|\.codex-plugin|\.cursor-plugin|\.goose-plugin|\.qoder-plugin)\/plugin\.json$/i;
 /** Agent Plugins spec (agent-plugins.org) manifests: a root-level `plugin.json` whose `$schema` carries this prefix is a portable plugin manifest with implicit `./skills` and `./mcp.json`, plus per-client `extensions` overlays (Codex reads `com.openai` as a legacy manifest for hooks). */
 export const AGENT_PLUGIN_SCHEMA_PREFIX = 'https://agent-plugins.org/schemas/';
 const PLUGIN_LSP_FILE = /(^|\/)(\.lsp\.json|lsp-config\/servers\.json)$/i;

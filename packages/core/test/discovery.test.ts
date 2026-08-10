@@ -719,6 +719,18 @@ describe('discoverConfigFiles', () => {
     expect(servers.map((s) => s.name).sort()).toEqual(['mem', 'root-srv']);
   });
 
+  it('finds mcpServers declared by Qoder plugin manifests (.qoder-plugin/plugin.json)', () => {
+    const project = path.join(dir, 'proj-qoder-plugin');
+    fs.mkdirSync(path.join(project, '.qoder-plugin'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, '.qoder-plugin', 'plugin.json'),
+      JSON.stringify({ name: 'qtools', mcpServers: { qtools: { command: 'npx', args: ['-y', 'qtools-mcp'] } } }),
+    );
+    const found = discoverConfigFiles({ homeDir: dir, projectDir: project, platform: 'linux' });
+    const servers = found.flatMap((f) => parseConfigFile(f));
+    expect(servers.map((s) => s.name)).toEqual(['qtools']);
+  });
+
   it('finds the other Codex marketplace manifests (.agents/plugins/api_marketplace.json, .cursor-plugin/marketplace.json)', () => {
     const project = path.join(dir, 'proj-codex-markets');
     fs.mkdirSync(path.join(project, '.agents', 'plugins'), { recursive: true });
