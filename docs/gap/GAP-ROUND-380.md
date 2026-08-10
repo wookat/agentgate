@@ -28,9 +28,9 @@ added, r379). v0.67.32 and v0.67.36 shipped and were close-looped.
   r371-378 precision work applying to our own fixtures; all expected
   self-hits).
 - Advisory database: 109 entries; production consistent — API count 109
-  after the #563 deploy, website feed 109 items, site 200. (API returned
-  a transient 0-length response mid-deploy during collection; re-query
-  confirmed 109.)
+  after the #563 deploy, website feed 109 items, site 200. (The API
+  rejects unknown query params by design — r29 — so cache-busting used the
+  bare endpoint.)
 - Advisory window: authenticated watch clean after the r379 ignore fix;
   npm export ETag changed once this block (r379, triaged fully), PyPI
   unchanged since r374.
