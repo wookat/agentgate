@@ -181,6 +181,9 @@ function isMutableMarketplaceSource(src: MarketplaceSource): boolean {
   if (src.source === 'npm') return !(typeof src.version === 'string' && EXACT_NPM_VERSION.test(src.version));
   if (src.source === 'archive') return !(typeof src.sha256 === 'string' && /^[0-9a-f]{64}$/i.test(src.sha256));
   if (!['github', 'git', 'url', 'git-subdir'].includes(src.source)) return false;
+  // A schemeless relative url ("./", "../plugin") is repo-local content shipped
+  // with the catalog — same trust boundary as a local path source, not a remote fetch.
+  if (src.source === 'url' && typeof src.url === 'string' && !/^[a-z][a-z0-9+.-]*:\/\//i.test(src.url) && !src.url.startsWith('//')) return false;
   if (typeof src.sha === 'string' && /^[0-9a-f]{7,40}$/i.test(src.sha)) return false;
   return !(typeof src.ref === 'string' && VERSION_REF.test(src.ref));
 }

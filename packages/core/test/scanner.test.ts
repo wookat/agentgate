@@ -2861,15 +2861,19 @@ describe('scanRepo', () => {
           { name: 'pinned-sha', source: { source: 'github', repo: 'acme/pinned', sha: 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678' } },
           { name: 'release-ref', source: { source: 'url', url: 'https://github.com/acme/rel.git', ref: 'v2.1.0' } },
           { name: 'local-plugin', source: './plugins/local-plugin' },
+          { name: 'relative-url', source: { source: 'url', url: './' } },
+          { name: 'relative-url-parent', source: { source: 'url', url: '../shared/plugin' } },
+          { name: 'remote-url', source: { source: 'url', url: 'https://plugins.example.com/latest' } },
         ],
       }),
     );
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
-    expect(hits).toHaveLength(2);
+    expect(hits).toHaveLength(3);
     expect(hits.every((f) => f.severity === 'medium')).toBe(true);
     expect(hits.map((f) => f.message)).toEqual([
       expect.stringContaining('"deploy-helper"'),
       expect.stringContaining('"branch-tracker"'),
+      expect.stringContaining('"remote-url"'),
     ]);
   });
 
