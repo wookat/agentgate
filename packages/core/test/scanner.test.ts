@@ -1545,6 +1545,40 @@ describe('scanRepo', () => {
     expect(ss.find((f) => f.file === 'harvest.sh')!.severity).toBe('high');
   });
 
+  it('recognizes noun-first SSRF-protection headers and camelCase block identifiers (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'ssrf_page.py'),
+      [
+        '"""SSRF Protection page — network request filtering and IP blocking."""',
+        '',
+        'CORE_PROTECTIONS = {',
+        '    "Private IP Ranges": ["10.0.0.0/8", "127.0.0.0/8"],',
+        '    "Cloud Metadata Endpoints": [',
+        '        "169.254.169.254",',
+        '        "metadata.google.internal",',
+        '    ],',
+        '}',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'liveness-check.mjs'),
+      [
+        'const blockCases = [',
+        "  ['http://[::1]/', 'IPv6 loopback'],",
+        "  ['http://[::ffff:169.254.169.254]/', 'IPv4-mapped IPv6 link-local (cloud metadata)'],",
+        '];',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'harvest.sh'),
+      'TOKEN=$(curl -s http://169.254.169.254/latest/api/token)\n',
+    );
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'ssrf_page.py')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'liveness-check.mjs')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'harvest.sh')!.severity).toBe('high');
+  });
+
   it('grades Firebase web-app configs and postman/ paths quietly (AG-CL-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'app.config.ts'),
