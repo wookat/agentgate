@@ -102,8 +102,9 @@ export const ssrfRule: Rule = {
     // safety-rule tables name themselves "trigger patterns" for unsafe actions.
     const nearWindow = allLines.slice(Math.max(0, line - 11), line + 3).join('\n');
     const blocklistNearby =
-      /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
-      /\b(Denied|Deny|Blocked|Restricted)[A-Z]/.test(nearWindow) ||
+      /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|danger(ous)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
+      /\b(Denied|Deny|Blocked|Restricted|Dangerous)[A-Z]/.test(nearWindow) ||
+      /\bdangerous[A-Z]/.test(nearWindow) ||
       /\btrigger[-_ ]?patterns?\b/i.test(nearWindow) ||
       // A named guard identifier (ssrfGuard, classifyIp routing) hides "guard"
       // at a camelCase boundary the word-boundary set can't see.

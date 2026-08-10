@@ -14,7 +14,9 @@ const SHELL_INTERPRETERS = ['sh', 'bash', 'zsh', 'cmd', 'cmd.exe', 'powershell',
 // `curl|bash` token is a category label, not a command) and may not cross a
 // sentence boundary (`.` followed by whitespace) — prose that lists commands and
 // later says "pipe patterns like | sh" is describing patterns, not running one.
-const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:\.(?!\s)|[^.|;&\n]|\\\n)*\s(?:\.(?!\s)|[^.|;&\n]|\\\n)*\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
+// A backslash-escaped pipe (`\|`) is a literal character — a regex source or a
+// quoted pattern — never a shell pipeline, so the pipe must not follow `\`.
+const REMOTE_EXEC_RE = /\b(curl|wget)\b(?:\.(?!\s)|[^.|;&\n]|\\\n)*\s(?:\.(?!\s)|[^.|;&\n]|\\\n)*(?<!\\)\|\s*(sh|bash|node|python)\b(?!\s+-{1,2}(?:e|c|m|eval)\b)/;
 /**
  * Dynamic code-execution primitives. `exec(` must not be preceded by a dot or word
  * char, otherwise every `regex.exec(input)` in a codebase is reported; a bare
@@ -107,9 +109,18 @@ function startupSurfaceLabel(file: string): string {
   return /(^|\/)\.kilo(code)?\//i.test(file) ? 'Kilo CLI plugin (auto-executed at startup)' : 'OpenCode plugin (auto-executed at startup)';
 }
 
+/**
+ * Dockerfile naming conventions: `Dockerfile`, `Dockerfile.<variant>`, or
+ * `<variant>.Dockerfile`. A source/doc extension after the variant chain
+ * (`dockerfile.ts`, `sandbox-dockerfile.test.ts`) marks code *about*
+ * Dockerfiles, not a build file Docker executes.
+ */
+const DOCKERFILE_NAME =
+  /(^|\/)(?:[\w.-]+\.)?Dockerfile(?:\.(?!(?:ts|tsx|js|jsx|mjs|cjs|py|rb|go|rs|java|cs|php|md|txt|html)$)[\w-]+)*$/i;
+
 /** Files whose contents are actually executed, where a curl|sh string is a real launch vector. */
 function isExecutableFile(file: string): boolean {
-  return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Dockerfile[\w.-]*|Makefile|package\.json)$/i.test(file) || /(^|\/)\.?crushrc$/i.test(file);
+  return /(\.(sh|bash|zsh|bat|cmd|ps1|ya?ml|toml)|Makefile|package\.json)$/i.test(file) || DOCKERFILE_NAME.test(file) || /(^|\/)\.?crushrc$/i.test(file);
 }
 
 /**
@@ -302,12 +313,23 @@ export const rceVectorsRule: Rule = {
     if (REMOTE_EXEC_RE.test(content) && !DEDICATED_COMMAND_SURFACE_FILE.test(file)) {
       // A `#`-comment line in a shell/config script never executes — installer
       // scripts routinely quote their own curl|sh one-liner in a usage comment.
+      // `//` lines are comments in the C-family sources this rule also scans.
       // Prefer a live match over a commented one so a comment can't mask it.
-      const isCommented = (idx: number) => /^\s*#/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
+      const isCommented = (idx: number) => /^\s*(#|\/\/)/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const isDataFormat = /\.(ya?ml|toml|json)$/i.test(file);
+      // Test suites pass curl|sh payloads as quoted string arguments (a hook
+      // handler's deny-assertions, a Dockerfile-rule spec's fixture literal) —
+      // quoted data in a test-path file is a fixture, not a pipeline it runs.
+      const testPathFile =
+        /(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file);
+      const insideQuoted = (idx: number) => {
+        const before = content.slice(content.lastIndexOf('\n', idx - 1) + 1, idx);
+        return (before.match(/'/g) ?? []).length % 2 === 1 || (before.match(/"/g) ?? []).length % 2 === 1;
+      };
+      const quotedTestFixture = (idx: number) => testPathFile && insideQuoted(idx);
       const m =
-        all.find((c) => !isCommented(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
+        all.find((c) => !isCommented(c.index ?? 0) && !quotedTestFixture(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
         all.find((c) => !isCommented(c.index ?? 0)) ??
         all[0]!;
       // A goose-recipe-shaped YAML/JSON file carries prompt text, not commands a
@@ -339,6 +361,7 @@ export const rceVectorsRule: Rule = {
         (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) &&
         !isRecipeProse &&
         !isCommented(m.index ?? 0) &&
+        !quotedTestFixture(m.index ?? 0) &&
         !dataFormatFixture &&
         !dataFormatDenyList &&
         !(isDataFormat && exampleMarked);

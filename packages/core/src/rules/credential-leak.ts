@@ -67,8 +67,8 @@ function isTestOrFixturePath(file: string): boolean {
     /(^|\/)test[-_][^/]+$|_(self)?test\.\w+$/i.test(file) ||
     // A test/selfcheck token delimited inside the filename (integration-test-mcp-002.mjs,
     // selfcheck-mcp-007-engine.mjs) marks a self-verifying harness file.
-    /(^|\/)[^/]*[-_.](tests?|selfcheck|selftest)[-_.][^/]*$/i.test(file) ||
-    /(^|\/)(selfcheck|selftest)[-_][^/]+$/i.test(file) ||
+    /(^|\/)[^/]*[-_.](tests?|selfcheck|selftest|demo)[-_.][^/]*$/i.test(file) ||
+    /(^|\/)(selfcheck|selftest|demo)[-_][^/]+$/i.test(file) ||
     /\.postman_collection\.json$/i.test(file)
   );
 }
