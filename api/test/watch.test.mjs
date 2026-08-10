@@ -251,3 +251,18 @@ test("draftFromGhsa marks unknowns as FIXME and maps moderate to medium", () => 
   assert.equal(draft.packages[0].ecosystem, "FIXME");
   assert.equal(draft.timeline.published, "FIXME");
 });
+
+test("watch-ignore.json: every rationale key is an active ignore entry", async () => {
+  const fs = await import("node:fs");
+  const ignore = JSON.parse(fs.readFileSync(new URL("../../advisories/watch-ignore.json", import.meta.url), "utf8"));
+  const active = new Set([...ignore.ids, ...ignore.packages]);
+  const orphans = Object.keys(ignore.rationale).filter((k) => !active.has(k));
+  assert.deepEqual(orphans, []);
+});
+
+test("watch-ignore.json: every ignore entry has a rationale", async () => {
+  const fs = await import("node:fs");
+  const ignore = JSON.parse(fs.readFileSync(new URL("../../advisories/watch-ignore.json", import.meta.url), "utf8"));
+  const missing = [...ignore.ids, ...ignore.packages].filter((k) => !(k in ignore.rationale));
+  assert.deepEqual(missing, []);
+});

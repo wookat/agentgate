@@ -48,7 +48,15 @@
   "GHSA-pq7w-6xmw-3jgj",
   "GHSA-5pgh-4pr5-mhm8",
   "GHSA-qp9j-gfjj-6h3v",
-  "GHSA-q9qj-38cq-3792"
+  "GHSA-q9qj-38cq-3792",
+  "GHSA-5r3x-hrv2-fg58",
+  "GHSA-rmrp-j9qh-xwh9",
+  "GHSA-xm38-q6p9-jrgg",
+  "GHSA-g33v-9g6g-xm9p",
+  "GHSA-pxv6-pv74-gcg3",
+  "GHSA-g57q-682f-hr5f",
+  "GHSA-w5g7-c885-pm69",
+  "MAL-2026-12789"
  ],
  "packages": [
   "npm:flowise",
@@ -107,6 +115,11 @@
   "GHSA-g33v-9g6g-xm9p": "adafap/api-mcp: GitHub-only (commit-addressed range); the npm api-mcp is an empty 'Reserved for future use' placeholder with none of the project code (GAP-ROUND-377)",
   "GHSA-pxv6-pv74-gcg3": "Handwriting-OCR/handwriting-ocr-mcp-server: GitHub-only, package.json name handwriting-ocr never published to npm (GAP-ROUND-377)",
   "GHSA-g57q-682f-hr5f": "Nikolaibibo/claude-comfyui-mcp: GitHub-only, package.json name comfyui-mcp maps to artokun's different npm project (GAP-ROUND-377)",
-  "GHSA-w5g7-c885-pm69": "bartekke8it56w2/new-mcp: GitHub-only, package.json name @modelcontextprotocol/server-gemini-thinking never published to npm (GAP-ROUND-377)"
+  "GHSA-w5g7-c885-pm69": "bartekke8it56w2/new-mcp: GitHub-only, package.json name @modelcontextprotocol/server-gemini-thinking never published to npm (GAP-ROUND-377)",
+  "CVE-2026-18991": "Alias of GHSA-q94p-g4rh-r9rf — NanoClaw is not a registry package the package-runner matcher can see (GAP-ROUND-27)",
+  "GHSA-46jg-c454-8hm3": "roo-code-memory-bank-mcp-server: GitHub-only, no npm/PyPI release to map (GAP-ROUND-340)",
+  "GHSA-3r2r-p86c-vj94": "shadcn-vue-mcp: GitHub-only, no npm/PyPI release to map (GAP-ROUND-340)",
+  "npm:flowise-components": "platform-level CVEs delegated to osv-scanner, same channel policy as npm:flowise (GAP-ROUND-22)",
+  "MAL-2026-12789": "fa-mcp-sdk 0.12.72: amazon-inspector composition heuristic; tarball unpacked — cli-template/update.cjs is a user-invoked service self-updater (git pull + mail/telegram notify to the operator-configured channel), not wired into install hooks, no remote-directed command channel; package remains live and actively maintained (GAP-ROUND-379)"
  }
 }

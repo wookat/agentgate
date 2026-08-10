@@ -2311,5 +2311,23 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0095",
+    "title": "@copilot-mcp/apex (npm) postinstall dropper pipes an attacker-controlled remote script into zsh and stages an unverified binary",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-05",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@copilot-mcp/apex",
+        "ranges": [
+          {
+            "introduced": "0"
+          }
+        ]
+      }
+    ]
   }
 ];
