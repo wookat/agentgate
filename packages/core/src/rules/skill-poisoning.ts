@@ -2088,13 +2088,23 @@ export const skillPoisoningRule: Rule = {
         if (/\b(asks?|asked|asking|tells?|told|telling|instructs?|instructed|tr(?:y|ies|ied|ying))\s+(you|the\s+agent|it|them)\s+to\s+$/i.test(before)) return true;
         return content[i - 1] === '>' && content[i + m[0].length] === '<';
       };
+      // A marker used as a bare code identifier — attribute access
+      // (`self.conversation_history`), assignment, call, or index in code
+      // embedded in the skill body — is program data, not an exfiltration
+      // directive naming the parameter. Graded low, not silent.
+      const codeIdentifier = ({ m }: { m: RegExpMatchArray }) => {
+        if (label !== 'known poisoning marker') return false;
+        const i = m.index ?? 0;
+        return content[i - 1] === '.' || (m[0].includes('_') && /^\s*(=[^=]|[([.])/.test(content.slice(i + m[0].length)));
+      };
       const best =
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c) && !isStructural(c.m[0])) ??
-        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c)) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c) && !codeIdentifier(c) && !isStructural(c.m[0])) ??
+        all.find((c) => !codeLines.has(c.line) && !inlineQuoted(c) && !isTemplateLine(c) && !citedProse(c) && !codeIdentifier(c)) ??
         all[0];
       if (best) {
         const { m, line } = best;
-        const quoted = codeLines.has(line) || inlineQuoted(best) || isTemplateLine(best) || citedProse(best);
+        const asCode = codeIdentifier(best);
+        const quoted = codeLines.has(line) || inlineQuoted(best) || isTemplateLine(best) || citedProse(best) || asCode;
         const structural = isStructural(m[0]);
         findings.push(
           finding(this, {
@@ -2102,7 +2112,9 @@ export const skillPoisoningRule: Rule = {
             target: file,
             file,
             line,
-            message: quoted
+            message: asCode
+              ? `Skill file matches prompt-injection pattern (${label}) used as a code identifier: "${snippet(m[0], 80)}" — likely embedded example code, but review it`
+              : quoted
               ? `Skill file matches prompt-injection pattern (${label}) inside a fenced code block: "${snippet(m[0], 80)}" — likely quoted example content, but review it`
               : structural
                 ? `Skill file uses a "${m[0]}" tag — common prompt-template structure in instruction files, but review that it does not conceal directives`

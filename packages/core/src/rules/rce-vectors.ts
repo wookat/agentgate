@@ -228,6 +228,27 @@ export const rceVectorsRule: Rule = {
   checkSource(file, rawContent) {
     /** True when the match sits inside a string under the nearest enclosing deny/block key (e.g. `"deniedCommands": [...]`). */
     function isDenyListEntry(content: string, idx: number): boolean {
+      // A match inside the value of a regex/pattern field (`pattern: '…curl…\\|\\s*sh…'`
+      // in a detection-rule row) is a pattern the rule engine tests against,
+      // never a command it runs — same semantics as a `matches:` table.
+      const lineStart = content.lastIndexOf('\n', idx - 1) + 1;
+      const ownKey = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(content.slice(lineStart, idx));
+      if (ownKey && /^((not[_-]?)?match(es)?|pattern|regexp?|re)$/i.test(ownKey[1]!)) return true;
+      // A detection-rule row — a list item that carries a `pattern:`/`re:`/
+      // `regex:` field — is data the rule engine tests against; a curl|sh
+      // string in any of its fields (pattern, message, examples) never runs.
+      const PATTERN_KEY = /^\s*["']?(pattern|regexp?|re|(not[_-]?)?match(es)?)["']?\s*:/i;
+      const allLines = content.split('\n');
+      const matchLine = content.slice(0, idx).split('\n').length - 1;
+      for (let s = matchLine; s >= 0 && matchLine - s < 15; s--) {
+        if (!/^\s*-\s/.test(allLines[s]!)) continue;
+        const indent = allLines[s]!.match(/^\s*/)![0].length;
+        for (let j = s; j < allLines.length && j - s <= 20; j++) {
+          if (j > s && /^\s*-\s/.test(allLines[j]!) && allLines[j]!.match(/^\s*/)![0].length <= indent) break;
+          if (PATTERN_KEY.test(allLines[j]!.replace(/^\s*-\s*/, ''))) return true;
+        }
+        break;
+      }
       const DENY_NAME = (name: string) =>
         /^(not[_-]?)?matches$/i.test(name) ||
         name
