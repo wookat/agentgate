@@ -55,6 +55,20 @@ function isInterleavedRun(value: string): boolean {
   return true;
 }
 
+/** Test/fixture trees and test-named files carry deliberate fakes (redaction tests, sample configs). */
+function isTestOrFixturePath(file: string): boolean {
+  return (
+    /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?|postman)\//i.test(file) ||
+    /\.(test|spec)\.\w+$/i.test(file) ||
+    /(^|\/)test[-_][^/]+$|_(self)?test\.\w+$/i.test(file) ||
+    // A test/selfcheck token delimited inside the filename (integration-test-mcp-002.mjs,
+    // selfcheck-mcp-007-engine.mjs) marks a self-verifying harness file.
+    /(^|\/)[^/]*[-_.](tests?|selfcheck|selftest)[-_.][^/]*$/i.test(file) ||
+    /(^|\/)(selfcheck|selftest)[-_][^/]+$/i.test(file) ||
+    /\.postman_collection\.json$/i.test(file)
+  );
+}
+
 /** Supabase anon/publishable JWTs are designed to be shipped to clients. */
 function isPublishableJwt(value: string): boolean {
   const payload = value.split('.')[1];
@@ -93,14 +107,17 @@ export const credentialLeakRule: Rule = {
   description: 'Detects hardcoded credentials in MCP client configs and tools soliciting secrets',
   checkServer(server) {
     const findings = [];
+    // A server config inside a test/fixture tree carries deliberate fake
+    // credentials (scanner fixtures, sample configs); still reported, quietly.
+    const fixtureConfig = isTestOrFixturePath(server.source ?? '');
     for (const [key, value] of Object.entries(server.env ?? {})) {
       if (SECRET_KEY_RE.test(key) && looksLikeSecret(value)) {
         findings.push(
           finding(this, {
-            severity: 'high',
+            severity: fixtureConfig ? 'low' : 'high',
             target: server.name,
             file: server.source,
-            message: `Server "${server.name}" has a hardcoded secret in env var "${key}" — move it to an environment reference or OS keychain`,
+            message: `Server "${server.name}" has a hardcoded secret in env var "${key}" — move it to an environment reference or OS keychain${fixtureConfig ? ' (in a test/fixture path, likely a deliberate fake; confirm)' : ''}`,
           }),
         );
       }
@@ -109,10 +126,10 @@ export const credentialLeakRule: Rule = {
       if ((/authorization|api[-_]?key|token/i.test(key) || SECRET_KEY_RE.test(key)) && looksLikeSecret(value.replace(/^Bearer\s+/i, ''))) {
         findings.push(
           finding(this, {
-            severity: 'high',
+            severity: fixtureConfig ? 'low' : 'high',
             target: server.name,
             file: server.source,
-            message: `Server "${server.name}" has a hardcoded credential in header "${key}"`,
+            message: `Server "${server.name}" has a hardcoded credential in header "${key}"${fixtureConfig ? ' (in a test/fixture path, likely a deliberate fake; confirm)' : ''}`,
           }),
         );
       }
@@ -149,7 +166,7 @@ export const credentialLeakRule: Rule = {
     const findings = [];
     // Secret-shaped strings inside test/fixture trees are usually deliberate fakes
     // (redaction tests, sample configs); still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|testdata|__tests__|examples?|fixtures|mocks?|docs?|demos?|postman)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test[-_][^/]+$|_(self)?test\.\w+$/i.test(file) || /\.postman_collection\.json$/i.test(file);
+    const testPath = isTestOrFixturePath(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
     const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
@@ -173,6 +190,10 @@ export const credentialLeakRule: Rule = {
         // Also match compound keys (`bad_example:`, `"good-example":`) — the
         // example marker can sit after an underscore/hyphen the \b can't see.
         const exampleValue = /(\b|"|[_-])examples?"?\s*[:=]/i.test(matchCol >= 0 ? lineText.slice(0, matchCol) : lineText);
+        // A redaction vector: the same line carries the mask the value must
+        // redact to ({raw, mask: "[REDACTED:jwt]"}), or the file is itself a
+        // redaction utility — the value is a test input, not a leak.
+        const redactionVector = /\[?REDACTED\b/.test(lineText) || /(^|\/)[^/]*redact[^/]*\.\w+$/i.test(file);
         const publishable = isPublishableJwt(m[0]);
         const demoJwt = !publishable && isDemoJwt(m[0]);
         // A Firebase *web-app* config object embeds the same client-distributable
@@ -181,14 +202,14 @@ export const credentialLeakRule: Rule = {
         const firebaseWebConfig =
           /\bAIza/.test(m[0]) &&
           /firebaseapp\.com|messagingSenderId|\bauthDomain\b/.test(allSourceLines.slice(Math.max(0, line - 6), line + 5).join('\n'));
-        const quiet = testPath || exampleValue || publishable || demoJwt || firebaseClientConfig || firebaseWebConfig;
+        const quiet = testPath || exampleValue || redactionVector || publishable || demoJwt || firebaseClientConfig || firebaseWebConfig;
         findings.push(
           finding(this, {
             severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${demoJwt ? ' — a JWT whose payload names itself a demo/test token; likely doc filler, confirm' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${redactionVector ? ' — a redaction test vector (masked target on the same line); confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${demoJwt ? ' — a JWT whose payload names itself a demo/test token; likely doc filler, confirm' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
           }),
         );
       }

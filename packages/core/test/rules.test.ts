@@ -75,6 +75,43 @@ describe('credential-leak', () => {
     expect(credentialLeakRule.checkSource!('sel.py', 'SECRET = "sk-live-DO-NOT-FORWARD-4471"')).toHaveLength(0);
   });
 
+  it('grades fixture-tree server configs quietly', () => {
+    const quiet = credentialLeakRule.checkServer!(
+      server({ source: '/repo/tests/fixtures/embedded-secrets/mcp.json', env: { OPENAI_API_KEY: FAKE_SK_KEY } }),
+    );
+    expect(quiet).toHaveLength(1);
+    expect(quiet[0]!.severity).toBe('low');
+    expect(quiet[0]!.message).toContain('test/fixture path');
+    const live = credentialLeakRule.checkServer!(server({ env: { OPENAI_API_KEY: FAKE_SK_KEY } }));
+    expect(live[0]!.severity).toBe('high');
+  });
+
+  it('grades hyphen-delimited test/selfcheck filenames as test paths', () => {
+    for (const file of ['tools/integration-test-mcp-002-deny.mjs', 'tools/selfcheck-mcp-007-engine.mjs']) {
+      const findings = credentialLeakRule.checkSource!(file, `const bad = "${FAKE_SK_KEY}";\n`);
+      expect(findings).toHaveLength(1);
+      expect(findings[0]!.severity).toBe('low');
+    }
+    // A hyphen inside an unrelated word (contest, latest) must not match.
+    const live = credentialLeakRule.checkSource!('tools/contest-ranker.mjs', `const key = "${FAKE_SK_KEY}";\n`);
+    expect(live[0]!.severity).toBe('high');
+  });
+
+  it('grades redaction test vectors quietly', () => {
+    const vector = credentialLeakRule.checkSource!(
+      'scripts/economy/redact.mjs',
+      `const cases = [{ cls: "openai", raw: "${FAKE_SK_KEY}", mask: "[REDACTED:openai]" }];\n`,
+    );
+    expect(vector).toHaveLength(1);
+    expect(vector[0]!.severity).toBe('low');
+    expect(vector[0]!.message).toContain('redaction test vector');
+    const sameLineMask = credentialLeakRule.checkSource!(
+      'src/masker.ts',
+      `if (line.includes("${FAKE_SK_KEY}")) return "[REDACTED]";\n`,
+    );
+    expect(sameLineMask[0]!.severity).toBe('low');
+  });
+
   it('grades _selftest.py files as test paths', () => {
     const findings = credentialLeakRule.checkSource!('evals/harness/scoring_selftest.py', `SECRET = "${FAKE_SK_KEY}"`);
     expect(findings).toHaveLength(1);
