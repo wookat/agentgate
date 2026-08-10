@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.42
+
+### Patch Changes
+
+- cc78a3b: Fresh-corpus precision: AG-RC-001 recognizes plural `patterns:` detection-rule lists; AG-CL-001 skips all-caps snake*case env placeholders and gitleaks JSON baselines; AG-SS-001 treats IOC-database headers as defensive; AG-TP-001 grades `test*_`/`_\_test` filenames quietly.
+- Updated dependencies [cc78a3b]
+  - mcp-agentgate-core@0.67.42
+
 ## 0.67.41
 
 ### Patch Changes
