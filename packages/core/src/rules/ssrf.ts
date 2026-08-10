@@ -104,7 +104,7 @@ export const ssrfRule: Rule = {
     const blocklistNearby =
       /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|den(y|ied|ies)|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|danger(ous)?|guard(s|ed|ing)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
       /\b(Denied|Deny|Blocked|Restricted|Dangerous)[A-Z]/.test(nearWindow) ||
-      /\b(denied|deny|dangerous)[A-Z]/.test(nearWindow) ||
+      /\b(denied|deny|dangerous|block(ed)?)[A-Z]/.test(nearWindow) ||
       /\btrigger[-_ ]?patterns?\b/i.test(nearWindow) ||
       // A named guard identifier (ssrfGuard, classifyIp routing) hides "guard"
       // at a camelCase boundary the word-boundary set can't see.
@@ -127,7 +127,10 @@ export const ssrfRule: Rule = {
     // preventive phrasing — a bare "SSRF" header also fits exploitation scripts.
     // A threat-intel scanner's header names its purpose ("Scan … for active
     // supply-chain incident indicators") while its IOC table sits far below.
-    const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b|\b(scan|detect|check)\w*\b[\s\S]{0,160}\b(incident indicators?|IOCs?)\b|\b(IOCs?|indicators? of compromise)\b[^\n]{0,80}\b(database|db|list|table|feed)\b/i.test(
+    // Noun-first headers name the module the other way around ("SSRF
+    // Protection page — … IP blocking"); an exploitation script doesn't call
+    // itself a protection/blocking/filtering module.
+    const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\bSSRF\b[^\n]{0,40}\b(protect\w*|block\w*|filter\w*|prevent\w*|mitigat\w*|guard\w*)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b|\b(scan|detect|check)\w*\b[\s\S]{0,160}\b(incident indicators?|IOCs?)\b|\b(IOCs?|indicators? of compromise)\b[^\n]{0,80}\b(database|db|list|table|feed)\b/i.test(
       allLines.slice(0, 12).join('\n'),
     );
     const defensive =
