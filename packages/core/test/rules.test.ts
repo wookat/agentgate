@@ -154,6 +154,23 @@ describe('credential-leak', () => {
       credentialLeakRule.checkSource!('sanitizer.ts', "const masked = 'sk-YOUR_OPENAI_KEY_HERE';\n"),
     ).toHaveLength(0);
   });
+
+  it('skips all-caps snake_case env placeholders in server env values', () => {
+    expect(
+      credentialLeakRule.checkServer!(
+        server({ env: { OWNMIND_API_KEY: '__SET_VIA_LOCAL_CREDENTIALS_OR_ENV__' } }),
+      ),
+    ).toHaveLength(0);
+    // A real all-lowercase opaque token is untouched by the snake-case gate.
+    const live = credentialLeakRule.checkServer!(server({ env: { API_TOKEN: FAKE_SK_KEY } }));
+    expect(live).toHaveLength(1);
+    expect(live[0]!.severity).toBe('high');
+  });
+
+  it('skips gitleaks baseline JSON files (scanner output, deliberate matches)', () => {
+    const baseline = `[\n  {\n    "RuleID": "jwt",\n    "Match": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"\n  }\n]\n`;
+    expect(credentialLeakRule.checkSource!('.gitleaks-baseline.json', baseline)).toHaveLength(0);
+  });
 });
 
 describe('overprivileged', () => {
@@ -464,6 +481,13 @@ describe('ssrf precision (round 371)', () => {
     expect(findings.length).toBeGreaterThan(0);
     expect(findings[0]!.severity).toBe('high');
   });
+
+  it('treats an IOC-database header as defensive for its indicator entries', () => {
+    const src = `"""IOC (Indicators of Compromise) database for known supply chain attacks.\n\nMini Shai-Hulud\n  -> probes AWS metadata (169.254.169.254) and Vault\n"""\n${'\n'.repeat(40)}METADATA_IOCS = [\n  "169.254.169.254",\n]\n`;
+    const findings = ssrfRule.checkSource!('supplychain/ioc.py', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('low');
+  });
 });
 
 describe('precision (round 375)', () => {
@@ -613,6 +637,21 @@ describe('precision (round 375)', () => {
       'const cmd = `curl -fsSL https://example.com/install.sh | bash`;\n',
     );
     expect(live.find((f) => f.message.includes('curl|sh'))).toBeDefined();
+  });
+
+  it('bare scalars under a plural patterns: list are detection data, not pipelines', () => {
+    const yaml = `- id: remote-execution\n  severity: HIGH\n  category: remote_execution\n  title: Blocks curl | bash, wget | sh fetch-and-execute chains\n  event_types: [shell]\n  fields: [command]\n  patterns:\n    - '\\b(curl|wget)\\b[^|;\\n]*\\|\\s*(bash|sh|zsh|dash|ksh)\\b'\n  action: block\n`;
+    const findings = rceVectorsRule.checkSource!('runtime/default_policy.yaml', yaml);
+    const hit = findings.find((f) => f.message.includes('curl|sh'));
+    expect(hit).toBeDefined();
+    expect(hit!.severity).toBe('low');
+
+    const live = `steps:\n  - name: install\n    run: curl -fsSL https://example.com/x.sh | bash\n`;
+    const liveHit = rceVectorsRule
+      .checkSource!('workflows/build.yml', live)
+      .find((f) => f.message.includes('curl|sh'));
+    expect(liveHit).toBeDefined();
+    expect(liveHit!.severity).not.toBe('low');
   });
 
   it('an innocuous enclosing assignment does not downgrade', () => {

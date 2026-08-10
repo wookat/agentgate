@@ -237,11 +237,11 @@ export const rceVectorsRule: Rule = {
       // never a command it runs — same semantics as a `matches:` table.
       const lineStart = content.lastIndexOf('\n', idx - 1) + 1;
       const ownKey = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(content.slice(lineStart, idx));
-      if (ownKey && /^((not[_-]?)?match(es)?|pattern|regexp?|re)$/i.test(ownKey[1]!)) return true;
+      if (ownKey && /^((not[_-]?)?match(es)?|patterns?|regexp?s?|regexes|re)$/i.test(ownKey[1]!)) return true;
       // A detection-rule row — a list item that carries a `pattern:`/`re:`/
       // `regex:` field — is data the rule engine tests against; a curl|sh
       // string in any of its fields (pattern, message, examples) never runs.
-      const PATTERN_KEY = /^\s*["']?(pattern|regexp?|re|(not[_-]?)?match(es)?)["']?\s*:/i;
+      const PATTERN_KEY = /^\s*["']?(patterns?|regexp?s?|regexes|re|(not[_-]?)?match(es)?)["']?\s*:/i;
       const allLines = content.split('\n');
       const matchLine = content.slice(0, idx).split('\n').length - 1;
       for (let s = matchLine; s >= 0 && matchLine - s < 15; s--) {
@@ -269,6 +269,9 @@ export const rceVectorsRule: Rule = {
         // pattern tables the rule engine tests against, never commands it runs.
         // Rule-table entry fields (`name:`/`re:`/`pattern:`…) sit *inside* the
         // table rows, so scanning continues to the enclosing declaration.
+        // A plural pattern-list key (`patterns:` over bare scalar entries)
+        // encloses regexes the engine tests against, like `matches:` does.
+        if (key && /^(patterns|regex(e|p)?s)$/i.test(key[1]!)) return true;
         if (key && !/^(name|id|label|re|regexp?|pattern|description|reason|message)$/i.test(key[1]!)) return DENY_NAME(key[1]!);
       }
       return false;
