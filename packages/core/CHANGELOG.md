@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.41
+
+### Patch Changes
+
+- d608273: AG-RC-001 precision: bare `curl|bash` category labels, regex alternations, and sentence-crossing command lists no longer report as remote-exec pipelines; live installers, `| bash -`, and data-pipe exclusions are regression-pinned.
+
 ## 0.67.40
 
 ### Patch Changes
