@@ -1995,16 +1995,19 @@ export const skillDynamicContextRule: Rule = {
 export function fencedCodeLines(content: string): Set<number> {
   const inFence = new Set<number>();
   const lines = content.split(/\r?\n/);
-  let fence: string | null = null;
+  // CommonMark closing-fence rules: same character, at least the opener's
+  // length, and no info string — so a shorter run (or one carrying a language
+  // tag) inside a longer fence is fence *content*, not a closer.
+  let fence: { char: string; len: number } | null = null;
   for (let i = 0; i < lines.length; i++) {
-    const m = (lines[i] ?? '').trimStart().match(/^(`{3,}|~{3,})/);
+    const m = (lines[i] ?? '').trimStart().match(/^(`{3,}|~{3,})(.*)$/);
     if (m?.[1]) {
       if (!fence) {
-        fence = m[1][0] as string;
+        fence = { char: m[1][0] as string, len: m[1].length };
         inFence.add(i + 1);
         continue;
       }
-      if (m[1].startsWith(fence)) {
+      if (m[1][0] === fence.char && m[1].length >= fence.len && (m[2] ?? '').trim() === '') {
         inFence.add(i + 1);
         fence = null;
         continue;
