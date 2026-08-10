@@ -56,7 +56,10 @@ export const INJECTION_PATTERNS: { re: RegExp; label: string }[] = [
   // words (key/token/secret) only count with credential context — a qualifier ("ssh keys",
   // "your token") or a file target ("token file") — so "Keyspaces", "condition key",
   // "key tradeoffs", "thousands of tokens", and "this token injection" stay silent.
-  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*(\b(ssh|credentials?|id_rsa)\b|\.env\b|\b(api|access|auth|private|gpg|aws|oauth|bearer|session|user(?:'s)?|your|my)\s+(keys?|tokens?|secrets?)\b|\b(keys?|tokens?|secrets?)\s+files?\b)/i, label: 'exfiltration instruction' },
+  // An instrumental credential ("send requests with/using a Bearer Token") is the
+  // authentication idiom of API docs — the token authorizes the request, it is not
+  // the payload — so a with/using article directly before the qualifier stays silent.
+  { re: /\byou\s+must\s+(first\s+)?(read|send|include|attach|forward)\b[^.\n]*(\b(ssh|credentials?|id_rsa)\b|\.env\b|(?<!\b(?:with|using)\s+(?:a|an|the)\s)\b(api|access|auth|private|gpg|aws|oauth|bearer|session|user(?:'s)?|your|my)\s+(keys?|tokens?|secrets?)\b|\b(keys?|tokens?|secrets?)\s+files?\b)/i, label: 'exfiltration instruction' },
   { re: /\bsidenote\b|\bconversation_history\b/i, label: 'known poisoning marker' },
 ];
 
