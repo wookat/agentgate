@@ -1258,7 +1258,15 @@ export function classifyRiskyCommand(command: string): { severity: 'critical' | 
     .replace(/\b(echo|printf)\s+(-\w+\s+)*(?:'[^']*'|"[^"$`]*")/g, '$1')
     // Scaffolding a local env file from a committed placeholder template reads no secrets.
     .replace(/\bcp\s+[\w./-]*\.env\.(example|sample|template|dist)\b\s+[\w./-]+/g, '');
-  return RISKY_COMMANDS.find((r) => r.re.test(effective));
+  const match = RISKY_COMMANDS.find((r) => r.re.test(effective));
+  if (match?.risk.startsWith('sends data')) {
+    // A notifier hook posting to a loopback daemon (127.0.0.1/localhost) sends
+    // nothing off the machine — that is not exfiltration. Only skip when every
+    // URL in the command is loopback; an unknown or variable host stays hot.
+    const urls = effective.match(/\bhttps?:\/\/[^\s"']+/g) ?? [];
+    if (urls.length > 0 && urls.every((u) => /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])([:/]|$)/i.test(u))) return undefined;
+  }
+  return match;
 }
 
 /** Python idioms that go beyond local data processing in code executed at extension start. */
