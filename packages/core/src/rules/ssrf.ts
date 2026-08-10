@@ -134,7 +134,7 @@ export const ssrfRule: Rule = {
       blocklistNearby ||
       guardDeclNearby ||
       headerDefensive ||
-      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must not|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must not|cannot target|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
     // example) is inert — nothing reads it; still reported, but quietly.
     const matchLine = allLines[line - 1] ?? '';

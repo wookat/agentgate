@@ -197,6 +197,34 @@ function maskMultilineDataStrings(content: string): string {
   );
 }
 
+/**
+ * Mask quoted-string-only continuation lines — arguments passed across `\`
+ * line breaks to a plain command (`doctor_fail \` + `"run: curl … | sh"`) are
+ * data the function prints, not a pipeline. The chain's opening command word
+ * must not be an interpreter/eval/ssh, and strings with interpolation stay
+ * live. Unlike same-line arguments, a wrapper idiom (`run "curl…"`) keeps the
+ * command adjacent, so leading-downloader bodies are safe to mask here.
+ */
+function maskContinuationArgStrings(content: string): string {
+  const LIVE_WORD = /^[ \t]*(sh|bash|zsh|dash|ksh|python\d*|node|perl|ruby|eval|source|exec|ssh|sudo|xargs)\b/i;
+  const lines = content.split('\n');
+  let openerLive = true;
+  let continued = false;
+  const out = lines.map((line) => {
+    const isContinuation = continued;
+    continued = /\\$/.test(line);
+    if (!isContinuation) {
+      openerLive = LIVE_WORD.test(line) || !/^[ \t]*\w[\w-]*([ \t]|\\$)/.test(line);
+      return line;
+    }
+    const m = /^([ \t]*)("(?:[^"$`]|\$[^(`])*"|'[^']*')([ \t]*\\?)$/.exec(line);
+    if (!m || openerLive) return line;
+    const str = m[2]!;
+    return m[1]! + str[0]! + str.slice(1, -1).replace(/./g, ' ') + str[str.length - 1]! + m[3]!;
+  });
+  return out.join('\n');
+}
+
 export const rceVectorsRule: Rule = {
   id: 'AG-RC-001',
   category: 'rce-vectors',
@@ -306,7 +334,7 @@ export const rceVectorsRule: Rule = {
     // commands (a pre-commit yaml `entry: bash -c "... || echo 'install: curl … | bash'"`
     // prints the hint exactly like an installer script does).
     const masked = maskEchoedStrings(maskQuotedHeredocs(rawContent));
-    const content = isShellScript ? maskInertQuotedStrings(maskMultilineDataStrings(masked)) : masked;
+    const content = isShellScript ? maskInertQuotedStrings(maskContinuationArgStrings(maskMultilineDataStrings(masked))) : masked;
     // Cursor hook/environment configs are named AG-SK-003 surfaces whose command
     // strings run through the risky-command classifier; the generic text warning
     // here would only duplicate that (more accurate) finding.

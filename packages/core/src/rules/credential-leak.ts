@@ -42,8 +42,21 @@ function isPlaceholder(value: string): boolean {
     // Interleaved-run dummies (ghp_A1bC2dE3fH4iJ5kL6…): the letters walk the
     // alphabet and the digits count 1-9-0 in lockstep — demo filler, not key
     // material. Real tokens are random, never monotone.
-    isInterleavedRun(value)
+    isInterleavedRun(value) ||
+    // A long ascending character run (AKIA1234567890ABCDEF,
+    // ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345) is keyboard-walk demo filler —
+    // eight consecutive ascending characters never occur in random key material.
+    hasLongAscendingRun(value)
   );
+}
+
+function hasLongAscendingRun(value: string): boolean {
+  let run = 1;
+  for (let i = 1; i < value.length; i++) {
+    run = value.charCodeAt(i) - value.charCodeAt(i - 1) === 1 ? run + 1 : 1;
+    if (run >= 8) return true;
+  }
+  return false;
 }
 
 function isInterleavedRun(value: string): boolean {
