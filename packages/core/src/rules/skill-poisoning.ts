@@ -1248,12 +1248,14 @@ const RISKY_COMMANDS: { re: RegExp; severity: 'critical' | 'high'; risk: string 
 ];
 
 /**
- * Classify a hook/task command against RISKY_COMMANDS. Single-quoted literals printed by
- * echo/printf are masked first — text like `echo 'run: curl … | sh'` is a message, not a pipeline.
+ * Classify a hook/task command against RISKY_COMMANDS. Literals printed by
+ * echo/printf are masked first — text like `echo 'run: curl … | sh'` is a
+ * message, not a pipeline. Double-quoted strings are masked only when free of
+ * interpolation (`$`/backtick), so a printed value can't hide a live command.
  */
 export function classifyRiskyCommand(command: string): { severity: 'critical' | 'high'; risk: string } | undefined {
   const effective = command
-    .replace(/\b(echo|printf)\s+(-\w+\s+)*'[^']*'/g, '$1')
+    .replace(/\b(echo|printf)\s+(-\w+\s+)*(?:'[^']*'|"[^"$`]*")/g, '$1')
     // Scaffolding a local env file from a committed placeholder template reads no secrets.
     .replace(/\bcp\s+[\w./-]*\.env\.(example|sample|template|dist)\b\s+[\w./-]+/g, '');
   return RISKY_COMMANDS.find((r) => r.re.test(effective));
