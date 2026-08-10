@@ -22,6 +22,10 @@ function isPlaceholder(value: string): boolean {
     /^%[A-Z0-9_]+%$/i.test(value) ||
     /^<[^>]+>$/.test(value) ||
     /(\b|_)(your|my|xxx+|placeholder|changeme|example|redacted|dummy|sample|fake|test|testing|mock|demo|do[-_]not)(\b|_)/i.test(value) ||
+    // An all-caps snake_case value (__SET_VIA_LOCAL_CREDENTIALS_OR_ENV__) is an
+    // env-var-style placeholder name, not key material — real tokens are
+    // mixed-case/random and never read as underscore-separated words.
+    /^_*[A-Z][A-Z0-9]*(_+[A-Z0-9]+)+_*$/.test(value) ||
     // A run of 8+ identical characters (sk-j7caBpkRoxxxxxxxxxxxx…,
     // ghp_aaaa…) is padded demo filler — real key material is high-entropy.
     /(.)\1{7,}/.test(value) ||
@@ -169,7 +173,7 @@ export const credentialLeakRule: Rule = {
     const testPath = isTestOrFixturePath(file);
     // Secret-scanner configs (gitleaks, detect-secrets) quote secret-shaped
     // patterns as the rules/baseline they scan for, not as leaked values.
-    const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.toml)?$|(^|\/)\.secrets\.baseline$/i.test(file);
+    const scannerConfig = /(^|\/)\.?gitleaks([\w.-]*\.(toml|json))?$|(^|\/)\.secrets\.baseline$/i.test(file);
     // Firebase distributes its client API key inside google-services.json /
     // GoogleService-Info.plist by design — access is gated by Firebase security
     // rules, not by the key's secrecy.
