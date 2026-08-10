@@ -28,6 +28,35 @@ export function findHiddenInSource(content: string): { char: string; line: numbe
   return { char: m[0], line: cleaned.slice(0, m.index ?? 0).split('\n').length };
 }
 
+/** All hidden-character hits, one per line, in document order. */
+export function findHiddenHitsInSource(content: string): { char: string; line: number }[] {
+  const cleaned = content.replace(/^\ufeff/, '').replace(EMOJI_ZWJ, '').replace(EMOJI_TAG_SEQUENCE, '');
+  const hits: { char: string; line: number }[] = [];
+  const lines = cleaned.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const m = (lines[i] ?? '').match(SOURCE_HIDDEN_UNICODE);
+    if (m) hits.push({ char: m[0], line: i + 1 });
+  }
+  return hits;
+}
+
+const COMMENT_LINE = /^\s*(\/\/|#|\*|;|--|\/\*|<!--)/;
+const UNICODE_ATTACK_PROSE =
+  /\b(bidi|unicode|zero[- ]?width|invisible|homoglyph|trojan[- ]?source|rlo\b|lro\b|control\s+char|format\s+char|u\+20[0-9a-f]{2})/i;
+
+/**
+ * Security tooling documents bidi/hidden-unicode attacks by embedding the very
+ * character in a comment that discusses it ("`examp\u202emoc.elp` (RLO + reversed) …").
+ * The character sits on a comment line and nearby prose names the attack class.
+ */
+export function isDefensiveUnicodeComment(content: string, line: number): boolean {
+  const lines = content.split('\n');
+  const hitLine = lines[line - 1] ?? '';
+  if (!COMMENT_LINE.test(hitLine)) return false;
+  const context = lines.slice(Math.max(0, line - 4), line + 3).join('\n');
+  return UNICODE_ATTACK_PROSE.test(context);
+}
+
 /** Bidi overrides/isolates and Unicode tag characters are Trojan-Source-grade concealment. */
 export function isTrojanHidden(char: string): boolean {
   const cp = char.codePointAt(0)!;
@@ -94,13 +123,8 @@ export const toolPoisoningRule: Rule = {
     return findings;
   },
   checkSource(file, content) {
-    const hit = findHiddenInSource(content);
-    if (!hit) return [];
-    const cp = hit.char.codePointAt(0)!;
-    const codepoint = `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
-    // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
-    // zero-width space or BOM is usually editor noise, so it is reported quietly.
-    const trojan = isTrojanHidden(hit.char);
+    const hits = findHiddenHitsInSource(content);
+    if (hits.length === 0) return [];
     // Test/fixture trees embed these characters as fixtures for the very
     // defenses under test; still reported, but quietly.
     const testPath =
@@ -108,13 +132,23 @@ export const toolPoisoningRule: Rule = {
       /\.(test|spec)\.\w+$/i.test(file) ||
       /(^|\/)test_[^/]+\.\w+$|_test\.\w+$/i.test(file) ||
       /(^|\/)fixtures?\.\w+$/i.test(file);
+    // Prefer the first hit that is not documentation of the attack itself:
+    // security tooling embeds bidi characters in comments that discuss them.
+    const hit =
+      hits.find((h) => !(isTrojanHidden(h.char) && isDefensiveUnicodeComment(content, h.line))) ?? hits[0]!;
+    const cp = hit.char.codePointAt(0)!;
+    const codepoint = `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
+    // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
+    // zero-width space or BOM is usually editor noise, so it is reported quietly.
+    const trojan = isTrojanHidden(hit.char);
+    const defensiveComment = trojan && isDefensiveUnicodeComment(content, hit.line);
     return [
       finding(this, {
-        severity: trojan && !testPath ? 'high' : 'low',
+        severity: trojan && !testPath && !defensiveComment ? 'high' : 'low',
         target: file,
         file,
         line: hit.line,
-        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}`,
+        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}${defensiveComment && !testPath ? '; on a comment line discussing hidden-unicode attacks, likely an illustrative example — confirm' : ''}`,
       }),
     ];
   },
