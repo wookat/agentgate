@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.49
+
+### Patch Changes
+
+- 10e2f50: AG-SK-003 precision: hook commands that POST data only to a loopback address (`127.0.0.1`, `localhost`, `[::1]`) are no longer classified as sending data to a remote host — a local notifier daemon receives nothing off the machine. Commands with any remote URL, a mixed loopback+remote pair, or no URL literal (variable host) keep their previous high grade.
+- Updated dependencies [10e2f50]
+  - mcp-agentgate-core@0.67.49
+
 ## 0.67.48
 
 ### Patch Changes
