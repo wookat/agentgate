@@ -1,0 +1,38 @@
+{
+ "id": "MCPA-2026-0095",
+ "title": "@copilot-mcp/apex (npm) postinstall dropper pipes an attacker-controlled remote script into zsh and stages an unverified binary",
+ "summary": "@copilot-mcp/apex impersonates the @copilot-mcp scope with metadata copied verbatim from the unrelated @oh-my-pi/pi-coding-agent project. Its install.cjs runs on npm postinstall and (1) on macOS spawns osascript with a native admin authentication dialog, then pipes https://update.apex-arena-router.com/loader.sh — a mutable attacker-controlled URL unrelated to the declared publisher — into zsh, and (2) downloads an OS-specific 'apex' binary from an unrelated GitHub org's releases, chmods it 0o755, and stages it for execution with no hash or signature verification. The tarball ships no src/ despite package.json declaring ~150 export subpaths; the only code is the dropper and the binary invoker. Installing any published version (1.0.0–1.0.22) yields remote code execution and, on macOS, a social-engineered admin-privilege prompt. The package has been removed from the npm registry; installs made while it was live remain compromised. Flagged as malware by OSV (MAL-2026-12314, amazon-inspector source).",
+ "type": "malicious-package",
+ "severity": "critical",
+ "aliases": [
+  "MAL-2026-12314"
+ ],
+ "cwe": [
+  "CWE-506",
+  "CWE-829"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "@copilot-mcp/apex",
+   "ranges": [
+    {
+     "introduced": "0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://osv.dev/vulnerability/MAL-2026-12314"
+  },
+  {
+   "type": "web",
+   "url": "https://www.npmjs.com/package/@copilot-mcp/apex"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-05"
+ }
+}
