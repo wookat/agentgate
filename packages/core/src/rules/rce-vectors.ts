@@ -228,12 +228,23 @@ export const rceVectorsRule: Rule = {
   checkSource(file, rawContent) {
     /** True when the match sits inside a string under the nearest enclosing deny/block key (e.g. `"deniedCommands": [...]`). */
     function isDenyListEntry(content: string, idx: number): boolean {
+      const DENY_NAME = (name: string) =>
+        /^(not[_-]?)?matches$/i.test(name) ||
+        name
+          .split(/[_-]|(?<=[a-z0-9])(?=[A-Z])/)
+          .some((t) => /^(deny|denied|denylist|block|blocked|blocklist|blacklist|disallow|disallowed|forbid|forbidden|danger|dangerous)$/i.test(t));
       const lines = content.slice(0, idx).split('\n');
-      for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 30; i--, seen++) {
+      for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 60; i--, seen++) {
+        // A deny table declared by assignment (`const denyBashPatterns = [`,
+        // `DANGEROUS = [`) encloses its entries the same way a deny key does.
+        const decl = /^\s*(?:export\s+)?(?:const|let|var)?\s*([A-Za-z_][\w]*)\s*(?::\s*[\w[\]<>.| ]+)?\s*=\s*[[({]/.exec(lines[i]!);
+        if (decl) return DENY_NAME(decl[1]!);
         const key = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(lines[i]!);
         // `matches:`/`not_matches:` under a detection-rule/policy yaml are
         // pattern tables the rule engine tests against, never commands it runs.
-        if (key) return /\b(den(y|ied|ylist)|block(ed)?(list)?|disallow(ed)?|forbid(den)?)\b|denied|blocklist|blacklist|^(not[_-]?)?matches$/i.test(key[1]!);
+        // Rule-table entry fields (`name:`/`re:`/`pattern:`…) sit *inside* the
+        // table rows, so scanning continues to the enclosing declaration.
+        if (key && !/^(name|id|label|re|regexp?|pattern|description|reason|message)$/i.test(key[1]!)) return DENY_NAME(key[1]!);
       }
       return false;
     }
