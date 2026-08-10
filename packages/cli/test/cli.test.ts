@@ -238,6 +238,17 @@ describe('agentgate scan', () => {
     expect(report.findings.some((f: { ruleId: string; target?: string }) => f.ruleId === 'AG-SC-001' && f.target === 'chrome')).toBe(true);
   });
 
+  it('reports server-scoped finding files relative to the scan root in JSON output', async () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'agentgate-relfile-'));
+    fs.writeFileSync(path.join(repo, '.mcp.json'), '{"mcpServers":{"ctx":{"command":"sh","args":["-c","npx some-server"]}}}\n');
+    const res = await run(['scan', repo, '--format', 'json', '--fail-on', 'never']);
+    fs.rmSync(repo, { recursive: true, force: true });
+    const report = JSON.parse(res.stdout);
+    const serverFinding = report.findings.find((f: { target?: string }) => f.target === 'ctx');
+    expect(serverFinding).toBeDefined();
+    expect(serverFinding.file).toBe('.mcp.json');
+  });
+
   it('detects poisoned tools with --live', async () => {
     const poisonedConfig = path.join(dir, 'poisoned.json');
     fs.writeFileSync(

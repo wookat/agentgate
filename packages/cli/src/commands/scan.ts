@@ -177,7 +177,16 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
     );
   }
 
-  const sorted = sortFindings(findings);
+  // Repo-walk findings carry project-relative paths; findings from discovered
+  // config files carry absolute ones. Report every file under the scan root
+  // the same way — relative, posix-separated. Configs outside the root (a
+  // user-level client config in the home directory) keep their absolute path.
+  const relativized = findings.map((f): Finding => {
+    if (!f.file || !path.isAbsolute(f.file)) return f;
+    const rel = path.relative(projectDir, f.file);
+    return rel.startsWith('..') || path.isAbsolute(rel) ? f : { ...f, file: rel.split(path.sep).join('/') };
+  });
+  const sorted = sortFindings(relativized);
   const report = {
     version: 1,
     scannedAt: new Date().toISOString(),
