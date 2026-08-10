@@ -148,6 +148,30 @@ describe('rule branch coverage', () => {
     expect(hit.message).toContain('defensive fixture');
   });
 
+  it('tool-poisoning: bidi chars on comment lines discussing hidden-unicode attacks are reported quietly', () => {
+    const js = repoScan({
+      'lint.js': '// "alice\u202eevilbob" renders reversed in any UI that respects\n// bidi — a forgery surface where the attested name looks wrong.\n',
+    });
+    const jsHit = js.find((f) => f.category === 'tool-poisoning')!;
+    expect(jsHit.severity).toBe('low');
+    expect(jsHit.message).toContain('illustrative example');
+    const py = repoScan({
+      'common.py': '# project name that renders `example.com` but stores\n# `examp\u202emoc.elp` (RLO + reversed) can mis-attribute findings\n',
+    });
+    expect(py.find((f) => f.category === 'tool-poisoning')!.severity).toBe('low');
+  });
+
+  it('tool-poisoning: a comment without attack prose, or code after a defensive comment, stays high', () => {
+    const plain = repoScan({ 'a.js': '// user "alice\u202eevilbob" logged in\n' });
+    expect(plain.find((f) => f.category === 'tool-poisoning')!.severity).toBe('high');
+    const mixed = repoScan({
+      'b.js': '// bidi override example: "a\u202eb"\nconst cmd = "run\u202egnp.sh";\n',
+    });
+    const hit = mixed.find((f) => f.category === 'tool-poisoning')!;
+    expect(hit.severity).toBe('high');
+    expect(hit.line).toBe(2);
+  });
+
   it('tool-poisoning: emoji ZWJ sequences are not hidden instructions', () => {
     const findings = repoScan({ 'emoji.ts': 'const e = "\u{1f469}\u200d\u{1f4bb}";\n' });
     expect(findings.some((f) => f.category === 'tool-poisoning')).toBe(false);
