@@ -108,7 +108,12 @@ export const ssrfRule: Rule = {
       /\btrigger[-_ ]?patterns?\b/i.test(nearWindow) ||
       // A named guard identifier (ssrfGuard, classifyIp routing) hides "guard"
       // at a camelCase boundary the word-boundary set can't see.
-      /ssrf[._-]?guard/i.test(nearWindow);
+      /ssrf[._-]?guard/i.test(nearWindow) ||
+      // URL-validator modules name themselves in the filename or nearby
+      // identifiers (url-validator.ts, ValidationError, validateProviderHost);
+      // an exfiltration script doesn't route its target through a validator.
+      /\bvalidat/i.test(nearWindow) ||
+      /\b(allow|white)[-_ ]?list/i.test(nearWindow);
     // Private/blocked-range guard functions (isPrivateIPv4, isBlockedIPv4)
     // annotate the metadata range in a doc comment above the declaration or a
     // body comment below it, either of which can sit well outside the generic
@@ -137,7 +142,7 @@ export const ssrfRule: Rule = {
       blocklistNearby ||
       guardDeclNearby ||
       headerDefensive ||
-      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must not|cannot target|SSRF|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b/i.test(context);
+      /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must (not|never)|cannot target|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b|(\b|_)SSRF(\b|_)/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
     // example) is inert — nothing reads it; still reported, but quietly.
     const matchLine = allLines[line - 1] ?? '';

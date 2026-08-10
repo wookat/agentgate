@@ -1579,6 +1579,41 @@ describe('scanRepo', () => {
     expect(ss.find((f) => f.file === 'harvest.sh')!.severity).toBe('high');
   });
 
+  it('recognizes URL-validator modules and underscore-bounded SSRF identifiers (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'url-validator.ts'),
+      [
+        '// packages/security/url-validator.ts',
+        'import { ValidationError } from "./errors";',
+        'import { validateProviderHost } from "./providers";',
+        '',
+        '// List of cloud metadata IP addresses',
+        'const CLOUD_METADATA_IPS = [',
+        '  "169.254.169.254", // AWS, OpenStack, GCP, etc.',
+        '  "100.100.100.200", // Alibaba Cloud',
+        '];',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'check-adversarial-surface.ts'),
+      [
+        '/** Addresses an outbound fetch must never be talked into reaching. */',
+        'const SSRF_CORPUS = [',
+        '  "http://127.0.0.1:8080/",',
+        '  "http://169.254.169.254/latest/meta-data/",',
+        '];',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      path.join(dir, 'imds_steal.py'),
+      'requests.get("http://169.254.169.254/latest/meta-data/iam/security-credentials/")\n',
+    );
+    const ss = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(ss.find((f) => f.file === 'url-validator.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'check-adversarial-surface.ts')!.severity).toBe('low');
+    expect(ss.find((f) => f.file === 'imds_steal.py')!.severity).toBe('high');
+  });
+
   it('grades Firebase web-app configs and postman/ paths quietly (AG-CL-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'app.config.ts'),
