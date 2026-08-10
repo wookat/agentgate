@@ -3144,7 +3144,7 @@ describe('scanRepo', () => {
       JSON.stringify(
         {
           $schema: 'https://opencode.ai/config.json',
-          plugin: ['opencode-wakatime', '@my-org/custom-plugin', 'opencode-helicone-session@1.2.0', './plugins/local.ts'],
+          plugin: ['opencode-wakatime', '@my-org/custom-plugin@latest', 'opencode-helicone-session@1.2.0', './plugins/local.ts'],
         },
         null,
         2,
@@ -3152,8 +3152,9 @@ describe('scanRepo', () => {
     );
     const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SC-001');
     expect(hits.map((f) => f.severity)).toEqual(['medium', 'medium']);
-    expect(hits[0]?.message).toContain('opencode-wakatime');
-    expect(hits[1]?.message).toContain('@my-org/custom-plugin');
+    expect(hits[0]?.message).toContain('(e.g. opencode-wakatime@1.2.3)');
+    expect(hits[1]?.message).toContain('"@my-org/custom-plugin@latest"');
+    expect(hits[1]?.message).toContain('(e.g. @my-org/custom-plugin@1.2.3)');
   });
 
   it('flags remote-URL OpenCode instructions (AG-SC-001)', () => {
