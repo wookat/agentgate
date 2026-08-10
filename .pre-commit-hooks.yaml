@@ -3,7 +3,7 @@
 #
 #   repos:
 #     - repo: https://github.com/wookat/agentgate
-#       rev: v0.67.46
+#       rev: v0.67.47
 #       hooks:
 #         - id: agentgate-ci
 #
