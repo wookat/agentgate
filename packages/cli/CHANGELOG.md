@@ -1,5 +1,12 @@
 # mcp-agentgate
 
+## 0.67.44
+
+### Patch Changes
+
+- 08be4b8: Scan output consistency (round 388): findings from discovered config files (an `.mcp.json` server launched through a shell, an unpinned server spec) now report their `file` posix-relative to the scan root like repo-walk findings do, instead of as an absolute path; configs outside the scan root (user-level client configs) keep their absolute path.
+  - mcp-agentgate-core@0.67.44
+
 ## 0.67.43
 
 ### Patch Changes

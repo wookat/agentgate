@@ -1,5 +1,7 @@
 # mcp-agentgate-core
 
+## 0.67.44
+
 ## 0.67.43
 
 ### Patch Changes
