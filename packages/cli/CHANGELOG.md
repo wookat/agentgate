@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.50
+
+### Patch Changes
+
+- 4a5105d: Cover the Qoder plugin surface (`.qoder-plugin/`): plugin manifests (`plugin.json` hooks and bundled mcpServers), marketplace catalogs (`marketplace.json` mutable sources), manifest-gated component markdown, and the plugin root's `system-prompt.md` extension context — Qwen Code v0.21.9 installs Qoder plugins natively, so these files now run for Qwen users too.
+- Updated dependencies [4a5105d]
+  - mcp-agentgate-core@0.67.50
+
 ## 0.67.49
 
 ### Patch Changes
