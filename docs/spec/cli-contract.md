@@ -30,7 +30,7 @@ that cannot be parsed is fatal (`2`).
       "severity": "critical | high | medium | low",
       "message": "human-readable summary",
       "target": "server/tool/file the finding refers to",
-      "file": "optional path",
+      "file": "optional path — posix-relative to the scan root when under it, absolute otherwise (e.g. a user-level client config)",
       "line": 1,               // optional
       "detail": "optional extra context"
     }
