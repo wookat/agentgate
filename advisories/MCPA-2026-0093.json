@@ -1,0 +1,51 @@
+{
+ "id": "MCPA-2026-0093",
+ "title": "KoboldCPP-MCP-Server makeRequest server-side request forgery (CVE-2026-19373)",
+ "summary": "KoboldCPP-MCP-Server (npm: server-koboldai) 1.0.0 is vulnerable to SSRF: src/index.ts (component BaseConfigSchema / makeRequest) accepts an apiUrl argument on every tool call and passes it straight into fetch() request URLs (`${apiUrl}/v1/chat/completions`, `${apiUrl}${endpoint}`) with no allowlist or network-range validation, so a poisoned tool call can point the server at loopback, private-network, or cloud-metadata URLs from its network position and read the responses (verified by unpacking the published server-koboldai@1.0.0 tarball). The maintainer was notified via a public issue but no fixed release exists as of 2026-08-10, so this is recorded as last_affected 1.0.0.",
+ "type": "ssrf",
+ "severity": "low",
+ "aliases": [
+  "CVE-2026-19373",
+  "GHSA-m2hf-r4mh-rrq8"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+  "score": 5.3
+ },
+ "cwe": [
+  "CWE-918"
+ ],
+ "packages": [
+  {
+   "ecosystem": "npm",
+   "name": "server-koboldai",
+   "ranges": [
+    {
+     "introduced": "0",
+     "last_affected": "1.0.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-m2hf-r4mh-rrq8"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19373"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/PhialsBasement/KoboldCPP-MCP-Server/issues/3"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/PhialsBasement/KoboldCPP-MCP-Server"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-10"
+ }
+}

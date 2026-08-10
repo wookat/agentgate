@@ -2273,5 +2273,43 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0093",
+    "title": "KoboldCPP-MCP-Server makeRequest server-side request forgery (CVE-2026-19373)",
+    "type": "ssrf",
+    "severity": "low",
+    "published": "2026-08-10",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "server-koboldai",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0094",
+    "title": "article-scraper-mcp fetch_article server-side request forgery (CVE-2026-19375)",
+    "type": "ssrf",
+    "severity": "medium",
+    "published": "2026-08-10",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "article-scraper-mcp",
+        "ranges": [
+          {
+            "introduced": "0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
   }
 ];
