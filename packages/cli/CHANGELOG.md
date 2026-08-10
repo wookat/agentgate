@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.38
+
+### Patch Changes
+
+- c96cedd: Advisory MCPA-2026-0095: @copilot-mcp/apex (npm) postinstall dropper — remote loader.sh piped into zsh plus an unverified staged binary, impersonating the @copilot-mcp scope (108 → 109).
+- Updated dependencies [c96cedd]
+  - mcp-agentgate-core@0.67.38
+
 ## 0.67.37
 
 ### Patch Changes
