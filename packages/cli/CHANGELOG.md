@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.39
+
+### Patch Changes
+
+- 892311f: AG-CL-001 precision: server configs in test/fixture trees report their hardcoded fake credentials as low with fixture wording; hyphen/underscore-delimited `test`/`selfcheck` filename tokens (integration-test-_.mjs, selfcheck-_.mjs) count as test paths; redaction test vectors (a `[REDACTED` mask on the same line, or redact-named utility files) grade low. Non-fixture configs and opaque secrets keep their original severities.
+- Updated dependencies [892311f]
+  - mcp-agentgate-core@0.67.39
+
 ## 0.67.38
 
 ### Patch Changes
