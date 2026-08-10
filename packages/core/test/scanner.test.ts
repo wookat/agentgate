@@ -944,6 +944,15 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'latest/app.js')!.severity).toBe('high');
   });
 
+  it('grades trojan chars in test_-prefixed files quietly (AG-TP-001)', () => {
+    fs.mkdirSync(path.join(dir, 'eval'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'eval', 'test_gate_security.py'), 'rlo = "bidi:\u202eabc"\n');
+    fs.writeFileSync(path.join(dir, 'eval', 'gate.py'), 's = "bidi:\u202eabc"\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-TP-001');
+    expect(hits.find((f) => f.file === 'eval/test_gate_security.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'eval/gate.py')!.severity).toBe('high');
+  });
+
   it('grades skill hidden-unicode severity: stray boundary zero-width low, concealing critical (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'a'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'b'), { recursive: true });

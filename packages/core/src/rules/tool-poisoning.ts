@@ -106,6 +106,7 @@ export const toolPoisoningRule: Rule = {
     const testPath =
       /(^|\/)([\w.]+[-_])?(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) ||
       /\.(test|spec)\.\w+$/i.test(file) ||
+      /(^|\/)test_[^/]+\.\w+$|_test\.\w+$/i.test(file) ||
       /(^|\/)fixtures?\.\w+$/i.test(file);
     return [
       finding(this, {
