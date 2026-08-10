@@ -138,10 +138,22 @@ export const ssrfRule: Rule = {
     const headerDefensive = /\b(prevent\w*|protect\w*|mitigat\w*|guard\w*|block\w*|den(y|ies)|disallow)\b[^\n]{0,80}\b(SSRF|metadata|internal networks?)\b|\bSSRF\b[^\n]{0,40}\b(protect\w*|block\w*|filter\w*|prevent\w*|mitigat\w*|guard\w*)\b|\b(allow|block)[-_ ]?lists?\b[^\n]{0,80}\bto prevent\b|\b(scan|detect|check)\w*\b[\s\S]{0,160}\b(incident indicators?|IOCs?)\b|\b(IOCs?|indicators? of compromise)\b[^\n]{0,80}\b(database|db|list|table|feed)\b/i.test(
       allLines.slice(0, 12).join('\n'),
     );
+    // A boolean host-classifier predicate compares the hostname against the
+    // metadata literal (host === "metadata.google.internal") or annotates a
+    // return-branch comment (return false; // link-local incl. cloud metadata)
+    // — the code checks the address instead of fetching it. Requires a boolean
+    // return in the near window and no fetch call on the literal's line, so
+    // exploitation code that dials the endpoint stays hot.
+    const literalLine = allLines[line - 1] ?? '';
+    const classifierNearby =
+      /(===|!==|==|!=)/.test(literalLine) &&
+      !/\b(curl|wget|fetch|request|urlopen|https?[._]?get|open)\s*\(/i.test(literalLine) &&
+      /\breturn\s+(true|false)\b/.test(nearWindow);
     const defensive =
       blocklistNearby ||
       guardDeclNearby ||
       headerDefensive ||
+      classifierNearby ||
       /\b(block(s|ed|ing)?|reject(s|ed|ing)?|den(y|ies|ied)|disallow|forbid|refus\w*|restrict\w*|prevent(s|ed|ing)?|must (not|never)|cannot target|guard(s|ed|ing)?|validat\w*|mitigat\w*|exclud\w*)\b|(\b|_)SSRF(\b|_)/i.test(context);
     // A `#`-commented config line (a commented-out cloud-init `metadata_urls`
     // example) is inert — nothing reads it; still reported, but quietly.
