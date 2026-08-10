@@ -105,7 +105,12 @@ function isDemoJwt(value: string): boolean {
   if (!payload) return false;
   try {
     const decoded = Buffer.from(payload, 'base64url').toString('utf8');
-    return /(\b|_|")(demo|test|testing|example|sample|dummy|fake|placeholder)(\b|_|")/i.test(decoded);
+    // The canonical jwt.io debugger token identifies itself by its payload
+    // (sub 1234567890 / name "John Doe") — doc filler copied everywhere.
+    return (
+      /(\b|_|")(demo|test|testing|example|sample|dummy|fake|placeholder)(\b|_|")/i.test(decoded) ||
+      /"sub"\s*:\s*"1234567890"|"name"\s*:\s*"John Doe"/.test(decoded)
+    );
   } catch {
     return false;
   }
@@ -211,6 +216,11 @@ export const credentialLeakRule: Rule = {
         // redact to ({raw, mask: "[REDACTED:jwt]"}), or the file is itself a
         // redaction utility — the value is a test input, not a leak.
         const redactionVector = /\[?REDACTED\b/.test(lineText) || /(^|\/)[^/]*redact[^/]*\.\w+$/i.test(file);
+        // A same-line suppression comment (`# nosec … fake fixture secret …`,
+        // `// not a real credential`) marks the value as a deliberate fake.
+        const suppressionComment =
+          /(#|\/\/)\s*nosec\b/i.test(lineText) ||
+          /(#|\/\/)[^\n]*\b(fake|dummy|placeholder|not\s+a\s+real)\b[^\n]*\b(secret|credential|key|token|fixture)\b/i.test(matchCol >= 0 ? lineText.slice(matchCol) : lineText);
         const publishable = isPublishableJwt(m[0]);
         const demoJwt = !publishable && isDemoJwt(m[0]);
         // A Firebase *web-app* config object embeds the same client-distributable
@@ -219,14 +229,14 @@ export const credentialLeakRule: Rule = {
         const firebaseWebConfig =
           /\bAIza/.test(m[0]) &&
           /firebaseapp\.com|messagingSenderId|\bauthDomain\b/.test(allSourceLines.slice(Math.max(0, line - 6), line + 5).join('\n'));
-        const quiet = testPath || exampleValue || redactionVector || publishable || demoJwt || firebaseClientConfig || firebaseWebConfig;
+        const quiet = testPath || exampleValue || redactionVector || suppressionComment || publishable || demoJwt || firebaseClientConfig || firebaseWebConfig;
         findings.push(
           finding(this, {
             severity: quiet ? 'low' : 'high',
             target: file,
             file,
             line,
-            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${redactionVector ? ' — a redaction test vector (masked target on the same line); confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${demoJwt ? ' — a JWT whose payload names itself a demo/test token; likely doc filler, confirm' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
+            message: `Possible hardcoded secret in source (matches ${re.source.slice(0, 30)}…)${testPath ? ' — in a test/fixture path, likely a deliberate fake; confirm' : ''}${exampleValue ? ' — under an example: key, likely documentation; confirm' : ''}${redactionVector ? ' — a redaction test vector (masked target on the same line); confirm' : ''}${suppressionComment ? ' — a same-line comment marks it as a deliberate fake (nosec/fake fixture); confirm' : ''}${publishable ? ' — a Supabase anon-role JWT, publishable by design; confirm row-level security instead' : ''}${demoJwt ? ' — a JWT whose payload names itself a demo/test token; likely doc filler, confirm' : ''}${firebaseClientConfig || firebaseWebConfig ? ' — a Firebase client config; its API key is client-distributable, access is gated by Firebase security rules' : ''}`,
           }),
         );
       }

