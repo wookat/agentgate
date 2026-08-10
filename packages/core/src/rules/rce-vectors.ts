@@ -274,9 +274,12 @@ export const rceVectorsRule: Rule = {
       // A match inside the value of a regex/pattern field (`pattern: '…curl…\\|\\s*sh…'`
       // in a detection-rule row) is a pattern the rule engine tests against,
       // never a command it runs — same semantics as a `matches:` table.
+      // TOML rule files assign with `=` (`regex = '''…'''`, `should_match = "curl … | bash"`);
+      // a rule-test expectation key (should_match/must_not_match) holds a string
+      // the rule engine is asserted against, never a command it runs.
       const lineStart = content.lastIndexOf('\n', idx - 1) + 1;
-      const ownKey = /^\s*-?\s*["']?([\w-]+)["']?\s*:/.exec(content.slice(lineStart, idx));
-      if (ownKey && /^((not[_-]?)?match(es)?|patterns?|regexp?s?|regexes|re)$/i.test(ownKey[1]!)) return true;
+      const ownKey = /^\s*-?\s*["']?([\w-]+)["']?\s*[:=]/.exec(content.slice(lineStart, idx));
+      if (ownKey && /^((should|must)[_-]?)?((not[_-]?)?match(es)?)$|^(patterns?|regexp?s?|regexes|re)$/i.test(ownKey[1]!)) return true;
       // A detection-rule row — a list item that carries a `pattern:`/`re:`/
       // `regex:` field — is data the rule engine tests against; a curl|sh
       // string in any of its fields (pattern, message, examples) never runs.
@@ -356,8 +359,19 @@ export const rceVectorsRule: Rule = {
         return (before.match(/'/g) ?? []).length % 2 === 1 || (before.match(/"/g) ?? []).length % 2 === 1;
       };
       const quotedTestFixture = (idx: number) => testPathFile && insideQuoted(idx);
+      // In a yaml/toml data file, a match wholly inside a backtick inline-code
+      // span (`runs a \`curl | bash\` chain…` in a block-scalar narrative) is
+      // prose quoting the idiom — no runner backticks its own commands.
+      const backtickQuotedProse = (idx: number) => {
+        if (!isDataFormat) return false;
+        const lineStart = content.lastIndexOf('\n', idx - 1) + 1;
+        const lineEnd = content.indexOf('\n', idx);
+        const before = content.slice(lineStart, idx);
+        const after = content.slice(idx, lineEnd === -1 ? content.length : lineEnd);
+        return (before.match(/`/g) ?? []).length % 2 === 1 && after.includes('`');
+      };
       const m =
-        all.find((c) => !isCommented(c.index ?? 0) && !quotedTestFixture(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
+        all.find((c) => !isCommented(c.index ?? 0) && !quotedTestFixture(c.index ?? 0) && !backtickQuotedProse(c.index ?? 0) && !(isDataFormat && isDenyListEntry(content, c.index ?? 0))) ??
         all.find((c) => !isCommented(c.index ?? 0)) ??
         all[0]!;
       // A goose-recipe-shaped YAML/JSON file carries prompt text, not commands a
@@ -392,6 +406,7 @@ export const rceVectorsRule: Rule = {
         !quotedTestFixture(m.index ?? 0) &&
         !dataFormatFixture &&
         !dataFormatDenyList &&
+        !backtickQuotedProse(m.index ?? 0) &&
         !(isDataFormat && exampleMarked);
       // A curl|sh string listed under a deny/block key (e.g. a `deniedCommands`
       // array) is a defensive control, not an execution vector.

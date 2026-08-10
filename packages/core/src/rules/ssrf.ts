@@ -86,7 +86,7 @@ export const ssrfRule: Rule = {
     }
     // Test/fixture trees reference the metadata IP as a fixture for the very
     // SSRF protections under test; still reported, but quietly.
-    const testPath = /(^|\/)(tests?|testing|__tests__|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec|selfcheck)\.\w+$/i.test(file);
+    const testPath = /(^|\/)(tests?|testing|__tests__|evals?|examples?|fixtures|mocks?)\//i.test(file) || /\.(test|spec|selfcheck)\.\w+$/i.test(file);
     // Security guidance / defensive code references the endpoint to block it
     // (e.g. "MUST reject ... the metadata IP"); an exfil vector doesn't.
     // Guards often explain themselves in a comment block, so look at the
@@ -102,9 +102,9 @@ export const ssrfRule: Rule = {
     // safety-rule tables name themselves "trigger patterns" for unsafe actions.
     const nearWindow = allLines.slice(Math.max(0, line - 11), line + 3).join('\n');
     const blocklistNearby =
-      /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|danger(ous)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
+      /(\b|_)(block(s|ed|ing)?|block[-_]?list|deny[-_]?list|den(y|ied|ies)|blacklist|reject(s|ed|ing)?|restrict(s|ed|ing|ion)?|danger(ous)?|guard(s|ed|ing)?|not allowed)(\b|_)|\bis[_]?private/i.test(nearWindow) ||
       /\b(Denied|Deny|Blocked|Restricted|Dangerous)[A-Z]/.test(nearWindow) ||
-      /\bdangerous[A-Z]/.test(nearWindow) ||
+      /\b(denied|deny|dangerous)[A-Z]/.test(nearWindow) ||
       /\btrigger[-_ ]?patterns?\b/i.test(nearWindow) ||
       // A named guard identifier (ssrfGuard, classifyIp routing) hides "guard"
       // at a camelCase boundary the word-boundary set can't see.
