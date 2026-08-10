@@ -275,7 +275,7 @@ function gooseRecipeLocations(projectDir: string): ClientConfigLocation[] {
 const PLUGIN_SEARCH_SKIP = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 
 /** Plugin metadata dirs marking a plugin/marketplace root (Claude Code, Copilot CLI, Factory Droid, and Codex conventions). */
-const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin']);
+const PLUGIN_META_DIRS = new Set(['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin', '.qoder-plugin']);
 
 /**
  * MCP servers bundled by Claude Code / Copilot CLI plugins: a plugin root is any directory

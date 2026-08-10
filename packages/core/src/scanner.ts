@@ -9,7 +9,7 @@ import { Finding, McpServerConfig, ScanResult, ToolSurface } from './types.js';
 const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.py', '.json', '.toml', '.yaml', '.yml', '.sh', '.jsonc']);
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.venv', 'venv', '__pycache__', '.next']);
 /** Hidden agent-config trees that may carry skill files. */
-const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.cursor', '.codex', '.goose', '.opencode', '.windsurf', '.cline', '.clinerules', '.kilocode', '.kilo', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.codex-plugin', '.cursor-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin', '.goose-plugin']);
+const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.cursor', '.codex', '.goose', '.opencode', '.windsurf', '.cline', '.clinerules', '.kilocode', '.kilo', '.gemini', '.continue', '.trae', '.kiro', '.roo', '.github', '.amazonq', '.vscode', '.zed', '.claude-plugin', '.codex-plugin', '.cursor-plugin', '.qwen', '.plugin', '.junie', '.openhands', '.factory', '.factory-plugin', '.goose-plugin', '.qoder-plugin']);
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** CI pipeline configs of other CI systems — build automation, not MCP server source (same rationale as .github/workflows). */
@@ -124,7 +124,7 @@ export function globToRegExp(glob: string): RegExp {
 }
 
 /** Plugin metadata dir names whose `plugin.json` marks a plugin root. */
-const PLUGIN_META_NAMES = ['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin'];
+const PLUGIN_META_NAMES = ['.claude-plugin', '.plugin', '.factory-plugin', '.codex-plugin', '.cursor-plugin', '.goose-plugin', '.qoder-plugin'];
 const PLUGIN_COMPONENT_MD = /(^|\/)(skills|commands|agents|output-styles)\/.+\.md$/gi;
 
 /**
@@ -144,6 +144,19 @@ function isPluginComponentSkill(ctx: PluginContext, relPosix: string): boolean {
 }
 
 const PLUGIN_BIN_FILE = /(^|\/)bin\/[^/]+$/i;
+
+const PLUGIN_SYSTEM_PROMPT_MD = /(^|\/)system-prompt\.md$/i;
+
+/**
+ * A plugin root's `system-prompt.md` is loaded as model-facing extension
+ * context for everyone who installs the plugin (Qoder plugin convention,
+ * also honored by Qwen Code's Qoder-compatible installer). Same manifest
+ * gate as component markdown.
+ */
+function isPluginSystemPromptMd(ctx: PluginContext, relPosix: string): boolean {
+  const m = PLUGIN_SYSTEM_PROMPT_MD.exec(relPosix);
+  return m !== null && isPluginRoot(ctx, relPosix.slice(0, m.index));
+}
 
 /**
  * Files directly under a plugin root's `bin/` are added to the Bash tool's
@@ -225,6 +238,7 @@ const MARKETPLACE_CATALOG_PATHS = [
   '.github/plugin/marketplace.json',
   '.factory-plugin/marketplace.json',
   '.cursor-plugin/marketplace.json',
+  '.qoder-plugin/marketplace.json',
   '.agents/plugins/marketplace.json',
   '.agents/plugins/api_marketplace.json',
 ];
@@ -375,7 +389,7 @@ export function scanRepo(dir: string, opts: ScanRepoOptions = {}): ScanResult {
   const ctx = newPluginContext(dir);
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(ctx, relPosix) || isDeclaredPluginComponentMd(ctx, relPosix);
+    const isSkill = SKILL_FILE.test(relPosix) || isPluginComponentSkill(ctx, relPosix) || isDeclaredPluginComponentMd(ctx, relPosix) || isPluginSystemPromptMd(ctx, relPosix);
     const isPluginBin = !isSkill && isPluginBinFile(ctx, relPosix);
     if (!isSkill && !isPluginBin && !SOURCE_EXTENSIONS.has(path.extname(file)) && !KIRO_AGENT_HOOK_FILE.test(relPosix) && !CRUSHRC_FILE.test(relPosix)) continue;
     if (!isSkill && CI_CONFIG_FILE.test(relPosix)) continue;
@@ -418,7 +432,7 @@ export function collectSkillFiles(dir: string, opts: { ignore?: string[] } = {})
   const ctx = newPluginContext(dir);
   for (const file of walk(dir)) {
     const relPosix = path.relative(dir, file).split(path.sep).join('/');
-    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(ctx, relPosix) && !isDeclaredPluginComponentMd(ctx, relPosix)) continue;
+    if (!SKILL_FILE.test(relPosix) && !isPluginComponentSkill(ctx, relPosix) && !isDeclaredPluginComponentMd(ctx, relPosix) && !isPluginSystemPromptMd(ctx, relPosix)) continue;
     if (ignoreRes.some((re) => re.test(relPosix))) continue;
     let stat;
     try {
