@@ -1,5 +1,12 @@
 # mcp-agentgate-core
 
+## 0.67.55
+
+### Patch Changes
+
+- bf6222a: AG-SS-001 defensive-context recognition covers two more real shapes: URL-validator modules (validator/validate identifiers or allowlist wording near the metadata-IP literal) and underscore-bounded SSRF identifiers (`SSRF_CORPUS` adversarial-check tables, plus "must never" wording). Defensive allowlist validators and SSRF test corpora that list the metadata IP now grade low instead of high; exploitation scripts with no defensive wording keep grading high.
+- bf65a52: AG-SS-001 defensive-context recognition covers boolean host-classifier predicates: when the metadata literal sits on an equality-comparison line (`host === "metadata.google.internal"`, or a `return false; // … cloud metadata` branch comment) with a boolean return in the near window and no fetch call on that line, the finding grades low. Code that dials the endpoint (urllib/requests/curl) keeps grading high.
+
 ## 0.67.54
 
 ### Patch Changes
