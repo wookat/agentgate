@@ -57,6 +57,39 @@ export function isDefensiveUnicodeComment(content: string, line: number): boolea
   return UNICODE_ATTACK_PROSE.test(context);
 }
 
+/**
+ * Detection tooling also embeds the characters it hunts for in non-comment
+ * pattern declarations: a regex character class listing the bidi range
+ * (`re.compile(r"[\u202a-\u202e]")`, a YAML `patterns:` entry) or a rule-test
+ * fixture string exercising the detector. Both shapes require nearby prose that
+ * names the attack class; the fixture shape additionally requires detection
+ * vocabulary (rule/canary/signature/verdict/detect) in the window, so a hidden
+ * character smuggled into ordinary code stays loud.
+ */
+export function isDefensiveDetectionPattern(content: string, line: number, file = ''): boolean {
+  const lines = content.split('\n');
+  const hitLine = lines[line - 1] ?? '';
+  const context = lines.slice(Math.max(0, line - 4), line + 3).join('\n');
+  // Detection-rule files name the attack class in the filename
+  // (invisible-character-prompt-injection.rule.yaml) when the fixture sits
+  // further from its label than the prose window reaches.
+  if (!UNICODE_ATTACK_PROSE.test(context) && !UNICODE_ATTACK_PROSE.test(file)) return false;
+  // Character-class pattern: every hidden char on the line sits inside [...]
+  // within a quoted string or regex literal.
+  const charClasses = hitLine.match(/\[[^\][]*\]/g) ?? [];
+  const inClass = charClasses.join('');
+  const stripped = hitLine
+    .split('')
+    .filter((c) => SOURCE_HIDDEN_UNICODE.test(c) && !inClass.includes(c))
+    .join('');
+  if (charClasses.some((c) => SOURCE_HIDDEN_UNICODE.test(c)) && stripped === '') return true;
+  // Rule-test fixture: a quoted payload string in a detection-rule context.
+  return (
+    /["'].*["']/.test(hitLine) &&
+    /\b(rules?|canar(?:y|ies)|signatures?|verdicts?|detect(?:s|ion|or)?|scanners?)\b/i.test(context)
+  );
+}
+
 /** Bidi overrides/isolates and Unicode tag characters are Trojan-Source-grade concealment. */
 export function isTrojanHidden(char: string): boolean {
   const cp = char.codePointAt(0)!;
@@ -140,20 +173,27 @@ export const toolPoisoningRule: Rule = {
     // Prefer the first hit that is not documentation of the attack itself:
     // security tooling embeds bidi characters in comments that discuss them.
     const hit =
-      hits.find((h) => !(isTrojanHidden(h.char) && isDefensiveUnicodeComment(content, h.line))) ?? hits[0]!;
+      hits.find(
+        (h) =>
+          !(
+            isTrojanHidden(h.char) &&
+            (isDefensiveUnicodeComment(content, h.line) || isDefensiveDetectionPattern(content, h.line, file))
+          ),
+      ) ?? hits[0]!;
     const cp = hit.char.codePointAt(0)!;
     const codepoint = `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
     // Bidi overrides and Unicode tag characters are Trojan-Source-grade; a stray
     // zero-width space or BOM is usually editor noise, so it is reported quietly.
     const trojan = isTrojanHidden(hit.char);
     const defensiveComment = trojan && isDefensiveUnicodeComment(content, hit.line);
+    const defensivePattern = trojan && !defensiveComment && isDefensiveDetectionPattern(content, hit.line, file);
     return [
       finding(this, {
-        severity: trojan && !testPath && !defensiveComment ? 'high' : 'low',
+        severity: trojan && !testPath && !defensiveComment && !defensivePattern ? 'high' : 'low',
         target: file,
         file,
         line: hit.line,
-        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}${defensiveComment && !testPath ? '; on a comment line discussing hidden-unicode attacks, likely an illustrative example — confirm' : ''}`,
+        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}${defensiveComment && !testPath ? '; on a comment line discussing hidden-unicode attacks, likely an illustrative example — confirm' : ''}${defensivePattern && !testPath ? '; inside a detection pattern/fixture for hidden-unicode attacks, likely defensive — confirm' : ''}`,
       }),
     ];
   },
