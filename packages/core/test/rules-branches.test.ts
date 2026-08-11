@@ -172,6 +172,33 @@ describe('rule branch coverage', () => {
     expect(hit.line).toBe(2);
   });
 
+  it('tool-poisoning: bidi ranges in detection regex character classes are reported quietly', () => {
+    const py = repoScan({
+      'canaries.py': 'CANARIES = [\n    Canary(\n        pattern=re.compile(r"[\u202a-\u202e\u2066-\u2069]"),\n        class_name="unicode-directionality",\n    ),\n]\n',
+    });
+    const pyHit = py.find((f) => f.category === 'tool-poisoning')!;
+    expect(pyHit.severity).toBe('low');
+    expect(pyHit.message).toContain('detection pattern');
+    const yaml = repoScan({
+      'signatures.yaml': '- id: SIG-020\n  name: bidi-control-trojan-source\n  patterns:\n  - "[\u202a-\u202e\u2066-\u2069]"\n  message: "Bidirectional-control unicode (Trojan Source)"\n',
+    });
+    expect(yaml.find((f) => f.category === 'tool-poisoning')!.severity).toBe('low');
+  });
+
+  it('tool-poisoning: quoted payloads in detection-rule fixtures are reported quietly', () => {
+    const findings = repoScan({
+      'rules/invisible-character-injection.rule.yaml': 'tests:\n  - name: bidi_override\n    verdict: match\n    events:\n      - event: { action: prompt.submitted }\n        prompt: { text: "open the file \u202e gnp.exe" }\n',
+    });
+    expect(findings.find((f) => f.category === 'tool-poisoning')!.severity).toBe('low');
+  });
+
+  it('tool-poisoning: a quoted bidi payload without detection context stays high', () => {
+    const findings = repoScan({
+      'deploy.sh': '# unicode-safe deploy helper\ncmd="run\u202egnp.sh"\n',
+    });
+    expect(findings.find((f) => f.category === 'tool-poisoning')!.severity).toBe('high');
+  });
+
   it('tool-poisoning: emoji ZWJ sequences are not hidden instructions', () => {
     const findings = repoScan({ 'emoji.ts': 'const e = "\u{1f469}\u200d\u{1f4bb}";\n' });
     expect(findings.some((f) => f.category === 'tool-poisoning')).toBe(false);
