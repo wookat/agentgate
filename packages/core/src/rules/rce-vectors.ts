@@ -153,6 +153,14 @@ function maskQuotedHeredocs(content: string): string {
  * text). A `$(`/backtick inside double quotes still executes, so those
  * strings are left live.
  */
+// Command words that print their argument rather than run it: logging and
+// diagnostic helpers (`info "curl … | sh"`, `fail "run: curl … | bash"`).
+// Matched segment-wise so compound names (`log_warn`,
+// `preflight_strict_warn_or_fail`) qualify too.
+const PRINT_WORD = /(^|_)(echo|printf|print|println|log|logger|info|note|msg|message|say|warn|warning|error|err|fail|die|abort|panic|usage|help|hint|tip|debug|verbose|success|status|banner)(_|$)/i;
+// The command word immediately preceding a quoted argument, at the start of a
+// statement (line start, `;`, `&&`, `|`, subshell, or then/do/else keyword).
+const LEADING_CMD_RE = /(?:^|[;&|(`]|\n|\bthen\b|\bdo\b|\belse\b)[ \t]*([\w.-]+)(?:[ \t]+-{1,2}[\w=-]+)*[ \t]+$/;
 function maskEchoedStrings(content: string): string {
   return content.replace(
     /\b(echo|printf)\s+(-\w+\s+)*((?:'[^']*'|"(?:[^"$`]|\$[^(])*")(\s+(?:'[^']*'|"(?:[^"$`]|\$[^(])*"))*)/g,
@@ -172,7 +180,13 @@ function maskInertQuotedStrings(content: string): string {
   return content.replace(/'[^'\n]*'|"(?:[^"$`\n]|\$[^(`\n])*"/g, (str: string, offset: number) => {
     const before = content.slice(Math.max(0, offset - 80), offset);
     if (/\b(sh|bash|zsh|dash|ksh|python\d*|node|perl|ruby)(\s+-\w+)*\s+-[ce]\s*$|\b(eval|source|exec)\s*$|\bssh\s+\S+\s*$|\$\(\s*$/.test(before)) return str;
-    if (/^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) return str;
+    if (/^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) {
+      // The `run 'curl … | bash'` wrapper idiom executes its argument, but a
+      // print/log helper (`info "curl -sfL … | sh"`, `…_warn_or_fail "curl
+      // not found (uses curl|sh)"`) only displays it.
+      const cmd = LEADING_CMD_RE.exec(before);
+      if (!cmd || !PRINT_WORD.test(cmd[1]!)) return str;
+    }
     return str[0]! + str.slice(1, -1).replace(/[^\n]/g, ' ') + str[str.length - 1]!;
   });
 }
@@ -193,8 +207,20 @@ function maskMultilineDataStrings(content: string): string {
     /(^|\n)([ \t]*)(\w[\w-]*)(=[ \t]*|[ \t]+(?:-\w+[ \t]+)*)('[^']*\n[^']*'|"(?:[^"$`]|\$[^(`])*\n(?:[^"$`]|\$[^(`])*")/g,
     (whole, _nl: string, _indent: string, word: string, sep: string, str: string) => {
       if (!sep.startsWith('=') && LIVE_WORD.test(word)) return whole;
-      if (/^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) return whole;
+      if (!PRINT_WORD.test(word) && /^\s*(sudo\s+)?(curl|wget)\b/.test(str.slice(1, -1))) return whole;
       return whole.replace(str, str[0]! + str.slice(1, -1).replace(/[^\n]/g, ' ') + str[str.length - 1]!);
+    },
+  ).replace(
+    // A multi-line message handed to a print/log helper stays text even when
+    // it interpolates command substitutions (`fail "…\n  curl … | bash\n\n$(note)"`)
+    // — the substitution output is printed, so only the `$(…)`/backtick spans
+    // stay live and the surrounding literal text is masked. The closing quote
+    // must end its line so a stray embedded quote cannot mispair.
+    /(^|\n)([ \t]*)(\w[\w-]*)([ \t]+(?:-\w+[ \t]+)*)("(?:[^"\\]|\\[\s\S])*\n(?:[^"\\]|\\[\s\S])*")(?=[ \t]*(\n|$))/g,
+    (whole, _nl: string, _indent: string, word: string, _sep: string, str: string) => {
+      if (!PRINT_WORD.test(word)) return whole;
+      const body = str.slice(1, -1).replace(/\$\((?:[^()]|\([^()]*\))*\)|`[^`\n]*`|[^\n]/g, (m) => (m.length > 1 ? m : ' '));
+      return whole.replace(str, str[0]! + body + str[str.length - 1]!);
     },
   );
 }

