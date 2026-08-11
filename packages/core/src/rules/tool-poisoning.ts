@@ -96,6 +96,39 @@ export function isTrojanHidden(char: string): boolean {
   return (cp >= 0x202a && cp <= 0x202e) || (cp >= 0x2066 && cp <= 0x2069) || cp >= 0xe0000;
 }
 
+/**
+ * Localization and language-corpus JSON (locale message catalogs, subtitle
+ * datasets) legitimately embeds bidi formatting characters inside its string
+ * values to render mixed-direction text. When a file parses as JSON and every
+ * hidden character sits inside a string token, the characters cannot reorder
+ * code — they only affect how that data string displays. Agent-facing config
+ * surfaces (MCP configs, settings, plugin/marketplace manifests, hooks) stay
+ * loud because a disguised string may itself be the attack there.
+ */
+export function isJsonStringData(file: string, content: string): boolean {
+  if (!/\.json$/i.test(file)) return false;
+  const base = file.split('/').pop() ?? file;
+  if (/(^|\.)(mcp|settings|plugins?|marketplace|hooks?|agents?|config)[^/]*\.json$/i.test(base)) return false;
+  try {
+    JSON.parse(content);
+  } catch {
+    return false;
+  }
+  let inString = false;
+  let escaped = false;
+  for (const ch of content) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (SOURCE_HIDDEN_UNICODE.test(ch)) return false;
+  }
+  return true;
+}
+
 /** A zero-width character wedged inside a word splits keywords to dodge pattern matching. */
 export function hidesInWord(content: string): boolean {
   return /\w[\u200b-\u200f\u2060-\u2064\u206a-\u206f\ufeff]+\w/u.test(content);
@@ -187,13 +220,15 @@ export const toolPoisoningRule: Rule = {
     const trojan = isTrojanHidden(hit.char);
     const defensiveComment = trojan && isDefensiveUnicodeComment(content, hit.line);
     const defensivePattern = trojan && !defensiveComment && isDefensiveDetectionPattern(content, hit.line, file);
+    const jsonStringData = trojan && !defensiveComment && !defensivePattern && isJsonStringData(file, content);
     return [
       finding(this, {
-        severity: trojan && !testPath && !defensiveComment && !defensivePattern ? 'high' : 'low',
+        severity:
+          trojan && !testPath && !defensiveComment && !defensivePattern && !jsonStringData ? 'high' : 'low',
         target: file,
         file,
         line: hit.line,
-        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}${defensiveComment && !testPath ? '; on a comment line discussing hidden-unicode attacks, likely an illustrative example — confirm' : ''}${defensivePattern && !testPath ? '; inside a detection pattern/fixture for hidden-unicode attacks, likely defensive — confirm' : ''}`,
+        message: `Source file contains a hidden/invisible Unicode character (${codepoint}) at line ${hit.line} — possible hidden tool instructions${trojan && testPath ? '; in a test/fixture path, likely a defensive fixture — confirm' : ''}${defensiveComment && !testPath ? '; on a comment line discussing hidden-unicode attacks, likely an illustrative example — confirm' : ''}${defensivePattern && !testPath ? '; inside a detection pattern/fixture for hidden-unicode attacks, likely defensive — confirm' : ''}${jsonStringData && !testPath ? '; inside JSON string data (directional text formatting), likely legitimate — confirm' : ''}`,
       }),
     ];
   },

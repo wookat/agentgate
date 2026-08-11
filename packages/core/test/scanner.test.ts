@@ -1078,6 +1078,21 @@ describe('scanRepo', () => {
     expect(hits.find((f) => f.file === 'eval/gate.py')!.severity).toBe('high');
   });
 
+  it('grades bidi chars inside JSON string data low, outside strings or in config JSON high (AG-TP-001)', () => {
+    fs.writeFileSync(
+      path.join(dir, 'ar-SA.json'),
+      '{\n  "json-editor": "\u0645\u062d\u0631\u0631\u202b JSON"\n}\n',
+    );
+    fs.writeFileSync(path.join(dir, 'broken.json'), '{ \u202e"a": "b" }\n');
+    fs.writeFileSync(path.join(dir, 'mcp.settings.json'), '{ "cmd": "run\u202eabc" }\n');
+    const hits = scanRepo(dir).findings.filter((f) => f.ruleId === 'AG-TP-001');
+    const data = hits.find((f) => f.file === 'ar-SA.json')!;
+    expect(data.severity).toBe('low');
+    expect(data.message).toContain('JSON string data');
+    expect(hits.find((f) => f.file === 'broken.json')!.severity).toBe('high');
+    expect(hits.find((f) => f.file === 'mcp.settings.json')!.severity).toBe('high');
+  });
+
   it('grades skill hidden-unicode severity: stray boundary zero-width low, concealing critical (AG-SK-001)', () => {
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'a'), { recursive: true });
     fs.mkdirSync(path.join(dir, '.claude', 'skills', 'b'), { recursive: true });
