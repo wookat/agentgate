@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.58
+
+### Patch Changes
+
+- 314981d: AG-RC-001: exempt GoReleaser configs (.goreleaser.yaml et al.) from source scanning — release-pipeline build automation whose release-notes text carries install one-liners, same rationale as other CI pipeline configs.
+
 ## 0.67.57
 
 ### Patch Changes
