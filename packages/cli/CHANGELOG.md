@@ -1,5 +1,13 @@
 # mcp-agentgate
 
+## 0.67.59
+
+### Patch Changes
+
+- 67821c8: AG-SS-001 skips metadata-endpoint mentions on comment-only lines when choosing the reported occurrence: severity is decided by the first non-comment mention (a live fetch below a doc comment still reports high), and files where every mention is a comment report low with comment wording.
+- Updated dependencies [67821c8]
+  - mcp-agentgate-core@0.67.59
+
 ## 0.67.58
 
 ### Patch Changes
