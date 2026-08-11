@@ -69,8 +69,35 @@ export const ssrfRule: Rule = {
   },
   checkSource(file, content) {
     if (!METADATA_ENDPOINTS.test(content)) return [];
-    const m = content.match(METADATA_ENDPOINTS)!;
-    const line = content.slice(0, m.index ?? 0).split('\n').length;
+    // Guard modules and defensive docs mention the metadata IP in comment
+    // lines (`// …`, `* …` doc blocks) explaining what they block; a comment
+    // can't fetch anything. Report at the first non-comment mention instead —
+    // live code that dials the endpoint still decides the severity — and only
+    // when every mention is a comment, report the comment line quietly.
+    const sourceLines = content.split(/\r?\n/);
+    const isSlashCommentLine = (l: string) => /^\s*(\/\/|\/\*|\*)/.test(l);
+    let line = 0;
+    let commentLine = 0;
+    for (const m of content.matchAll(new RegExp(METADATA_ENDPOINTS.source, 'gi'))) {
+      const l = content.slice(0, m.index).split('\n').length;
+      if (isSlashCommentLine(sourceLines[l - 1] ?? '')) {
+        if (!commentLine) commentLine = l;
+        continue;
+      }
+      line = l;
+      break;
+    }
+    if (!line) {
+      return [
+        finding(this, {
+          severity: 'low',
+          target: file,
+          file,
+          line: commentLine,
+          message: 'Only code comments reference a cloud metadata endpoint — explanatory prose, not a request; confirm no code dials it',
+        }),
+      ];
+    }
     // Network-policy manifests reference the metadata IP to *block* egress
     // to it — a defensive control, not an SSRF vector.
     if (/\.ya?ml$/i.test(file) && NETWORK_POLICY_KIND.test(content)) {

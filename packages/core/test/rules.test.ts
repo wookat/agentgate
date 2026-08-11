@@ -576,6 +576,30 @@ describe('precision (round 375)', () => {
     expect(findings[0]!.severity).toBe('low');
   });
 
+  it('grades comment-only metadata mentions low (guard-module doc prose)', () => {
+    const src = `/**\n * Extract the embedded IPv4 from an IPv4-mapped IPv6 address. Handles both\n * dotted-quad (\`::ffff:169.254.169.254\`) and hex (\`::ffff:a9fe:a9fe\`) forms.\n */\nfunction extractMappedIpv4(ipv6) {}\n`;
+    const findings = ssrfRule.checkSource!('lib/safe-fetch.ts', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('low');
+    expect(findings[0]!.message).toContain('Only code comments');
+  });
+
+  it('a leading comment mention does not mask a live metadata fetch below', () => {
+    const src = `// It is unrelated to the metadata exposure (169.254.169.254) described above.\n${'\n'.repeat(30)}const r = await fetch(\n  "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token",\n  { headers: { "Metadata-Flavor": "Google" } },\n);\n`;
+    const findings = ssrfRule.checkSource!('src/build-cloud.ts', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('high');
+    expect(findings[0]!.line).toBe(33);
+  });
+
+  it('skips a doc-comment mention and grades the classifier comparison below defensive', () => {
+    const src = `/**\n * Checks if a host is local or cloud metadata (e.g. 169.254.169.254).\n */\nexport function isLocalOrMetadataHost(host) {\n  if (host === "metadata.google.internal") {\n    return true;\n  }\n  return false;\n}\n`;
+    const findings = ssrfRule.checkSource!('src/utils/proxy.ts', src);
+    expect(findings.length).toBeGreaterThan(0);
+    expect(findings[0]!.severity).toBe('low');
+    expect(findings[0]!.line).toBe(5);
+  });
+
   it('grades an unclosed tag amid neighboring-line placeholder tokens as template notation', async () => {
     const { skillPoisoningRule } = await import('../src/rules/skill-poisoning.js');
     const md = `## Pricing basis\n- Prices are set as: <markup on cost / target margin on price> — owner: <role>\n- Standard target: <structural placeholder, e.g., "margin target lives in\n  <system>">\n`;
