@@ -13,7 +13,7 @@ const AGENT_DOT_DIRS = new Set(['.agents', '.agent', '.claude', '.crush', '.curs
 /** Dot-dirs walked only for instruction files — their other contents (CI workflows) are not MCP server source. */
 const SKILL_ONLY_DOT_DIRS = new Set(['.github']);
 /** CI pipeline configs of other CI systems — build automation, not MCP server source (same rationale as .github/workflows). */
-const CI_CONFIG_FILE = /(^|\/)(\.gitlab-ci\.yml|\.travis\.yml|azure-pipelines(\.[\w-]+)?\.ya?ml|bitbucket-pipelines\.yml|Jenkinsfile|\.circleci\/config\.yml|\.buildkite\/[^/]+\.ya?ml|\.drone\.yml|appveyor\.yml|cloudbuild\.ya?ml)$/;
+const CI_CONFIG_FILE = /(^|\/)(\.gitlab-ci\.yml|\.travis\.yml|azure-pipelines(\.[\w-]+)?\.ya?ml|bitbucket-pipelines\.yml|Jenkinsfile|\.circleci\/config\.yml|\.buildkite\/[^/]+\.ya?ml|\.drone\.yml|appveyor\.yml|cloudbuild\.ya?ml|\.?goreleaser(\.[\w-]+)?\.ya?ml)$/;
 /** Dot-dirs walked only for editor settings/MCP configs — launch/task configs are not MCP server source. */
 const SETTINGS_ONLY_DOT_DIRS = new Map([['.vscode', new Set(['settings.json', 'mcp.json', 'tasks.json'])], ['.zed', new Set(['settings.json'])]]);
 const MAX_FILE_BYTES = 1024 * 1024;
