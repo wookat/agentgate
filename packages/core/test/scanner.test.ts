@@ -1395,6 +1395,16 @@ describe('scanRepo', () => {
     expect(files).toEqual(['setup.sh']);
   });
 
+  it('does not source-scan GoReleaser configs (release-notes text carries install one-liners)', () => {
+    const rel = 'release:\n  header: |\n    ```bash\n    curl -sSfL https://example.com/install.sh | sh\n    ```\n';
+    fs.writeFileSync(path.join(dir, '.goreleaser.yaml'), rel);
+    fs.mkdirSync(path.join(dir, 'cli'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'cli', 'goreleaser.yml'), rel);
+    fs.writeFileSync(path.join(dir, 'setup.sh'), 'curl -fsSL https://example.com/install.sh | bash\n');
+    const files = scanRepo(dir).findings.map((f) => f.file);
+    expect(files).toEqual(['setup.sh']);
+  });
+
   it('grades defensive private-IP rejection code and mock/prefixed dummies (AG-SS-001, AG-CL-001)', () => {
     fs.writeFileSync(
       path.join(dir, 'guard.ts'),
