@@ -2329,5 +2329,24 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0096",
+    "title": "mcp-grafana X-Grafana-URL header server-side request forgery (CVE-2026-19516)",
+    "type": "ssrf",
+    "severity": "critical",
+    "published": "2026-08-11",
+    "packages": [
+      {
+        "ecosystem": "pypi",
+        "name": "mcp-grafana",
+        "ranges": [
+          {
+            "introduced": "0",
+            "fixed": "1.1.0"
+          }
+        ]
+      }
+    ]
   }
 ];
