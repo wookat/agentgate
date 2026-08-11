@@ -1,0 +1,51 @@
+{
+ "id": "MCPA-2026-0096",
+ "title": "mcp-grafana X-Grafana-URL header server-side request forgery (CVE-2026-19516)",
+ "summary": "mcp-grafana before 1.1.0 honors a caller-supplied X-Grafana-URL request header that controls the destination of the server's outbound requests, and the grafana_api_request tool additionally lets the caller choose the HTTP method, path, and body. Because the destination is not restricted to the configured Grafana instance, a caller can direct requests at internal, loopback, and link-local network services (including cloud metadata endpoints) and read the responses, resulting in server-side request forgery. The earlier fix for CVE-2026-15583 prevented the configured service-account token from being sent to unintended destinations but did not restrict the destinations themselves. Fixed in 1.1.0, which removes support for the undocumented X-Grafana-URL header (grafana/mcp-grafana#1052).",
+ "type": "ssrf",
+ "severity": "critical",
+ "aliases": [
+  "CVE-2026-19516",
+  "GHSA-fr94-7cqc-vjrq"
+ ],
+ "cvss": {
+  "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:L/A:L",
+  "score": 9.1
+ },
+ "cwe": [
+  "CWE-918"
+ ],
+ "packages": [
+  {
+   "ecosystem": "pypi",
+   "name": "mcp-grafana",
+   "ranges": [
+    {
+     "introduced": "0",
+     "fixed": "1.1.0"
+    }
+   ]
+  }
+ ],
+ "references": [
+  {
+   "type": "advisory",
+   "url": "https://github.com/advisories/GHSA-fr94-7cqc-vjrq"
+  },
+  {
+   "type": "web",
+   "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19516"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/grafana/mcp-grafana/pull/1052"
+  },
+  {
+   "type": "web",
+   "url": "https://github.com/grafana/mcp-grafana/releases/tag/v1.1.0"
+  }
+ ],
+ "timeline": {
+  "published": "2026-08-11"
+ }
+}
