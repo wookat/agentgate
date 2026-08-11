@@ -1,5 +1,11 @@
 # mcp-agentgate-core
 
+## 0.67.56
+
+### Patch Changes
+
+- 13474e9: The "sidenote" poisoning marker now requires a directing verb ("pass/include/send … as/in a sidenote"), so typographic prose about sidenote page elements no longer reports AG-SK-001/AG-TP-001 findings. `conversation_history` detection is unchanged.
+
 ## 0.67.55
 
 ### Patch Changes
