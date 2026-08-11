@@ -1,5 +1,15 @@
 # mcp-agentgate
 
+## 0.67.61
+
+### Patch Changes
+
+- e0e7e23: Advisory MCPA-2026-0096: mcp-grafana X-Grafana-URL header SSRF (CVE-2026-19516, critical) — caller-controlled outbound destination reaching internal/loopback/metadata endpoints; fixed in 1.1.0 which removes the undocumented header. Bundled database grows to 110 advisories.
+- f80f6fc: AG-TP-001 grades bidi/hidden-unicode characters low when they sit entirely inside string tokens of valid plain-data JSON (locale catalogs, language corpora). Agent-facing config JSON (mcp/settings/plugin/marketplace/hooks/agents/config), invalid JSON, and hidden characters outside string tokens keep reporting high.
+- Updated dependencies [e0e7e23]
+- Updated dependencies [f80f6fc]
+  - mcp-agentgate-core@0.67.61
+
 ## 0.67.60
 
 ### Patch Changes
