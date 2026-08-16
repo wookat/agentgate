@@ -1,0 +1,114 @@
+---
+import MarketingLayout from '../../components/MarketingLayout.astro';
+import CompareTable from '../../components/CompareTable.astro';
+import type { CompareRow } from '../../components/CompareTable.astro';
+
+const rows: CompareRow[] = [
+  {
+    label: 'Tools needed for full coverage',
+    us: 'One CLI — MCP configs, skills, commands, plugins, lockfile, dependencies',
+    usTone: 'ok',
+    them: 'Two separate tools: skill-scanner (skills) + mcp-scanner (MCP servers)',
+    themTone: 'danger',
+  },
+  {
+    label: 'API keys required',
+    us: 'None',
+    usTone: 'ok',
+    them: 'Two of three mcp-scanner engines need keys (LLM provider / Cisco AI Defense)',
+    themTone: 'warn',
+  },
+  {
+    label: 'Deterministic results',
+    us: 'Yes — rule-based, reproducible in CI',
+    usTone: 'ok',
+    them: 'LLM-as-a-judge engine is non-deterministic',
+    themTone: 'warn',
+  },
+  {
+    label: 'Lockfile of the approved tool surface',
+    us: 'agentgate.lock — names, descriptions, input schemas',
+    usTone: 'ok',
+    them: 'None',
+    themTone: 'danger',
+  },
+  {
+    label: 'CI drift gate',
+    us: 'agentgate ci — non-zero exit + readable diff + SARIF',
+    usTone: 'ok',
+    them: 'None',
+    themTone: 'danger',
+  },
+  {
+    label: 'Advisory database',
+    us: 'Public, structured, 110+ entries, free JSON API',
+    usTone: 'ok',
+    them: 'None (pip-audit for Python deps, VirusTotal for binaries)',
+    themTone: 'danger',
+  },
+  {
+    label: 'Client config discovery',
+    us: 'Auto-discovers Claude, Cursor, VS Code, Codex, OpenCode, and 20+ more',
+    usTone: 'ok',
+    them: 'Config file input (mcp-scanner)',
+    themTone: 'warn',
+  },
+  {
+    label: 'Runtime / language',
+    us: 'TypeScript, Node 22 — one npx away for JS teams',
+    usTone: 'ok',
+    them: 'Python 3.11+',
+    themTone: 'muted',
+  },
+];
+---
+
+<MarketingLayout
+  title="AgentGate vs Cisco skill-scanner + mcp-scanner — comparison"
+  description="Source-verified comparison of AgentGate and Cisco's skill-scanner and mcp-scanner: single-tool coverage, API keys, determinism, lockfile, CI gate, advisory database."
+  canonical="https://agentgate.zalize.com/compare/cisco/"
+>
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+    <p class="text-sm font-medium text-ag-accent">Comparison</p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight">AgentGate vs Cisco skill-scanner + mcp-scanner</h1>
+    <p class="mt-4 max-w-3xl text-lg text-ag-muted">
+      Cisco splits agent security across two tools:
+      <a href="https://github.com/cisco-ai-defense/skill-scanner" class="text-ag-accent underline underline-offset-2">skill-scanner</a>
+      for agent skills and
+      <a href="https://github.com/cisco-ai-defense/mcp-scanner" class="text-ag-accent underline underline-offset-2">mcp-scanner</a>
+      for MCP servers — and its strongest engines need external API keys. AgentGate covers the
+      whole agent config surface in one deterministic, key-free CLI, then locks and CI-gates it.
+      Sources and verification dates in
+      <a href="https://github.com/wookat/agentgate/blob/main/docs/COMPARISON.md" class="text-ag-accent underline underline-offset-2">docs/COMPARISON.md</a>.
+    </p>
+
+    <div class="mt-10">
+      <CompareTable competitor="Cisco skill-scanner + mcp-scanner" rows={rows} caption="Feature comparison between AgentGate and Cisco's scanners" />
+    </div>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-2">
+      <div class="rounded-ag-lg border border-ag-border bg-ag-subtle p-6">
+        <h2 class="text-lg font-semibold">Where AgentGate wins</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-ag-muted">
+          <li>One tool, one report, one CI step for configs, skills, commands, plugins, lockfile drift, and dependencies.</li>
+          <li>No API keys: results are deterministic and reproducible — the same input always yields the same findings.</li>
+          <li>Lockfile + drift gate defends against rug-pulls that any point-in-time scanner misses.</li>
+          <li>Public advisory database cross-checked automatically on every scan.</li>
+        </ul>
+      </div>
+      <div class="rounded-ag-lg border border-ag-border bg-ag-subtle p-6">
+        <h2 class="text-lg font-semibold">Where Cisco wins (honest)</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-ag-muted">
+          <li>LLM-as-a-judge can catch novel semantic attacks that rule-based analysis has no signature for.</li>
+          <li>YARA engine, VirusTotal binary lookups, and PyPI sandbox scanning cover angles AgentGate does not attempt.</li>
+          <li>Backed by Cisco AI Defense research with 3,400+ combined GitHub stars (2026-08).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="/docs/quick-start/" class="inline-flex h-12 items-center justify-center rounded-ag-md bg-ag-accent px-6 font-semibold text-ag-accent-contrast transition-colors duration-150 hover:bg-ag-accent-strong">Try AgentGate in 60 seconds</a>
+      <a href="/compare/snyk/" class="inline-flex h-12 items-center justify-center rounded-ag-md border border-ag-border px-6 font-semibold transition-colors duration-150 hover:border-ag-accent">Compare vs Snyk →</a>
+    </div>
+  </section>
+</MarketingLayout>
