@@ -8,11 +8,11 @@
 ## Thread A — the finding (recommended, post first)
 
 **1/**
-We unpacked npm tarballs for a month while building a public MCP/AI-agent advisory
-database.
+We unpacked the tarballs of 30+ npm packages flagged as malicious in public feeds
+(OSV/GHSA) while building an MCP/AI-agent advisory database.
 
-19 malicious packages targeting Claude Code, Cursor and OpenCode users are still
-installable from npm as of <DATE>.
+19 verified-malicious packages targeting Claude Code, Cursor and OpenCode users are
+still installable from npm as of <DATE>.
 
 Here's what they actually do 🧵
 
@@ -50,8 +50,9 @@ they build (or download) a replacement `opencode` binary from a non-publisher re
 swap it onto your PATH at install time.
 
 **7/**
-All 19 have OSV MAL- identifiers. Many have sat live for weeks anyway. Full evidence,
-per-package behavior analysis and our npm disclosure:
+Credit where due: all 19 were first flagged upstream (OSV MAL- IDs). Many have sat
+live for weeks anyway. Our tarball-level evidence, per-package behavior analysis and
+npm disclosure:
 github.com/wookat/agentgate/tree/main/docs/launch/disclosure
 
 **8/**

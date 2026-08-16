@@ -7,9 +7,9 @@
 
 ## Title (80 char max — pick one)
 
-1. `Show HN: We found 19 malicious npm packages targeting AI agents – still live`
+1. `Show HN: 19 malicious npm packages targeting AI agents are still installable`
 2. `Show HN: AgentGate – npm audit + lockfile + CI drift gate for MCP servers`
-3. `Show HN: AgentGate – we scan npm for malicious MCP/agent packages (19 live now)`
+3. `Show HN: We verified 19 malicious MCP/agent npm packages – still live today`
 
 Recommended: #1 (a concrete, verifiable finding beats a product pitch on HN;
 the product rides the story).
@@ -20,11 +20,12 @@ the product rides the story).
 
 ## First comment (post immediately after submitting)
 
-Hi HN — while building AgentGate's advisory database we kept finding npm packages
-that remote-control your AI coding agent. As of <DATE>, 19 of them are still
-installable from the public registry (we re-verified the latest tarballs by
-unpacking them; full list + evidence in the repo under
-docs/launch/disclosure/). The recurring shape:
+Hi HN — while building AgentGate's advisory database we unpacked and read the
+latest tarballs of 30+ npm packages flagged as malicious in public feeds
+(OSV/GHSA) that target AI coding agents. As of <DATE>, 19 of them — verified
+malicious in the shipped code — are still installable from the public registry
+(full list + per-package evidence in the repo under docs/launch/disclosure/).
+The recurring shape:
 
 - a "helper"/"leaderboard"/"remote access" package opens a WebSocket to a
   hardcoded relay, then spawns `claude -p <server-supplied prompt>
@@ -36,8 +37,9 @@ docs/launch/disclosure/). The recurring shape:
 - `@atom8n/inspector` republishes the official MCP Inspector with the
   CVE-2025-49596 auth fixes deliberately reverted
 
-We reported them (OSV MAL- IDs exist for all 19; npm disclosure sent) and built
-tooling so you don't have to trust us:
+All 19 already carry OSV MAL- identifiers — flagged upstream, still live. We
+sent npm security a consolidated disclosure and built tooling so you don't have
+to trust us:
 
 - `agentgate scan` — static analysis of your MCP configs + server packages,
   cross-checked against our public advisory DB (110 public advisories).
@@ -62,9 +64,11 @@ can and cannot defend against (runtime enforcement is explicitly out of scope).
 
 ## Prepared answers for likely questions
 
-**"Did you report these to npm?"** — Yes: full responsible-disclosure email with
-per-package evidence went to npm security (docs/launch/disclosure/), and all 19
-have OSV MAL- identifiers. Several have sat live for weeks after being flagged.
+**"Did you discover these?"** — No — credit where due: each has an upstream OSV
+MAL- (and often GHSA) record. Our contribution is verification (every latest
+tarball unpacked and read, behavior documented in structured advisories) and the
+finding that 19 remain installable weeks after being flagged; we sent npm
+security a consolidated disclosure (docs/launch/disclosure/).
 
 **"Isn't this just Snyk's mcp-scan?"** — Different loop: they scan (and will
 execute stdio server commands to enumerate tools, with a consent prompt, plus
@@ -80,9 +84,10 @@ defends day 0.
 references to OSV/GHSA where they exist, and every claim states the verification
 method (tarball unpacked, version, date). PRs welcome.
 
-**"How were the 19 found?"** — Continuous watch over GHSA/OSV plus our own
-hunting rounds; each candidate's latest tarball is unpacked and read before an
-advisory is written (no scanner-only claims).
+**"How were the 19 selected?"** — Continuous watch over GHSA/OSV; each
+candidate's latest tarball is unpacked and read before an advisory is written
+(no scanner-only claims), and "still installable" is re-checked against the
+registry on the stated date.
 
 ## Timing notes
 

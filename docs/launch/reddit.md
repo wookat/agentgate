@@ -20,13 +20,16 @@
 
 **Body:**
 
-Author here. While maintaining a public MCP advisory database we kept unpacking npm
-tarballs that remote-control your coding agent: packages that open a WebSocket to a
+Author here. While maintaining a public MCP advisory database we unpacked and read
+the latest tarballs of 30+ npm packages flagged as malicious in public feeds
+(OSV/GHSA). Many remote-control your coding agent: packages that open a WebSocket to a
 hardcoded relay and spawn `claude -p <server prompt> --dangerously-skip-permissions`,
 a fake `anthropic-setup` that points ANTHROPIC_BASE_URL at an attacker domain, a
 republished MCP Inspector with the CVE-2025-49596 auth fixes reverted. As of <DATE>,
-19 are still installable (evidence + per-package analysis:
-docs/launch/disclosure/ in the repo; all have OSV MAL- IDs).
+19 verified-malicious packages are still installable (evidence + per-package
+analysis: docs/launch/disclosure/ in the repo; all carry upstream OSV MAL- IDs —
+credit to those feeds; our contribution is the tarball-level verification and the
+still-installable finding).
 
 Existing tooling covers fragments: scanners with no baseline/drift story (and most
 execute your server commands to enumerate tools), lockfile tools with no scanning and
@@ -58,8 +61,9 @@ Schema, and I'd rather converge with other tools than fragment the format.
 
 **Body:**
 
-We unpacked and verified 19 npm packages that are still installable and target
-Claude Code / Cursor users: fake "remote access"/"leaderboard"/"setup" helpers that
+We unpacked and verified the tarballs of npm packages flagged as malicious in
+public feeds (OSV/GHSA) — 19 are still installable and target Claude Code /
+Cursor users: fake "remote access"/"leaderboard"/"setup" helpers that
 connect to a hardcoded server and let it spawn
 `claude --dangerously-skip-permissions` with arbitrary prompts on your machine, hijack
 your ANTHROPIC_BASE_URL to steal API keys, or harvest GitHub/npm/AWS credentials

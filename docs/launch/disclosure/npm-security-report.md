@@ -21,8 +21,9 @@ During advisory research we verified — by downloading and unpacking the latest
 tarballs — that the following 19 npm packages contain malicious code
 (remote-controlled code execution, credential exfiltration, or binary
 replacement) and were still installable from the public registry as of 2026-08-16.
-Several already have OSV `MAL-` identifiers and/or GitHub advisories but have
-not been taken down or replaced with security-holder packages.
+All of them already have OSV `MAL-` identifiers (and several also GitHub
+advisories) but have not been taken down or replaced with security-holder
+packages.
 
 We request takedown / security-holder replacement for the packages below.
 Full structured advisories (behavior analysis, affected versions, references)

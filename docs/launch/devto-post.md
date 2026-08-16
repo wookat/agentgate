@@ -16,10 +16,11 @@ cover_image: <upload docs/assets/demo.gif or an advisory screenshot>
 ## TL;DR
 
 While building a public advisory database for the Model Context Protocol (MCP)
-ecosystem, we unpacked and read the shipped code of every suspicious npm package we
-could find in the AI-agent space. As of <DATE>, **19 packages that we verified as
-malicious are still installable from the public npm registry**. All of them have OSV
-`MAL-` identifiers. Several have been live for weeks after being flagged.
+ecosystem, we unpacked and read the shipped code of 30+ npm packages flagged as
+malicious in public feeds (OSV/GHSA) in the AI-agent space — the discoveries are
+those feeds' work, the tarball-level verification below is ours. As of <DATE>,
+**19 packages that we verified as malicious are still installable from the public
+npm registry**, weeks after being flagged.
 
 The full evidence pack — per-package behavior, affected versions, references, and the
 responsible-disclosure email we sent to npm security — is in
