@@ -9,12 +9,161 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-compatible-8A2BE2)](https://modelcontextprotocol.io)
+[![Advisories](https://img.shields.io/badge/MCP%20advisories-110%20verified-0f766e)](https://agentgate.zalize.com/advisories/)
 
 English | [简体中文](README.zh-CN.md)
 
 <img src="docs/assets/demo.gif" alt="agentgate demo: scan finds a hardcoded credential and unpinned package, lock pins the tool surface, and diff catches an upstream rug-pull" width="900">
 
 </div>
+
+Adding an MCP server to Claude/Cursor today is "paste JSON, hope for the best."
+AgentGate is the open-source trust & supply-chain gate that closes that gap:
+it **scans** your MCP servers for real attack patterns, **locks** the exact tool
+surface your agent sees, **gates** CI on any drift from that baseline, and
+cross-checks everything against a **public advisory database** of verified MCP
+incidents.
+
+## Quick start
+
+No install needed (the npm package is **`mcp-agentgate`**; the installed command is **`agentgate`**):
+
+```bash
+# Scan every MCP config on this machine — 26+ clients auto-discovered
+# (Claude Desktop/Code, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Zed, …)
+npx mcp-agentgate scan
+
+# Pin the current tool surface into agentgate.lock
+npx mcp-agentgate lock
+
+# In CI: exit non-zero if anything drifted from the lock
+npx mcp-agentgate ci
+
+# Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
+npx mcp-agentgate deps
+
+# Ask the MCP advisory database about a package before you install it
+npx mcp-agentgate advisory check mcp-remote@0.1.10
+```
+
+Works offline, no account or token required. All commands and exit codes:
+[docs/spec/cli-contract.md](docs/spec/cli-contract.md). Docs, rule reference,
+and a shareable report viewer: **https://agentgate.zalize.com**.
+
+## What it does
+
+| Step | What it does |
+|---|---|
+| **Scan** | Static + opt-in live analysis of MCP servers: tool poisoning (hidden Unicode, prompt injection), credential leaks, SSRF/RCE vectors, over-privileged tool combos |
+| **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees — and optionally every skill/instruction file (`--skills`) — into `agentgate.lock`: rug-pull defense |
+| **Gate** | Fail CI on any drift from the approved baseline; diff-based review, not binary allow/deny |
+| **Deps** | Catch AI-hallucinated (slopsquatted) and typosquatted dependencies — live npm/PyPI verification of manifests *and* source imports before anything installs |
+| **Advise** | Cross-check servers against a [public, structured MCP advisory database](advisories/) |
+
+## Track record
+
+This is not a rules demo — the advisory pipeline and scanner run against the
+real npm ecosystem continuously:
+
+- **110 verified advisories** in the [public MCP advisory database](https://agentgate.zalize.com/advisories/)
+  ([JSON feed](https://agentgate.zalize.com/feeds/advisories.json) ·
+  [RSS](https://agentgate.zalize.com/feeds/advisories.xml) · queryable
+  [Workers API](docs/spec/advisory-api.md)), every entry backed by an
+  authoritative source and re-verified against the actual package or fix commit.
+- **30+ of them are malicious npm packages** (credential stealers, reverse
+  shells, traffic interceptors) targeting the MCP/agent ecosystem — each one
+  verified by unpacking the published npm tarball, and several were **still
+  live on npm at verification time** (e.g. `anthropic-setup`, which silently
+  reroutes all Claude Code traffic through an attacker's proxy;
+  `remote-claude-daemon`, a remote-controlled `claude --dangerously-skip-permissions`
+  relay; `@guangnao/claude-cli`, a concealed remote-job hub).
+- **CVE-grade incidents covered end-to-end**: the postmark-mcp BCC backdoor,
+  mcp-remote RCE (CVE-2025-6514, CVSS 9.6), MCP Inspector RCE (CVE-2025-49596),
+  filesystem-server sandbox escapes (CVE-2025-53109/53110), and the ongoing
+  GHSA/OSV window is swept on a fixed cadence.
+- **AgentGate scans itself in CI** on every PR ([dogfood job](.github/workflows/ci.yml)).
+
+## How it compares
+
+The MCP security landscape splits into scanners with no drift defense and
+lockfiles with no scanner. AgentGate is the only tool that ships the whole
+loop. Star counts and capabilities verified 2026-08-16; full source-verified
+matrix against 9 tools in **[docs/COMPARISON.md](docs/COMPARISON.md)**:
+
+| | AgentGate | [Snyk Agent Scan](https://github.com/snyk/agent-scan) (2.9k★) | [Cisco MCP Scanner](https://github.com/cisco-ai-defense/mcp-scanner) (1.0k★) | [ToolPin](https://github.com/proofofwork-agency/toolpin) |
+|---|---|---|---|---|
+| Security scan (static + live) | ✅ 12 rules, deterministic | ✅ | ✅ (YARA + LLM judge) | ⚠️ advisory-only |
+| Lockfile of the tool surface | ✅ `agentgate.lock` (+ skills) | ❌ | ❌ | ✅ |
+| CI drift gate + readable diff | ✅ `ci` / `diff` | ❌ | ❌ | ✅ |
+| Public advisory DB + auto cross-check | ✅ 110 entries, open JSON | ⚠️ proprietary platform | ⚠️ pip-audit/VirusTotal only | ❌ |
+| Hallucinated/typosquat dep check | ✅ `deps` (npm + PyPI) | ❌ | ❌ | ❌ |
+| No account/token required | ✅ | ❌ `SNYK_TOKEN` required | ⚠️ 2 of 3 engines need API keys | ✅ |
+| Runs your server commands by default | ❌ opt-in `--live`, asks first | ⚠️ executes on scan | — | ⚠️ on `pin` |
+
+## CI gate in one step
+
+```yaml
+# .github/workflows/mcp-gate.yml
+steps:
+  - uses: actions/checkout@v4
+  - uses: wookat/agentgate/packages/action@v0.67.61
+    with:
+      command: ci
+```
+
+Findings show up inline on the PR diff automatically — under GitHub Actions, `ci`/`scan`/`deps` emit one workflow-command annotation per finding, no extra permissions needed. See [packages/action](packages/action/) for SARIF upload to GitHub code scanning and all inputs.
+
+Or as a pre-commit hook:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/wookat/agentgate
+    rev: v0.67.61
+    hooks:
+      - id: agentgate-ci
+```
+
+GitLab CI / CircleCI / Jenkins / Azure Pipelines recipes:
+[agentgate.zalize.com/docs/guides/ci](https://agentgate.zalize.com/docs/guides/ci/).
+
+## Compatibility
+
+| Platform | Status |
+| --- | --- |
+| Linux | CI-verified on every PR (`ubuntu-latest`) |
+| macOS | CI-verified on every PR (`macos-latest`) |
+| Windows | CI-verified on every PR (`windows-latest`) |
+| Node.js | >= 22 (enforced via `engines`) |
+
+The full test suite — including a live stdio MCP fixture server — runs on all
+three operating systems in CI. Client config discovery covers the
+platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
+OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev,
+Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code,
+GitHub Copilot CLI, JetBrains Junie, Factory Droid, Antigravity, Goose, and Crush on each OS.
+
+## Config portability
+
+Move your MCP server config between clients without retyping JSON/TOML by hand
+(the official MCP 2026 roadmap names config portability as an open gap):
+
+```bash
+npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
+```
+
+Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode,
+Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, and Amazon Q Developer, with
+explicit warnings on any lossy conversion. Also available as the standalone
+[mcp-agentgate-config-convert](packages/config-convert/) package.
+
+## Why not just use a scanner (or just a lockfile)?
+
+Scanners find known-bad patterns *at scan time* but can't see an approved server that
+quietly changes next week. Lockfiles catch drift but don't judge whether what you locked
+was safe to begin with. AgentGate does both, plus cross-checks a public advisory DB.
+The full, source-verified feature matrix vs mcp-scan (now Snyk Agent Scan), Cisco MCP
+Scanner, MCTS, ToolPin, mcp-warden, and both mcp-locks: **[docs/COMPARISON.md](docs/COMPARISON.md)**.
 
 <details><summary>Developing from source (contributors)</summary>
 
@@ -60,109 +209,6 @@ Twelve scan rules across seven categories, aligned with real-world MCP incidents
 Lockfile formats: [v1](docs/spec/lockfile-v1.md) (servers only, frozen) and [v2](docs/spec/lockfile-v2.md) (adds optional pinned skill files via `lock --skills`), with JSON Schemas in [docs/spec/](docs/spec/).
 
 </details>
-
----
-
-AgentGate is an open-source trust & supply-chain gate for
-[Model Context Protocol](https://modelcontextprotocol.io) servers. Real incidents already
-happened — the postmark-mcp BCC backdoor, mcp-remote RCE (CVE-2025-6514, CVSS 9.6),
-and silent upstream "rug pulls" that change tool descriptions your agent reads live.
-Existing tools cover one corner each ([comparison](docs/COMPARISON.md)); AgentGate closes
-the whole loop in one tool:
-
-| Step | What it does |
-|---|---|
-| **Scan** | Static + opt-in live analysis of MCP servers: tool poisoning (hidden Unicode, prompt injection), credential leaks, SSRF/RCE vectors, over-privileged tool combos |
-| **Lock** | Pin the exact tool surface (names, descriptions, input schemas) your agent sees — and optionally every skill/instruction file (`--skills`) — into `agentgate.lock`: rug-pull defense |
-| **Gate** | Fail CI on any drift from the approved baseline; diff-based review, not binary allow/deny |
-| **Deps** | Catch AI-hallucinated (slopsquatted) and typosquatted dependencies — live npm/PyPI verification of manifests *and* source imports before anything installs |
-| **Advise** | Cross-check servers against a [public, structured MCP advisory database](advisories/) |
-
-## Quick start
-
-The npm package is **`mcp-agentgate`** (the bare `agentgate` name was taken); the installed command is still **`agentgate`** (`npm i -g mcp-agentgate` → `agentgate scan`).
-
-```bash
-# Scan the MCP configs on this machine (Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, Amazon Q, Qwen Code, Copilot CLI, Junie, Factory Droid, Antigravity, Goose, Crush auto-discovered)
-npx mcp-agentgate scan
-
-# Pin the current tool surface into agentgate.lock
-npx mcp-agentgate lock
-
-# In CI: exit non-zero if anything drifted from the lock
-npx mcp-agentgate ci
-
-# Catch AI-hallucinated (slopsquatted) and typosquatted dependencies (npm + PyPI)
-npx mcp-agentgate deps
-
-# Ask the MCP advisory database about a package before you install it
-npx mcp-agentgate advisory check mcp-remote@0.1.10
-```
-
-All commands and exit codes: [docs/spec/cli-contract.md](docs/spec/cli-contract.md).
-Docs, rule reference, and report viewer: **https://agentgate.zalize.com**.
-
-## CI gate in one step
-
-```yaml
-# .github/workflows/mcp-gate.yml
-steps:
-  - uses: actions/checkout@v4
-  - uses: wookat/agentgate/packages/action@v0.67.61
-    with:
-      command: ci
-```
-
-Findings show up inline on the PR diff automatically — under GitHub Actions, `ci`/`scan`/`deps` emit one workflow-command annotation per finding, no extra permissions needed. See [packages/action](packages/action/) for SARIF upload to GitHub code scanning and all inputs.
-
-Or as a pre-commit hook:
-
-```yaml
-# .pre-commit-config.yaml
-repos:
-  - repo: https://github.com/wookat/agentgate
-    rev: v0.67.61
-    hooks:
-      - id: agentgate-ci
-```
-
-## Compatibility
-
-| Platform | Status |
-| --- | --- |
-| Linux | CI-verified on every PR (`ubuntu-latest`) |
-| macOS | CI-verified on every PR (`macos-latest`) |
-| Windows | CI-verified on every PR (`windows-latest`) |
-| Node.js | >= 22 (enforced via `engines`) |
-
-The full test suite — including a live stdio MCP fixture server — runs on all
-three operating systems in CI. Client config discovery covers the
-platform-specific paths of Claude Desktop, Claude Code, Cursor, VS Code, Codex,
-OpenCode, Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev,
-Amp, Warp, LM Studio, Trae, Qoder, Amazon Q Developer, Qwen Code,
-GitHub Copilot CLI, JetBrains Junie, Factory Droid, Antigravity, Goose, and Crush on each OS.
-
-## Config portability
-
-Move your MCP server config between clients without retyping JSON/TOML by hand
-(the official MCP 2026 roadmap names config portability as an open gap):
-
-```bash
-npx mcp-agentgate config convert --from cursor --to vscode --in .cursor/mcp.json --out .vscode/mcp.json
-```
-
-Supports Claude Desktop, Claude Code, Cursor, VS Code, Codex, OpenCode,
-Windsurf, Cline, Gemini CLI, Kiro, Roo Code, Kilo Code, Zed, Continue.dev, Amp, Warp, LM Studio, Trae, Qoder, and Amazon Q Developer, with
-explicit warnings on any lossy conversion. Also available as the standalone
-[mcp-agentgate-config-convert](packages/config-convert/) package.
-
-## Why not just use a scanner (or just a lockfile)?
-
-Scanners find known-bad patterns *at scan time* but can't see an approved server that
-quietly changes next week. Lockfiles catch drift but don't judge whether what you locked
-was safe to begin with. AgentGate does both, plus cross-checks a public advisory DB.
-The full, source-verified feature matrix vs mcp-scan (now Snyk Agent Scan), Cisco MCP
-Scanner, MCTS, ToolPin, mcp-warden, and both mcp-locks: **[docs/COMPARISON.md](docs/COMPARISON.md)**.
 
 ## Repository layout
 
