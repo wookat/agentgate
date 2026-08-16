@@ -203,6 +203,16 @@ export async function runScan(target: string | undefined, opts: ScanOptions): Pr
   } else if (opts.format === 'sarif') {
     const fallbackBaseDirs = [projectDir, ...(opts.config ? [path.dirname(path.resolve(opts.config))] : [])];
     rendered = JSON.stringify(toSarif(sorted, { toolVersion: CLI_VERSION, fallbackBaseDirs }), null, 2);
+  } else if (scannedServers.length === 0 && scannedFiles.length === 0) {
+    rendered = [
+      'Nothing was scanned — no MCP client configs were found on this machine.',
+      '',
+      'Try one of these:',
+      `  agentgate scan --config path/to/mcp.json    ${pc.dim('scan a specific MCP config file')}`,
+      `  agentgate scan path/to/mcp-server-repo      ${pc.dim("scan an MCP server's source code")}`,
+      '',
+      pc.dim('Quick start: https://agentgate.zalize.com/docs/quick-start/'),
+    ].join('\n');
   } else {
     rendered = [
       pc.dim(
