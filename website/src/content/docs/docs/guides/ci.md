@@ -14,7 +14,7 @@ AgentGate is published on npm as [`mcp-agentgate`](https://www.npmjs.com/package
 
 ## GitHub Actions
 
-Using the bundled composite action:
+Using the AgentGate action (also referencable as `wookat/agentgate/packages/action@<tag>`):
 
 ```yaml
 name: mcp-gate
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wookat/agentgate/packages/action@main
+      - uses: wookat/agentgate@v0.67.61
         with:
           command: ci
           args: --config .mcp.json --fail-on high
@@ -41,7 +41,7 @@ notices) — no extra permissions or upload steps needed.
 To additionally surface scan findings in GitHub code scanning, add a `command: scan` step with `sarif-file: agentgate.sarif` (SARIF output is scan-only) and upload it:
 
 ```yaml
-      - uses: wookat/agentgate/packages/action@main
+      - uses: wookat/agentgate@v0.67.61
         with:
           command: scan
           sarif-file: agentgate.sarif
