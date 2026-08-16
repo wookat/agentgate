@@ -1,9 +1,11 @@
 # Awesome-list / directory listing plan
 
-> Status 2026-08-04: submission EXECUTING per total-lead instruction (npm release
-> shipped). Fork branches `add-agentgate` prepared for targets 1/2/6/8; targets
-> 3–5 skipped (server-only lists, no tools section — per the caveat below).
-> Star counts verified via GitHub API on 2026-08-03.
+> Status 2026-08-16: five fork branches `add-agentgate` are pushed and ready
+> (targets 1/2/5/6/8 — see "Submission state" below). Opening the PRs is blocked:
+> the session's fine-grained PAT can fork and push but gets HTTP 403 on
+> "create pull request" against third-party repos. Targets 3–4 skipped
+> (server-only lists, no tools section). Star counts verified via GitHub API on
+> 2026-08-03.
 
 ## Target lists (priority order)
 
@@ -17,6 +19,33 @@
 | 6 | [yzfly/Awesome-MCP-ZH](https://github.com/yzfly/Awesome-MCP-ZH) | 7,510 | 工具/安全 | Chinese audience; link README.zh-CN.md |
 | 7 | [chatmcp/mcpso](https://mcp.so) | 2,097 (repo) | Directory submission form | Web directory, submit via site |
 | 8 | [rohitg00/awesome-devops-mcp-servers](https://github.com/rohitg00/awesome-devops-mcp-servers) | 1,014 | CI/CD tooling | DevOps angle (Action + gate) |
+| 9 | [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | 52,424 | Tooling | **No PRs accepted.** Recommendations only via the web issue form (`gh` CLI explicitly forbidden), one resource at a time, and the maintainer states that submissions used as a promotion strategy are usually rejected. Eligible on the objective criteria (repo >14 days old, active commits). Owner action — see draft below. |
+
+## Submission state (2026-08-16)
+
+| Target | Branch | Compare URL (one click opens the PR form) | State |
+|---|---|---|---|
+| Puliczek/awesome-mcp-security | `wookat:add-agentgate` | https://github.com/Puliczek/awesome-mcp-security/compare/main...wookat:awesome-mcp-security:add-agentgate | ready, PR not opened (403) |
+| punkpeye/awesome-mcp-devtools | `wookat:add-agentgate` | https://github.com/punkpeye/awesome-mcp-devtools/compare/main...wookat:awesome-mcp-devtools:add-agentgate | ready, PR not opened (403) |
+| yzfly/Awesome-MCP-ZH | `wookat:add-agentgate` | https://github.com/yzfly/Awesome-MCP-ZH/compare/main...wookat:Awesome-MCP-ZH:add-agentgate | ready, PR not opened (403) |
+| rohitg00/awesome-devops-mcp-servers | `wookat:add-agentgate` | https://github.com/rohitg00/awesome-devops-mcp-servers/compare/main...wookat:awesome-devops-mcp-servers:add-agentgate | ready, PR not opened (403) |
+| appcypher/awesome-mcp-servers | `wookat:add-agentgate` | https://github.com/appcypher/awesome-mcp-servers/compare/master...wookat:awesome-mcp-servers:add-agentgate | ready, PR not opened (403) |
+| mcp.so | — | https://mcp.so/submit | owner action (login required) |
+| awesome-claude-code | — | https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml | owner action (web form, human required) |
+
+Unblocking option: a classic PAT with the `public_repo` scope allows
+`POST /repos/{owner}/{repo}/pulls` from the pushed fork branches; the
+fine-grained token does not, regardless of its repository permissions.
+
+## awesome-claude-code recommendation text (paste into the issue form)
+
+- Resource name: `AgentGate`
+- URL: `https://github.com/wookat/agentgate`
+- Category: Tooling
+- Description (one line, no emoji, no sales pitch): `Scans MCP server configs for
+  tool poisoning and credential exposure, pins the approved tool surface into a
+  lockfile, and fails CI or a pre-commit hook when a server's tools drift.`
+- Author: submit as the maintainer (the list requires human submission).
 
 Also non-list channels to queue: MCP GitHub Discussions, the MCP Discord community
 showcase channel (verify current invite/rules at launch).

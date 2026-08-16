@@ -16,24 +16,32 @@
 
 ## r/mcp draft
 
-**Title:** AgentGate: open-source scan + lockfile + CI drift gate for MCP servers (rug-pull defense)
+**Title:** We verified 19 malicious npm packages targeting MCP/AI agents that are still installable — and open-sourced the gate we built against them
 
 **Body:**
 
-Author here. After postmark-mcp (BCC backdoor in a patch release) and CVE-2025-6514
-(mcp-remote RCE, CVSS 9.6), I went looking for tooling that treats MCP servers like the
-supply-chain dependencies they are — and found only fragments: scanners with no
-baseline/drift story, lockfile tools with no scanning and no advisory feed
-(source-verified comparison in the repo: docs/COMPARISON.md).
+Author here. While maintaining a public MCP advisory database we kept unpacking npm
+tarballs that remote-control your coding agent: packages that open a WebSocket to a
+hardcoded relay and spawn `claude -p <server prompt> --dangerously-skip-permissions`,
+a fake `anthropic-setup` that points ANTHROPIC_BASE_URL at an attacker domain, a
+republished MCP Inspector with the CVE-2025-49596 auth fixes reverted. As of <DATE>,
+19 are still installable (evidence + per-package analysis:
+docs/launch/disclosure/ in the repo; all have OSV MAL- IDs).
+
+Existing tooling covers fragments: scanners with no baseline/drift story (and most
+execute your server commands to enumerate tools), lockfile tools with no scanning and
+no advisory feed (source-verified comparison: docs/COMPARISON.md).
 
 AgentGate is one CLI for the full loop:
 
 - **scan** — tool poisoning (hidden Unicode / prompt injection), credential leaks,
-  SSRF/RCE vectors, over-privileged tool combos; static by default, live opt-in
+  SSRF/RCE vectors, over-privileged tool combos; static by default (zero execution —
+  it never runs your server commands), live opt-in
 - **lock** — `agentgate.lock` pins tool names + descriptions + input schemas (the
   things a rug pull changes)
 - **ci** — GitHub Action / pre-commit hook; any drift fails the build with a readable diff
-- **advise** — cross-check against a public structured MCP advisory database
+- **advise** — cross-check against our public structured MCP advisory database
+  (110 public advisories, the 19 above included)
 
 Bonus: `config convert` moves server configs between Claude Desktop/Code, Cursor,
 VS Code, Codex, and OpenCode formats.
@@ -46,14 +54,21 @@ Schema, and I'd rather converge with other tools than fragment the format.
 
 ## r/ClaudeAI draft (shorter)
 
-**Title:** I built an open-source "package-lock.json" for your Claude MCP servers
+**Title:** PSA: npm packages that remote-drive your Claude Code with --dangerously-skip-permissions are live right now — how to check your setup
 
 **Body:**
 
-Your Claude Desktop/Code MCP servers can change their tool descriptions upstream any
-time — Claude reads them live on every connection, and you get no notification. That's
-how rug-pull attacks work (and real incidents like the postmark-mcp backdoor already
-happened).
+We unpacked and verified 19 npm packages that are still installable and target
+Claude Code / Cursor users: fake "remote access"/"leaderboard"/"setup" helpers that
+connect to a hardcoded server and let it spawn
+`claude --dangerously-skip-permissions` with arbitrary prompts on your machine, hijack
+your ANTHROPIC_BASE_URL to steal API keys, or harvest GitHub/npm/AWS credentials
+through your own authenticated `claude` CLI (claude-cup). Full list with evidence:
+https://github.com/wookat/agentgate/tree/main/docs/launch/disclosure
+
+Separately: your MCP servers can change their tool descriptions upstream any time —
+Claude reads them live on every connection, and you get no notification. That's how
+rug-pull attacks work.
 
 AgentGate scans your MCP configs for poisoning/credential leaks, pins the approved tool
 surface into a lockfile, and fails CI (or a pre-commit hook) when anything drifts.
