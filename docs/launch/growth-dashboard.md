@@ -69,10 +69,10 @@ means someone ran it on their own machine and cared about the result.
 
 ## What to capture each week (5 minutes)
 
-1. `GITHUB_TOKEN=… node scripts/growth-snapshot.mjs`
-2. `curl -s https://api.npmjs.org/versions/mcp-agentgate/last-week` → downloads of
-   the current `latest` version
-3. GitHub Insights → Traffic → unique visitors (screenshot; 14-day retention)
-4. Cloudflare analytics for agentgate.zalize.com → unique visitors
-5. Append one row above, with the week's promotion actions in "New listings /
+1. `GITHUB_TOKEN=… node scripts/growth-snapshot.mjs --append` — prints all
+   metrics (including `latest`-version downloads) and appends a prefilled row to
+   the Weekly log above
+2. GitHub Insights → Traffic → unique visitors (screenshot; 14-day retention)
+3. Cloudflare analytics for agentgate.zalize.com → unique visitors
+4. Fill in the appended row, with the week's promotion actions in "New listings /
    posts". No row without its cause.
