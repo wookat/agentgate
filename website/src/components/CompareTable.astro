@@ -1,0 +1,45 @@
+---
+export interface CompareRow {
+  label: string;
+  us: string;
+  usTone: 'ok' | 'warn' | 'danger' | 'muted';
+  them: string;
+  themTone: 'ok' | 'warn' | 'danger' | 'muted';
+}
+
+interface Props {
+  competitor: string;
+  rows: CompareRow[];
+  caption: string;
+}
+
+const { competitor, rows, caption } = Astro.props;
+const tone = {
+  ok: 'text-ag-ok',
+  warn: 'text-ag-warn',
+  danger: 'text-ag-danger',
+  muted: 'text-ag-muted',
+};
+---
+
+<div class="overflow-x-auto rounded-ag-lg border border-ag-border">
+  <table class="w-full min-w-[640px] text-left text-sm">
+    <caption class="sr-only">{caption}</caption>
+    <thead class="bg-ag-subtle text-ag-muted">
+      <tr>
+        <th scope="col" class="p-4 font-medium">Capability</th>
+        <th scope="col" class="p-4 font-semibold text-ag-accent">AgentGate</th>
+        <th scope="col" class="p-4 font-medium">{competitor}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-ag-border">
+      {rows.map((r) => (
+        <tr>
+          <th scope="row" class="p-4 font-medium">{r.label}</th>
+          <td class={`p-4 ${tone[r.usTone]}`}>{r.us}</td>
+          <td class={`p-4 ${tone[r.themTone]}`}>{r.them}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
