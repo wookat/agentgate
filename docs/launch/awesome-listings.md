@@ -25,11 +25,11 @@
 
 | Target | Branch | Compare URL (one click opens the PR form) | State |
 |---|---|---|---|
-| Puliczek/awesome-mcp-security | `wookat:add-agentgate` | https://github.com/Puliczek/awesome-mcp-security/compare/main...wookat:awesome-mcp-security:add-agentgate | ready, PR not opened (403) |
-| punkpeye/awesome-mcp-devtools | `wookat:add-agentgate` | https://github.com/punkpeye/awesome-mcp-devtools/compare/main...wookat:awesome-mcp-devtools:add-agentgate | ready, PR not opened (403) |
-| yzfly/Awesome-MCP-ZH | `wookat:add-agentgate` | https://github.com/yzfly/Awesome-MCP-ZH/compare/main...wookat:Awesome-MCP-ZH:add-agentgate | ready, PR not opened (403) |
-| rohitg00/awesome-devops-mcp-servers | `wookat:add-agentgate` | https://github.com/rohitg00/awesome-devops-mcp-servers/compare/main...wookat:awesome-devops-mcp-servers:add-agentgate | ready, PR not opened (403) |
-| appcypher/awesome-mcp-servers | `wookat:add-agentgate` | https://github.com/appcypher/awesome-mcp-servers/compare/master...wookat:awesome-mcp-servers:add-agentgate | ready, PR not opened (403) |
+| Puliczek/awesome-mcp-security | `wookat:add-agentgate` | https://github.com/Puliczek/awesome-mcp-security/pull/273 | PR opened (2026-08-16) |
+| punkpeye/awesome-mcp-devtools | `wookat:add-agentgate` | https://github.com/punkpeye/awesome-mcp-devtools/pull/282 | PR opened (2026-08-16) |
+| yzfly/Awesome-MCP-ZH | `wookat:add-agentgate` | https://github.com/yzfly/Awesome-MCP-ZH/pull/464 | PR opened (2026-08-16) |
+| rohitg00/awesome-devops-mcp-servers | `wookat:add-agentgate` | https://github.com/rohitg00/awesome-devops-mcp-servers/pull/315 | PR opened (2026-08-16) |
+| appcypher/awesome-mcp-servers | `wookat:add-agentgate` | (repository archived, PRs impossible) | skipped (archived) |
 | mcp.so | — | https://mcp.so/submit | owner action (login required) |
 | awesome-claude-code | — | https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml | owner action (web form, human required) |
 
