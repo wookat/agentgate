@@ -9,6 +9,7 @@
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node >= 22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 [![MCP](https://img.shields.io/badge/Model%20Context%20Protocol-compatible-8A2BE2)](https://modelcontextprotocol.io)
+[![Advisories](https://img.shields.io/badge/MCP%20advisories-110%20verified-0f766e)](https://agentgate.zalize.com/advisories/)
 
 [English](README.md) | 简体中文
 
@@ -27,6 +28,29 @@ AgentGate 是面向 [Model Context Protocol](https://modelcontextprotocol.io) �
 | **Gate 门禁** | 与已批准基线有任何漂移即 CI 红灯；基于 diff 评审，而非二元允许/拒绝 |
 | **Deps 依赖防护** | 拦截 AI 幻觉包（slopsquatting）与 typosquat 依赖 —— 安装前对 manifest *与源码 import* 做 npm/PyPI 实时核验 |
 | **Advise 通报** | 与[公开结构化 MCP 安全通报数据库](advisories/)自动比对 |
+
+## 实战记录
+
+通报流水线与扫描器持续运行在真实 npm 生态上，而不是规则演示：
+
+- **110 条已核实通报**收录于[公开 MCP 通报数据库](https://agentgate.zalize.com/advisories/)（[JSON feed](https://agentgate.zalize.com/feeds/advisories.json) · [RSS](https://agentgate.zalize.com/feeds/advisories.xml) · 可查询 [Workers API](docs/spec/advisory-api.md)），每条均有权威来源并对照真实包/修复 commit 复核。
+- **其中 30+ 条是针对 MCP/Agent 生态的恶意 npm 包**（凭证窃取、反弹 shell、流量劫持），每个都经解包已发布 npm tarball 验证，且多个在核实时**仍在 npm 在架**（如 `anthropic-setup`：静默把全部 Claude Code 流量改道到攻击者代理；`remote-claude-daemon`：远程操控的 `claude --dangerously-skip-permissions` 中继；`@guangnao/claude-cli`：隐藏的远程任务 hub）。
+- **CVE 级事故端到端覆盖**：postmark-mcp BCC 后门、mcp-remote RCE（CVE-2025-6514，CVSS 9.6）、MCP Inspector RCE（CVE-2025-49596）、filesystem-server 沙箱逃逸（CVE-2025-53109/53110），并按固定节奏扫 GHSA/OSV 窗口。
+- **AgentGate 在 CI 中自我扫描**每个 PR（[dogfood job](.github/workflows/ci.yml)）。
+
+## 与竞品对比
+
+MCP 安全工具分成两派：只有扫描没有漂移防御，或只有 lockfile 没有扫描。AgentGate 是唯一闭环全链路的工具。星数与能力核实于 2026-08-16，对 9 个工具的逐项来源核实见 **[docs/COMPARISON.md](docs/COMPARISON.md)**：
+
+| | AgentGate | [Snyk Agent Scan](https://github.com/snyk/agent-scan)（2.9k★） | [Cisco MCP Scanner](https://github.com/cisco-ai-defense/mcp-scanner)（1.0k★） | [ToolPin](https://github.com/proofofwork-agency/toolpin) |
+|---|---|---|---|---|
+| 安全扫描（静态+连接式） | ✅ 12 条规则，确定性 | ✅ | ✅（YARA + LLM 评审） | ⚠️ 仅提示性 |
+| 工具面 lockfile | ✅ `agentgate.lock`（+ skills） | ❌ | ❌ | ✅ |
+| CI 漂移门禁 + 可读 diff | ✅ `ci` / `diff` | ❌ | ❌ | ✅ |
+| 公开通报库 + 自动比对 | ✅ 110 条开放 JSON | ⚠️ 私有平台 | ⚠️ 仅 pip-audit/VirusTotal | ❌ |
+| 幻觉/typosquat 依赖检查 | ✅ `deps`（npm + PyPI） | ❌ | ❌ | ❌ |
+| 无需账号/token | ✅ | ❌ 必须 `SNYK_TOKEN` | ⚠️ 3 引擎中 2 个需 API key | ✅ |
+| 默认执行你的服务器命令 | ❌ `--live` 显式可选并先询问 | ⚠️ 扫描即执行 | — | ⚠️ `pin` 时执行 |
 
 ## 快速开始
 
