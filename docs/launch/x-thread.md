@@ -58,7 +58,7 @@ github.com/wookat/agentgate/tree/main/docs/launch/disclosure
 **8/**
 So we built the gate we wanted:
 
-• `agentgate scan` — static, zero execution, cross-checks 110 public advisories
+• `agentgate scan` — static, zero execution, cross-checks 116 public advisories
 • `agentgate lock` — pins the approved tool surface
 • `agentgate ci` — fails the build on drift (GitHub Action + pre-commit)
 
@@ -105,7 +105,7 @@ not allow/deny lists.
 **4/**
 Plus the parts a lockfile can't do: static scanning for tool poisoning (hidden
 Unicode, prompt injection in descriptions), credential leaks, SSRF/RCE vectors —
-cross-checked against a database of 110 public advisories on MCP/agent threats.
+cross-checked against a database of 116 public advisories on MCP/agent threats.
 
 **5/**
 Apache-2.0, works offline, no account:

@@ -1,0 +1,43 @@
+{
+  "id": "MCPA-2026-0098",
+  "title": "@zapier/mcp-integration compromised by the Shai-Hulud \"Second Coming\" npm worm",
+  "summary": "Versions 3.0.1 through 3.0.3 of @zapier/mcp-integration were published by the self-propagating Shai-Hulud (\"The Second Coming\") npm worm after the maintainer's account was compromised. The malicious payload harvests tokens and credentials from the install environment (npm tokens, GitHub tokens, cloud credentials), exfiltrates them by publishing to attacker-visible GitHub repositories, propagates itself to npm packages the victim can publish, and establishes persistence as a GitHub Actions workflow; a destructive branch can wipe the user's home directory when it cannot exfiltrate. The compromised versions have been removed from the npm registry (latest clean release line is 3.0.0).",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "GHSA-659m-mwq2-jh49",
+    "MAL-2025-190918"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@zapier/mcp-integration",
+      "ranges": [
+        {
+          "introduced": "3.0.1",
+          "last_affected": "3.0.3"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-659m-mwq2-jh49"
+    },
+    {
+      "type": "web",
+      "url": "https://www.aikido.dev/blog/shai-hulud-strikes-again-hitting-zapier-ensdomains"
+    },
+    {
+      "type": "web",
+      "url": "https://www.stepsecurity.io/blog/sha1-hulud-the-second-coming-zapier-ens-domains-and-other-prominent-npm-packages-compromised"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}

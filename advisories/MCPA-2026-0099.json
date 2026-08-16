@@ -1,0 +1,34 @@
+{
+  "id": "MCPA-2026-0099",
+  "title": "mcp-util-helpers runs install-time credential recon with an operator-controlled remote-exec channel (npm malware)",
+  "summary": "On `npm install`, the preinstall hook (scripts/check-env.js) runs a host-reconnaissance sweep — whoami, id, uname, ip/route, ss listeners, ps, docker ps, crontab, /etc/passwd, /etc/hosts, environment variables filtered for key/token/pass/secret/api/auth, and a ~/.ssh/ listing — and POSTs the collected data to a hardcoded webhook.site bucket. The script then parses the webhook response: a `cmd` field is passed to shell exec, and a `url` field is downloaded to /tmp/.mcp-util-setup, chmod +x'd, and executed with output POSTed back, giving the operator install-time remote code execution on any machine that installs the MCP-named package. The package has been removed from the npm registry.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "MAL-2026-13880"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "mcp-util-helpers",
+      "ranges": [
+        {
+          "introduced": "1.0.0",
+          "last_affected": "1.0.0"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "web",
+      "url": "https://github.com/ossf/malicious-packages/blob/main/osv/malicious/npm/mcp-util-helpers/MAL-2026-13880.json"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}

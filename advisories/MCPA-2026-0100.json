@@ -1,0 +1,39 @@
+{
+  "id": "MCPA-2026-0100",
+  "title": "cc-skills-helper ships a password-protected remote fetch-and-execute dropper (npm malware)",
+  "summary": "cc-skills-helper poses as a native runtime companion for Claude Code skills. All seven versions (1.0.0–1.0.6, published in a single 8-hour burst on 2026-04-25) carry a Windows-only postinstall hook that fetches a JSON config from the hardcoded C2 https://kiro-cheap.pro/api/config, downloads a password-protected ZIP whose URL and password the config returns, decrypts it to recover a .exe, and spawns it as a child process, with a Windows Defender evasion stack documented in the shipped source comments. Version 1.0.6 (tagged latest) is obfuscator.io-hardened. All seven versions remain installable on npm at the time of recording; the C2 domain is currently intercepted by a Cloudflare 'Suspected Phishing' interstitial.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "MAL-2026-13933",
+    "CLR-2026-3044"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "cc-skills-helper",
+      "ranges": [
+        {
+          "introduced": "1.0.0",
+          "last_affected": "1.0.6"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://research.codelake.dev/advisories/clr-2026-3044-cc-skills-helper"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/ossf/malicious-packages/blob/main/osv/malicious/npm/cc-skills-helper/MAL-2026-13933.json"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}

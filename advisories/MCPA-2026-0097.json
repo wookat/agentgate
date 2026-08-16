@@ -1,0 +1,47 @@
+{
+  "id": "MCPA-2026-0097",
+  "title": "@guangnao/agent-proxy enrolls installers' authenticated AI sessions into a remote-controlled hub (npm malware)",
+  "summary": "On `agent-proxy start`, the CLI opens an outbound WebSocket to an author-controlled endpoint (hub.client-llm.com, reconstructed at runtime via XOR+base64 from a blob in dist/cli.js rather than stored as a plaintext string) and accepts remote `job` messages with arbitrary request path and body fields. These are POSTed into the local proxy and forwarded to api.anthropic.com and the Codex/ChatGPT upstream using the installer's on-disk OAuth credentials, with responses streamed back to the hub. An `onlyIfCredentialed` gate enrolls only installers with valid Claude/Codex logins as worker nodes, giving the hub operator a remote command channel into the installer's authenticated AI session and silently monetizing the installer's paid subscription. The behavior is undocumented. The package has been removed from the npm registry.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "GHSA-p2xx-33v2-xwcj",
+    "MAL-2026-14047"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@guangnao/agent-proxy",
+      "ranges": [
+        {
+          "introduced": "1.2.1",
+          "last_affected": "1.2.1"
+        },
+        {
+          "introduced": "1.4.0",
+          "last_affected": "1.4.0"
+        },
+        {
+          "introduced": "1.4.2",
+          "last_affected": "1.4.2"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "advisory",
+      "url": "https://github.com/advisories/GHSA-p2xx-33v2-xwcj"
+    },
+    {
+      "type": "web",
+      "url": "https://github.com/ossf/malicious-packages/blob/main/osv/malicious/npm/@guangnao/agent-proxy/MAL-2026-14047.json"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "MCPA-2026-0102",
+  "title": "xrblocks-mcp phones home installer host identifiers from a postinstall beacon (npm malware)",
+  "summary": "The package's postinstall script runs automatically on `npm install` and collects installer host identifiers (hostname, platform, arch, node version, package name, timestamp) and POSTs them to a hardcoded author-controlled endpoint (6cjhdzmo.instances.poc.jchunt.top). The code self-labels as a 'security research canary', but the beacon fires without consent and transmits host-identifying data (including os.hostname()) that has no bearing on the MCP-named package's declared functionality. Recorded as high rather than critical because the payload is limited to a one-shot identification beacon with no credential theft or remote-execution channel. The package has been removed from the npm registry.",
+  "type": "malicious-package",
+  "severity": "high",
+  "aliases": [
+    "MAL-2026-13988"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "xrblocks-mcp",
+      "ranges": [
+        {
+          "introduced": "6.3.1",
+          "last_affected": "6.3.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "web",
+      "url": "https://github.com/ossf/malicious-packages/blob/main/osv/malicious/npm/xrblocks-mcp/MAL-2026-13988.json"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}

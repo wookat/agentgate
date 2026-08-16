@@ -2348,5 +2348,127 @@ export const MCPA_ADVISORIES: McpaAdvisory[] = [
         ]
       }
     ]
+  },
+  {
+    "id": "MCPA-2026-0097",
+    "title": "@guangnao/agent-proxy enrolls installers' authenticated AI sessions into a remote-controlled hub (npm malware)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@guangnao/agent-proxy",
+        "ranges": [
+          {
+            "introduced": "1.2.1",
+            "last_affected": "1.2.1"
+          },
+          {
+            "introduced": "1.4.0",
+            "last_affected": "1.4.0"
+          },
+          {
+            "introduced": "1.4.2",
+            "last_affected": "1.4.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0098",
+    "title": "@zapier/mcp-integration compromised by the Shai-Hulud \"Second Coming\" npm worm",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@zapier/mcp-integration",
+        "ranges": [
+          {
+            "introduced": "3.0.1",
+            "last_affected": "3.0.3"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0099",
+    "title": "mcp-util-helpers runs install-time credential recon with an operator-controlled remote-exec channel (npm malware)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "mcp-util-helpers",
+        "ranges": [
+          {
+            "introduced": "1.0.0",
+            "last_affected": "1.0.0"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0100",
+    "title": "cc-skills-helper ships a password-protected remote fetch-and-execute dropper (npm malware)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "cc-skills-helper",
+        "ranges": [
+          {
+            "introduced": "1.0.0",
+            "last_affected": "1.0.6"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0101",
+    "title": "@kolbo/mcp 1.57.1 loads a blockchain-resolved second stage when the MCP server first authenticates (compromised release)",
+    "type": "malicious-package",
+    "severity": "critical",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "@kolbo/mcp",
+        "ranges": [
+          {
+            "introduced": "1.57.1",
+            "last_affected": "1.57.1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "MCPA-2026-0102",
+    "title": "xrblocks-mcp phones home installer host identifiers from a postinstall beacon (npm malware)",
+    "type": "malicious-package",
+    "severity": "high",
+    "published": "2026-08-14",
+    "packages": [
+      {
+        "ecosystem": "npm",
+        "name": "xrblocks-mcp",
+        "ranges": [
+          {
+            "introduced": "6.3.1",
+            "last_affected": "6.3.1"
+          }
+        ]
+      }
+    ]
   }
 ];

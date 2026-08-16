@@ -44,7 +44,7 @@ AgentGate is one CLI for the full loop:
   things a rug pull changes)
 - **ci** — GitHub Action / pre-commit hook; any drift fails the build with a readable diff
 - **advise** — cross-check against our public structured MCP advisory database
-  (110 public advisories, the 19 above included)
+  (116 public advisories, the 19 above included)
 
 Bonus: `config convert` moves server configs between Claude Desktop/Code, Cursor,
 VS Code, Codex, and OpenCode formats.
