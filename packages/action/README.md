@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wookat/agentgate/packages/action@v0.67.61
+      - uses: wookat/agentgate@v0.67.61   # Marketplace / root action.yml
         with:
           command: ci            # ci | scan | diff | lock
           lockfile: agentgate.lock
@@ -62,12 +62,21 @@ steps:
 |---|---|
 | `exit-code` | agentgate exit code (`0` = no drift/findings) |
 
-## Marketplace publishing note
+## Marketplace packaging
 
-GitHub Marketplace requires `action.yml` at the repository root. At first release we
-will either (a) copy this `action.yml` to the repo root, or (b) sync this directory to a
-dedicated `wookat/agentgate-action` repo — decision deferred to launch (total lead
-call). Until then the action is usable via the subdirectory reference above.
+GitHub Marketplace only lists an action whose `action.yml` sits at the **repository
+root**, so this file is the source of truth and the root copy is generated:
+
+```bash
+node scripts/sync-root-action.mjs   # regenerate /action.yml after editing this one
+node scripts/check-action-sync.mjs  # CI gate: fails when the root copy drifts
+```
+
+Both references work — `wookat/agentgate@<tag>` (root, Marketplace) and
+`wookat/agentgate/packages/action@<tag>` (subdirectory, unchanged for existing users).
+
+The remaining listing steps require the repository owner's account; they are tracked in
+[docs/launch/marketplace.md](../../docs/launch/marketplace.md).
 
 ## CLI contract (route A interface)
 

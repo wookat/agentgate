@@ -1,0 +1,90 @@
+# GENERATED — do not edit. Copy of packages/action/action.yml
+# Regenerate: node scripts/sync-root-action.mjs
+name: "AgentGate MCP Gate"
+description: >-
+  Scan, lock, and gate MCP servers in CI — fail the build when the tool surface
+  your agent sees drifts from the approved agentgate.lock baseline.
+author: "AgentGate"
+branding:
+  icon: "shield"
+  color: "purple"
+
+inputs:
+  command:
+    description: >-
+      AgentGate command to run: `ci` (drift gate, default), `scan`, `diff`, `lock`,
+      or `deps` (hallucinated/typosquatted dependency gate).
+    required: false
+    default: "ci"
+  args:
+    description: "Extra arguments appended to the command (e.g. `--config .mcp.json`)."
+    required: false
+    default: ""
+  lockfile:
+    description: "Path to the agentgate lockfile."
+    required: false
+    default: "agentgate.lock"
+  version:
+    description: "agentgate npm package version to run (via npx)."
+    required: false
+    default: "latest"
+  working-directory:
+    description: "Directory to run in."
+    required: false
+    default: "."
+  sarif-file:
+    description: >-
+      If set, write a SARIF report to this path (`scan` command only). Upload it
+      with github/codeql-action/upload-sarif to surface findings in code scanning.
+    required: false
+    default: ""
+  node-version:
+    description: "Node.js version to set up."
+    required: false
+    default: "22"
+
+outputs:
+  exit-code:
+    description: "Exit code of the agentgate command (0 = no drift/findings)."
+    value: ${{ steps.run.outputs.exit-code }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+    - id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        AGENTGATE_VERSION: ${{ inputs.version }}
+        AGENTGATE_COMMAND: ${{ inputs.command }}
+        AGENTGATE_LOCKFILE: ${{ inputs.lockfile }}
+        AGENTGATE_SARIF: ${{ inputs.sarif-file }}
+        AGENTGATE_ARGS: ${{ inputs.args }}
+      run: |
+        set -uo pipefail
+        cmd=(npx --yes "mcp-agentgate@${AGENTGATE_VERSION}" "${AGENTGATE_COMMAND}")
+        case "${AGENTGATE_COMMAND}" in
+          ci|diff) cmd+=(--lockfile "${AGENTGATE_LOCKFILE}") ;;
+          lock) cmd+=(--out "${AGENTGATE_LOCKFILE}") ;;
+        esac
+        if [ -n "${AGENTGATE_SARIF}" ]; then
+          if [ "${AGENTGATE_COMMAND}" != "scan" ]; then
+            echo "::error::sarif-file is only supported with command: scan (got: ${AGENTGATE_COMMAND})"
+            exit 2
+          fi
+          cmd+=(--format sarif --output "${AGENTGATE_SARIF}")
+        fi
+        if [ -n "${AGENTGATE_ARGS}" ]; then
+          # shellcheck disable=SC2206
+          cmd+=(${AGENTGATE_ARGS})
+        fi
+        echo "::group::agentgate"
+        echo "+ ${cmd[*]}"
+        "${cmd[@]}"
+        code=$?
+        echo "::endgroup::"
+        echo "exit-code=${code}" >> "$GITHUB_OUTPUT"
+        exit "${code}"
