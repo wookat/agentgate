@@ -1,9 +1,9 @@
 # Show HN draft
 
 > ⚠️ DO NOT POST — content package only. All external publishing is executed by the
-> total lead per SOP-03. Re-verify the "still installable" count against
-> docs/launch/disclosure/npm-security-report.md on posting day (packages get taken
-> down; never post a stale number).
+> total lead per SOP-03. On posting day run `node scripts/launch-live-check.mjs`
+> to re-verify the "still installable" count (packages get taken down; never post
+> a stale number), then update the count and <DATE> everywhere in docs/launch/.
 
 ## Title (80 char max — pick one)
 
