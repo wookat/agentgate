@@ -42,7 +42,7 @@ sent npm security a consolidated disclosure and built tooling so you don't have
 to trust us:
 
 - `agentgate scan` — static analysis of your MCP configs + server packages,
-  cross-checked against our public advisory DB (110 public advisories).
+  cross-checked against our public advisory DB (116 public advisories).
   Zero execution: unlike scanners that launch your MCP servers to enumerate
   tools, the default path never runs server code.
 - `agentgate lock` — pins the approved tool surface (names, descriptions, input

@@ -1,0 +1,34 @@
+{
+  "id": "MCPA-2026-0101",
+  "title": "@kolbo/mcp 1.57.1 loads a blockchain-resolved second stage when the MCP server first authenticates (compromised release)",
+  "summary": "Version 1.57.1 of the Kolbo AI MCP server appends a top-level async IIFE after module.exports in src/auth.js (an otherwise legitimate OAuth PKCE implementation). When the file is required — src/client.js requires ./auth inside _ensureLogin, so the loader fires on the first API request after the server is invoked (e.g. `npx @kolbo/mcp` from Claude Desktop, Claude Code, or Cursor) — it queries public Ethereum JSON-RPC endpoints for the latest transaction from a hardcoded attacker address, decodes two IPv4 C2 endpoints from the transaction `to` field, fetches XOR-encrypted second-stage JavaScript from the C2, and executes it via eval() and a detached `spawn('node', ['-e', payload])` child process. Sensitive identifiers are hidden behind \\uXXXX escapes and the C2 addresses are derived from on-chain data, so no plain domain or IP appears in the source. Other published versions of the package (latest 1.72.2 at the time of recording) are not flagged.",
+  "type": "malicious-package",
+  "severity": "critical",
+  "aliases": [
+    "MAL-2026-13938"
+  ],
+  "cwe": [
+    "CWE-506"
+  ],
+  "packages": [
+    {
+      "ecosystem": "npm",
+      "name": "@kolbo/mcp",
+      "ranges": [
+        {
+          "introduced": "1.57.1",
+          "last_affected": "1.57.1"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "web",
+      "url": "https://github.com/ossf/malicious-packages/blob/main/osv/malicious/npm/@kolbo/mcp/MAL-2026-13938.json"
+    }
+  ],
+  "timeline": {
+    "published": "2026-08-14"
+  }
+}
