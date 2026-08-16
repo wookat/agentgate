@@ -92,6 +92,8 @@ export default defineConfig({
           items: [
             { label: 'Threat model', slug: 'docs/threat-model' },
             { label: 'How AgentGate compares', slug: 'docs/comparison' },
+            { label: 'vs Snyk Agent Scan', link: '/compare/snyk/' },
+            { label: 'vs Cisco scanners', link: '/compare/cisco/' },
           ],
         },
         {

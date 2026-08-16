@@ -62,21 +62,31 @@ steps:
 |---|---|
 | `exit-code` | agentgate exit code (`0` = no drift/findings) |
 
-## Marketplace packaging
+## Marketplace publishing
 
-GitHub Marketplace only lists an action whose `action.yml` sits at the **repository
-root**, so this file is the source of truth and the root copy is generated:
+GitHub Marketplace requires `action.yml` at the repository root, so the same
+action is mirrored byte-identically at [`/action.yml`](../../action.yml) and
+referenced as:
+
+```yaml
+- uses: wookat/agentgate@v0.67.61
+  with:
+    command: ci
+```
+
+This file is the source of truth; the root mirror is generated and CI-gated:
 
 ```bash
 node scripts/sync-root-action.mjs   # regenerate /action.yml after editing this one
-node scripts/check-action-sync.mjs  # CI gate: fails when the root copy drifts
+node scripts/check-action-sync.mjs  # CI gate: fails when the root mirror drifts
 ```
 
-Both references work — `wookat/agentgate@<tag>` (root, Marketplace) and
-`wookat/agentgate/packages/action@<tag>` (subdirectory, unchanged for existing users).
-
-The remaining listing steps require the repository owner's account; they are tracked in
-[docs/launch/marketplace.md](../../docs/launch/marketplace.md).
+Listing on the Marketplace is done from the GitHub release UI ("Publish this
+Action to the GitHub Marketplace" checkbox on a release) and is an owner/total-lead
+step tracked in [docs/launch/marketplace.md](../../docs/launch/marketplace.md);
+`name`, `description`, and `branding` in `action.yml` already satisfy the
+Marketplace metadata requirements. The subdirectory reference
+(`wookat/agentgate/packages/action@<tag>`) keeps working either way.
 
 ## CLI contract (route A interface)
 

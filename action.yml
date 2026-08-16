@@ -1,5 +1,3 @@
-# GENERATED — do not edit. Copy of packages/action/action.yml
-# Regenerate: node scripts/sync-root-action.mjs
 name: "AgentGate MCP Gate"
 description: >-
   Scan, lock, and gate MCP servers in CI — fail the build when the tool surface

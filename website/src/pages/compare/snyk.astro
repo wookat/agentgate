@@ -1,0 +1,113 @@
+---
+import MarketingLayout from '../../components/MarketingLayout.astro';
+import CompareTable from '../../components/CompareTable.astro';
+import type { CompareRow } from '../../components/CompareTable.astro';
+
+const rows: CompareRow[] = [
+  {
+    label: 'Account / token required',
+    us: 'None — fully local, works offline',
+    usTone: 'ok',
+    them: 'Snyk account + SNYK_TOKEN for every scan',
+    themTone: 'danger',
+  },
+  {
+    label: 'Executes your MCP servers during scan',
+    us: 'Never — static analysis by default',
+    usTone: 'ok',
+    them: 'Yes — stdio scans run the server commands (sandbox recommended by their docs)',
+    themTone: 'danger',
+  },
+  {
+    label: 'Lockfile of the approved tool surface',
+    us: 'agentgate.lock — names, descriptions, input schemas',
+    usTone: 'ok',
+    them: 'None',
+    themTone: 'danger',
+  },
+  {
+    label: 'CI drift gate',
+    us: 'agentgate ci — non-zero exit + readable diff + SARIF',
+    usTone: 'ok',
+    them: 'None in the OSS repo',
+    themTone: 'danger',
+  },
+  {
+    label: 'Advisory database',
+    us: 'Public, structured, 110+ entries, free JSON API',
+    usTone: 'ok',
+    them: 'Proprietary Snyk platform',
+    themTone: 'warn',
+  },
+  {
+    label: 'Agent skills (SKILL.md) scanning',
+    us: 'Yes — plus commands, plugins, and lockfile drift',
+    usTone: 'ok',
+    them: 'Yes',
+    themTone: 'ok',
+  },
+  {
+    label: 'Client config discovery',
+    us: 'Claude, Cursor, VS Code, Codex, OpenCode, Windsurf, and 20+ more',
+    usTone: 'ok',
+    them: 'Broadest coverage (Claude, Cursor, Windsurf, Gemini CLI, VS Code, …)',
+    themTone: 'ok',
+  },
+  {
+    label: 'CLI output stability',
+    us: 'Stable JSON / SARIF / terminal table',
+    usTone: 'ok',
+    them: 'Labeled "experimental and subject to change"',
+    themTone: 'warn',
+  },
+];
+---
+
+<MarketingLayout
+  title="AgentGate vs Snyk Agent Scan — MCP security comparison"
+  description="Source-verified comparison of AgentGate and Snyk agent-scan (ex mcp-scan): tokens, execution model, lockfile, CI drift gate, and advisory database."
+  canonical="https://agentgate.zalize.com/compare/snyk/"
+>
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+    <p class="text-sm font-medium text-ag-accent">Comparison</p>
+    <h1 class="mt-2 text-4xl font-bold tracking-tight">AgentGate vs Snyk Agent Scan</h1>
+    <p class="mt-4 max-w-3xl text-lg text-ag-muted">
+      Snyk Agent Scan (formerly Invariant Labs <code class="font-mono text-base">mcp-scan</code>)
+      is an inventory and scanner front-end for the commercial Snyk platform. AgentGate is a
+      local-first security gate: scan, lock, and CI-gate the whole agent config surface with no
+      account and nothing executed. Every row below was verified against the
+      <a href="https://github.com/snyk/agent-scan" class="text-ag-accent underline underline-offset-2">snyk/agent-scan</a>
+      repository — dates and sources in
+      <a href="https://github.com/wookat/agentgate/blob/main/docs/COMPARISON.md" class="text-ag-accent underline underline-offset-2">docs/COMPARISON.md</a>.
+    </p>
+
+    <div class="mt-10">
+      <CompareTable competitor="Snyk Agent Scan" rows={rows} caption="Feature comparison between AgentGate and Snyk Agent Scan" />
+    </div>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-2">
+      <div class="rounded-ag-lg border border-ag-border bg-ag-subtle p-6">
+        <h2 class="text-lg font-semibold">Where AgentGate wins</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-ag-muted">
+          <li>No account, no token, no data leaves your machine — scans work offline and in air-gapped CI.</li>
+          <li>Static-only by default: scanning an untrusted config never executes it.</li>
+          <li>The lockfile + drift gate catches rug-pulls — an approved server changing its tool descriptions upstream — which a point-in-time scanner cannot see.</li>
+          <li>The advisory database is public and structured; Snyk's intelligence sits behind the platform login.</li>
+        </ul>
+      </div>
+      <div class="rounded-ag-lg border border-ag-border bg-ag-subtle p-6">
+        <h2 class="text-lg font-semibold">Where Snyk wins (honest)</h2>
+        <ul class="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-ag-muted">
+          <li>Broadest client auto-discovery in the ecosystem and a large commercial research team behind it.</li>
+          <li>Platform features (dashboards, org policy, reporting) that a standalone CLI does not attempt.</li>
+          <li>The largest community of the MCP scanners (2,800+ GitHub stars as of 2026-08).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-10 flex flex-wrap gap-3">
+      <a href="/docs/quick-start/" class="inline-flex h-12 items-center justify-center rounded-ag-md bg-ag-accent px-6 font-semibold text-ag-accent-contrast transition-colors duration-150 hover:bg-ag-accent-strong">Try AgentGate in 60 seconds</a>
+      <a href="/compare/cisco/" class="inline-flex h-12 items-center justify-center rounded-ag-md border border-ag-border px-6 font-semibold transition-colors duration-150 hover:border-ag-accent">Compare vs Cisco →</a>
+    </div>
+  </section>
+</MarketingLayout>
