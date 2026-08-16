@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: wookat/agentgate/packages/action@v0.67.61
+      - uses: wookat/agentgate@v0.67.61   # Marketplace / root action.yml
         with:
           command: ci            # ci | scan | diff | lock
           lockfile: agentgate.lock
@@ -65,7 +65,8 @@ steps:
 ## Marketplace publishing
 
 GitHub Marketplace requires `action.yml` at the repository root, so the same
-action is mirrored at [`/action.yml`](../../action.yml) and referenced as:
+action is mirrored byte-identically at [`/action.yml`](../../action.yml) and
+referenced as:
 
 ```yaml
 - uses: wookat/agentgate@v0.67.61
@@ -73,10 +74,17 @@ action is mirrored at [`/action.yml`](../../action.yml) and referenced as:
     command: ci
 ```
 
-The two files must stay byte-identical — keep them in sync in the same PR.
+This file is the source of truth; the root mirror is generated and CI-gated:
+
+```bash
+node scripts/sync-root-action.mjs   # regenerate /action.yml after editing this one
+node scripts/check-action-sync.mjs  # CI gate: fails when the root mirror drifts
+```
+
 Listing on the Marketplace is done from the GitHub release UI ("Publish this
 Action to the GitHub Marketplace" checkbox on a release) and is an owner/total-lead
-step; `name`, `description`, and `branding` in `action.yml` already satisfy the
+step tracked in [docs/launch/marketplace.md](../../docs/launch/marketplace.md);
+`name`, `description`, and `branding` in `action.yml` already satisfy the
 Marketplace metadata requirements. The subdirectory reference
 (`wookat/agentgate/packages/action@<tag>`) keeps working either way.
 

@@ -1,7 +1,7 @@
 {
   "name": "mcp-agentgate",
   "version": "0.67.61",
-  "description": "Scan, lock, and gate your MCP servers — npm audit + lockfile + CI drift gate for the MCP era",
+  "description": "Scan, lock, and gate your MCP servers \u2014 npm audit + lockfile + CI drift gate for the MCP era",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -13,10 +13,20 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "mcp-security",
     "security",
     "supply-chain",
+    "supply-chain-security",
     "lockfile",
     "scanner",
+    "audit",
+    "tool-poisoning",
+    "rug-pull",
+    "drift-detection",
+    "sarif",
+    "claude",
+    "cursor",
+    "ai-agents",
     "cli"
   ],
   "publishConfig": {

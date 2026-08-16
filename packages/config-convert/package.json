@@ -33,5 +33,18 @@
     "@types/node": "^22.20.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "config",
+    "converter",
+    "claude",
+    "claude-desktop",
+    "cursor",
+    "vscode",
+    "codex",
+    "opencode",
+    "cli"
+  ]
 }

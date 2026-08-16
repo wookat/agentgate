@@ -13,10 +13,12 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "mcp-security",
     "security",
     "supply-chain",
     "lockfile",
-    "scanner"
+    "scanner",
+    "advisory-database"
   ],
   "publishConfig": {
     "access": "public"
