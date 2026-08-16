@@ -23,5 +23,6 @@ agg --font-size 16 --theme monokai --last-frame-duration 4 demo.cast <repo>/docs
 ```
 
 The `github` server entry in `demo-mcp.json` uses a deliberately fake
-`ghp_demo…` token so `scan` demonstrates the credential-leak rule; it is not a
-real credential.
+`ghp_demo…` token (not a real credential). The scan step demonstrates the
+supply-chain rule (`@latest` + `-y` on the github server); the low-entropy
+placeholder token is intentionally not flagged by the credential rule.
