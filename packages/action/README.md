@@ -62,12 +62,23 @@ steps:
 |---|---|
 | `exit-code` | agentgate exit code (`0` = no drift/findings) |
 
-## Marketplace publishing note
+## Marketplace publishing
 
-GitHub Marketplace requires `action.yml` at the repository root. At first release we
-will either (a) copy this `action.yml` to the repo root, or (b) sync this directory to a
-dedicated `wookat/agentgate-action` repo — decision deferred to launch (total lead
-call). Until then the action is usable via the subdirectory reference above.
+GitHub Marketplace requires `action.yml` at the repository root, so the same
+action is mirrored at [`/action.yml`](../../action.yml) and referenced as:
+
+```yaml
+- uses: wookat/agentgate@v0.67.61
+  with:
+    command: ci
+```
+
+The two files must stay byte-identical — keep them in sync in the same PR.
+Listing on the Marketplace is done from the GitHub release UI ("Publish this
+Action to the GitHub Marketplace" checkbox on a release) and is an owner/total-lead
+step; `name`, `description`, and `branding` in `action.yml` already satisfy the
+Marketplace metadata requirements. The subdirectory reference
+(`wookat/agentgate/packages/action@<tag>`) keeps working either way.
 
 ## CLI contract (route A interface)
 
