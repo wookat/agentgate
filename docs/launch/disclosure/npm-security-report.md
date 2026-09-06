@@ -1,13 +1,17 @@
-# Responsible disclosure: 19 malicious packages still installable on npm
+# Responsible disclosure: 18 of 19 verified-malicious packages still installable on npm
 
-> STATUS: READY TO SEND — owner (total lead) sends from an official address to
-> **security@npmjs.com** (GitHub/npm security). Do not send from an automation
-> account. Prepared by Route C on 2026-08-16; every "still live" claim below was
-> re-verified against `registry.npmjs.org` on 2026-08-16 (latest dist-tag shown).
+> STATUS: SENT 2026-09-06 — from agentgate@zalize.com to security@npmjs.com via Resend
+> (accepted by Resend, message id f5fa79e2-0e67-43b5-b760-af23672e2be7; delivery/receipt
+> not yet confirmed). The official https://npmjs.com/support form was Cloudflare-gated
+> from our environment, so the email channel was used; if no reply within 5 business
+> days, re-file via the "Report malware" button on any listed package page.
+> Prepared by Route C on 2026-08-16; every "still live" claim below was
+> re-verified against `registry.npmjs.org` on 2026-09-06 via `scripts/launch-live-check.mjs`
+> (latest dist-tag shown). `anthropic-setup` has since been replaced with a security holder.
 
 ## Email subject
 
-`Responsible disclosure: 19 malicious npm packages (AI-agent/MCP supply chain) still installable`
+`Responsible disclosure: 18 malicious npm packages (AI-agent/MCP supply chain) still installable`
 
 ## Email body
 
@@ -20,36 +24,37 @@ MCP/AI-agent ecosystem threats (https://agentgate.zalize.com).
 During advisory research we verified — by downloading and unpacking the latest
 tarballs — that the following 19 npm packages contain malicious code
 (remote-controlled code execution, credential exfiltration, or binary
-replacement) and were still installable from the public registry as of 2026-08-16.
-All of them already have OSV `MAL-` identifiers (and several also GitHub
-advisories) but have not been taken down or replaced with security-holder
-packages.
+replacement). 18 of them were still installable from the public registry as of
+2026-09-06 (`anthropic-setup`, #6, has since been replaced with a security-holder
+package and is listed for completeness). All of them already have OSV `MAL-`
+identifiers (and several also GitHub advisories) but the remaining 18 have not
+been taken down or replaced with security-holder packages.
 
-We request takedown / security-holder replacement for the packages below.
+We request takedown / security-holder replacement for the 18 packages below that are still live.
 Full structured advisories (behavior analysis, affected versions, references)
 are linked per package.
 
-| # | Package | Latest (2026-08-16) | Severity | Behavior (one line) | OSV / GHSA | Full advisory |
+| # | Package | Latest (2026-09-06) | Severity | Behavior (one line) | OSV / GHSA | Full advisory |
 |---|---------|------------------|----------|---------------------|------------|---------------|
-| 1 | `opencode-optimised-toolings` | 6.5.1 | critical | The npm package opencode-optimised-toolings poses as an OpenCode plugin | GHSA-49cx-27xq-h4g2, MAL-2026-13452 | https://agentgate.zalize.com/advisories/MCPA-2026-0061 |
+| 1 | `opencode-optimised-toolings` | 6.5.2 | critical | The npm package opencode-optimised-toolings poses as an OpenCode plugin | GHSA-49cx-27xq-h4g2, MAL-2026-13452 | https://agentgate.zalize.com/advisories/MCPA-2026-0061 |
 | 2 | `agenthub-multiagent-mcp` | 1.61.0 | critical | agenthub-multiagent-mcp ships a worker that opens a WebSocket to a hardcoded server (wss://agenthub.contetial.com) and, for every 'dispatch' message received, writes the server-sup | GHSA-gr2g-rx6h-9jh5, MAL-2026-13399 | https://agentgate.zalize.com/advisories/MCPA-2026-0063 |
 | 3 | `llm-interceptor` | 0.4.1 | critical | The npm package llm-interceptor installs itself into the victim's agent tooling on `npm install`: its postinstall registers an MCP server entry in ~/.cursor/mcp.json, runs `claude  | GHSA-6wxr-274h-wx32, MAL-2026-13370 | https://agentgate.zalize.com/advisories/MCPA-2026-0064 |
 | 4 | `agenttunnels` | 0.1.17 | critical | The npm package agenttunnels ships an MCP bridge whose tunnel_run_command tool executes a command string from a proposal payload fetched from a remote session worker via child_proc | GHSA-4cm6-97rm-ffqf, MAL-2026-13400 | https://agentgate.zalize.com/advisories/MCPA-2026-0065 |
 | 5 | `opencode-engos-ai` | 0.0.0-dev-202608161512 | critical | The npm package opencode-engos-ai poses as an OpenCode distribution | MAL-2026-12405 | https://agentgate.zalize.com/advisories/MCPA-2026-0069 |
-| 6 | `anthropic-setup` | 1.0.1 | critical | The npm package anthropic-setup poses as an Anthropic API setup helper (`npx anthropic-setup sk-ant-...`) | MAL-2026-12510 | https://agentgate.zalize.com/advisories/MCPA-2026-0070 |
+| 6 | `anthropic-setup` | 0.0.1-security | critical | The npm package anthropic-setup poses as an Anthropic API setup helper (`npx anthropic-setup sk-ant-...`) | MAL-2026-12510 | https://agentgate.zalize.com/advisories/MCPA-2026-0070 |
 | 7 | `remote-claude-daemon` | 0.7.5 | critical | The npm package remote-claude-daemon connects outbound to a hardcoded WebSocket relay and treats inbound messages as commands against the local host | MAL-2026-13455 | https://agentgate.zalize.com/advisories/MCPA-2026-0071 |
 | 8 | `@guangnao/claude-cli` | 1.0.17 | high | The npm package @guangnao/claude-cli hardcodes a hub endpoint (https://hub.client-llm.com) concealed behind a bespoke base64+XOR string decoder used for exactly that one URL | MAL-2026-13209 | https://agentgate.zalize.com/advisories/MCPA-2026-0073 |
-| 9 | `@cliphijack/santaclaude` | 1.0.112 | critical | The npm package @cliphijack/santaclaude runs a client that polls https://santaclaude.app (/api/control/claim, /api/jobs/claim) and dispatches server-supplied jobs into the user's t | MAL-2026-13363 | https://agentgate.zalize.com/advisories/MCPA-2026-0074 |
+| 9 | `@cliphijack/santaclaude` | 1.0.117 | critical | The npm package @cliphijack/santaclaude runs a client that polls https://santaclaude.app (/api/control/claim, /api/jobs/claim) and dispatches server-supplied jobs into the user's t | MAL-2026-13363 | https://agentgate.zalize.com/advisories/MCPA-2026-0074 |
 | 10 | `claw-subagent-service` | 1.4.0 | critical | The npm package claw-subagent-service registers itself as a privileged auto-start Windows service from its postinstall script (`sc.exe create` plus `sc.exe failure .. | MAL-2026-3757 | https://agentgate.zalize.com/advisories/MCPA-2026-0075 |
 | 11 | `claude-cup` | 0.9.12 | critical | The npm package claude-cup presents itself as a Claude Code usage leaderboard | MAL-2026-5789 | https://agentgate.zalize.com/advisories/MCPA-2026-0076 |
 | 12 | `mangomind-agent` | 0.2.2 | critical | mangomind-agent installs a background daemon (hidden via a temp VBS launcher on Windows, launchd/systemd on macOS/Linux) that connects to a hardcoded WebSocket relay (`wss://mangom | MAL-2026-13611, GHSA-34vp-2pw6-g7f3 | https://agentgate.zalize.com/advisories/MCPA-2026-0078 |
-| 13 | `aclade-agent` | 1.0.6 | critical | aclade-agent installs a daemon that re-spawns itself detached and polls `https://aclade.com/api/connector/poll` for task objects, then dispatches them in `executeTask()` | MAL-2026-13614, GHSA-45jx-7hwc-cx43 | https://agentgate.zalize.com/advisories/MCPA-2026-0079 |
-| 14 | `agenthub-ai` | 1.3.0 | critical | agenthub-ai ships a bundled daemon (dist-publish/main.js) that installs itself as an OS-level autostart service (Windows hidden WScript launcher / systemd unit / launchd job), open | MAL-2026-13615, GHSA-hw95-mqx2-4pg5 | https://agentgate.zalize.com/advisories/MCPA-2026-0080 |
+| 13 | `aclade-agent` | 1.2.0 | critical | aclade-agent installs a daemon that re-spawns itself detached and polls `https://aclade.com/api/connector/poll` for task objects, then dispatches them in `executeTask()` | MAL-2026-13614, GHSA-45jx-7hwc-cx43 | https://agentgate.zalize.com/advisories/MCPA-2026-0079 |
+| 14 | `agenthub-ai` | 1.7.0 | critical | agenthub-ai ships a bundled daemon (dist-publish/main.js) that installs itself as an OS-level autostart service (Windows hidden WScript launcher / systemd unit / launchd job), open | MAL-2026-13615, GHSA-hw95-mqx2-4pg5 | https://agentgate.zalize.com/advisories/MCPA-2026-0080 |
 | 15 | `claude-remote-agent` | 0.7.1 | high | claude-remote-agent runs a daemon that connects to a WebSocket relay and, on relay request, spawns a Python PTY bridge to run `claude` sessions in the host's working directory, for | MAL-2026-13376, GHSA-vmfr-7cqr-9wc8 | https://agentgate.zalize.com/advisories/MCPA-2026-0081 |
 | 16 | `@atom8n/inspector` | 0.17.32 | critical | @atom8n/inspector republishes the official @modelcontextprotocol/inspector under a squatted scope while spoofing Anthropic metadata (package.json declares author 'Anthropic, PBC' a | MAL-2026-13414, GHSA-9836-cprf-5xxq | https://agentgate.zalize.com/advisories/MCPA-2026-0082 |
 | 17 | `trimprompt` | 1.0.49 | high | trimprompt markets itself as a token-saving proxy for AI coding agents, but nearly every runtime module (cache-manager.js, ccr.js, executor.js, file-watcher.js, hooks/claude-hook.j | MAL-2026-13462, GHSA-cvm3-f6xv-h47p | https://agentgate.zalize.com/advisories/MCPA-2026-0083 |
-| 18 | `@addai/node` | 0.27.1 | critical | @addai/node installs a background daemon (dist/session-runner.js) that pairs the host to a remote account and polls the hardcoded backend `https://syhzpqqvrplaqdipcymw.supabase.co` | MAL-2026-13411, GHSA-w4g2-j72c-g28r | https://agentgate.zalize.com/advisories/MCPA-2026-0084 |
-| 19 | `@xiaohhhh1/canvas-agent` | 0.4.35 | critical | @xiaohhhh1/canvas-agent's bin opens an outbound WebSocket to the hardcoded relay `wss://canvas.xiaohhhh1.com/api/agent-relay` on start and forwards inbound relay messages as authen | MAL-2026-13398, GHSA-29wq-c378-jw6v | https://agentgate.zalize.com/advisories/MCPA-2026-0085 |
+| 18 | `@addai/node` | 0.30.7 | critical | @addai/node installs a background daemon (dist/session-runner.js) that pairs the host to a remote account and polls the hardcoded backend `https://syhzpqqvrplaqdipcymw.supabase.co` | MAL-2026-13411, GHSA-w4g2-j72c-g28r | https://agentgate.zalize.com/advisories/MCPA-2026-0084 |
+| 19 | `@xiaohhhh1/canvas-agent` | 0.4.80 | critical | @xiaohhhh1/canvas-agent's bin opens an outbound WebSocket to the hardcoded relay `wss://canvas.xiaohhhh1.com/api/agent-relay` on start and forwards inbound relay messages as authen | MAL-2026-13398, GHSA-29wq-c378-jw6v | https://agentgate.zalize.com/advisories/MCPA-2026-0085 |
 
 We are happy to provide unpacked tarballs, IoCs (hardcoded C2 endpoints), and
 per-version diffs on request.
@@ -62,7 +67,7 @@ https://github.com/wookat/agentgate
 
 ### opencode-optimised-toolings (MCPA-2026-0061, critical)
 
-- Latest on npm as of 2026-08-16: `6.5.1` (still installable)
+- Latest on npm as of 2026-09-06: `6.5.2` (still installable)
 - Aliases: GHSA-49cx-27xq-h4g2, MAL-2026-13452
 - References: https://github.com/advisories/GHSA-49cx-27xq-h4g2; https://osv.dev/vulnerability/MAL-2026-13452
 
@@ -70,7 +75,7 @@ The npm package opencode-optimised-toolings poses as an OpenCode plugin. On plug
 
 ### agenthub-multiagent-mcp (MCPA-2026-0063, critical)
 
-- Latest on npm as of 2026-08-16: `1.61.0` (still installable)
+- Latest on npm as of 2026-09-06: `1.61.0` (still installable)
 - Aliases: GHSA-gr2g-rx6h-9jh5, MAL-2026-13399
 - References: https://github.com/advisories/GHSA-gr2g-rx6h-9jh5; https://osv.dev/vulnerability/MAL-2026-13399
 
@@ -78,7 +83,7 @@ agenthub-multiagent-mcp ships a worker that opens a WebSocket to a hardcoded ser
 
 ### llm-interceptor (MCPA-2026-0064, critical)
 
-- Latest on npm as of 2026-08-16: `0.4.1` (still installable)
+- Latest on npm as of 2026-09-06: `0.4.1` (still installable)
 - Aliases: GHSA-6wxr-274h-wx32, MAL-2026-13370
 - References: https://github.com/advisories/GHSA-6wxr-274h-wx32; https://osv.dev/vulnerability/MAL-2026-13370
 
@@ -86,7 +91,7 @@ The npm package llm-interceptor installs itself into the victim's agent tooling 
 
 ### agenttunnels (MCPA-2026-0065, critical)
 
-- Latest on npm as of 2026-08-16: `0.1.17` (still installable)
+- Latest on npm as of 2026-09-06: `0.1.17` (still installable)
 - Aliases: GHSA-4cm6-97rm-ffqf, MAL-2026-13400
 - References: https://github.com/advisories/GHSA-4cm6-97rm-ffqf; https://osv.dev/vulnerability/MAL-2026-13400
 
@@ -94,7 +99,7 @@ The npm package agenttunnels ships an MCP bridge whose tunnel_run_command tool e
 
 ### opencode-engos-ai (MCPA-2026-0069, critical)
 
-- Latest on npm as of 2026-08-16: `0.0.0-dev-202608161512` (still installable)
+- Latest on npm as of 2026-09-06: `0.0.0-dev-202608161512` (still installable)
 - Aliases: MAL-2026-12405
 - References: https://osv.dev/vulnerability/MAL-2026-12405; https://www.npmjs.com/package/opencode-engos-ai
 
@@ -102,15 +107,15 @@ The npm package opencode-engos-ai poses as an OpenCode distribution. Its postins
 
 ### anthropic-setup (MCPA-2026-0070, critical)
 
-- Latest on npm as of 2026-08-16: `1.0.1` (still installable)
+- Latest on npm as of 2026-09-06: `0.0.1-security` (security-holder package; no longer installable as malicious code)
 - Aliases: MAL-2026-12510
 - References: https://osv.dev/vulnerability/MAL-2026-12510; https://www.npmjs.com/package/anthropic-setup
 
-The npm package anthropic-setup poses as an Anthropic API setup helper (`npx anthropic-setup sk-ant-...`). Its bin entry is a single base64-concealed eval that writes ~/.claude/settings.json with env.ANTHROPIC_BASE_URL set to https://sugarball.vercel.app, stores the supplied ANTHROPIC_API_KEY, and adds an apiKeyHelper echoing that key. Every subsequent Claude Code invocation then sends the installer's API key and full prompt/response content to the attacker-controlled Vercel deployment instead of api.anthropic.com. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.0.1 tarball verified on 2026-08-08 still contains the concealed hijack, so every version is recorded as affected.
+The npm package anthropic-setup poses as an Anthropic API setup helper (`npx anthropic-setup sk-ant-...`). Its bin entry is a single base64-concealed eval that writes ~/.claude/settings.json with env.ANTHROPIC_BASE_URL set to https://sugarball.vercel.app, stores the supplied ANTHROPIC_API_KEY, and adds an apiKeyHelper echoing that key. Every subsequent Claude Code invocation then sends the installer's API key and full prompt/response content to the attacker-controlled Vercel deployment instead of api.anthropic.com. Flagged as malware by OSV (amazon-inspector source); the package remained live on npm and the 1.0.1 tarball verified on 2026-08-08 still contains the concealed hijack, so every version is recorded as affected. As of 2026-09-06 npm has replaced it with the `0.0.1-security` holder package.
 
 ### remote-claude-daemon (MCPA-2026-0071, critical)
 
-- Latest on npm as of 2026-08-16: `0.7.5` (still installable)
+- Latest on npm as of 2026-09-06: `0.7.5` (still installable)
 - Aliases: MAL-2026-13455
 - References: https://osv.dev/vulnerability/MAL-2026-13455; https://www.npmjs.com/package/remote-claude-daemon
 
@@ -118,7 +123,7 @@ The npm package remote-claude-daemon connects outbound to a hardcoded WebSocket 
 
 ### @guangnao/claude-cli (MCPA-2026-0073, high)
 
-- Latest on npm as of 2026-08-16: `1.0.17` (still installable)
+- Latest on npm as of 2026-09-06: `1.0.17` (still installable)
 - Aliases: MAL-2026-13209
 - References: https://osv.dev/vulnerability/MAL-2026-13209; https://www.npmjs.com/package/@guangnao/claude-cli
 
@@ -126,7 +131,7 @@ The npm package @guangnao/claude-cli hardcodes a hub endpoint (https://hub.clien
 
 ### @cliphijack/santaclaude (MCPA-2026-0074, critical)
 
-- Latest on npm as of 2026-08-16: `1.0.112` (still installable)
+- Latest on npm as of 2026-09-06: `1.0.117` (still installable)
 - Aliases: MAL-2026-13363
 - References: https://osv.dev/vulnerability/MAL-2026-13363; https://www.npmjs.com/package/@cliphijack/santaclaude
 
@@ -134,7 +139,7 @@ The npm package @cliphijack/santaclaude runs a client that polls https://santacl
 
 ### claw-subagent-service (MCPA-2026-0075, critical)
 
-- Latest on npm as of 2026-08-16: `1.4.0` (still installable)
+- Latest on npm as of 2026-09-06: `1.4.0` (still installable)
 - Aliases: MAL-2026-3757
 - References: https://osv.dev/vulnerability/MAL-2026-3757; https://www.npmjs.com/package/claw-subagent-service
 
@@ -142,7 +147,7 @@ The npm package claw-subagent-service registers itself as a privileged auto-star
 
 ### claude-cup (MCPA-2026-0076, critical)
 
-- Latest on npm as of 2026-08-16: `0.9.12` (still installable)
+- Latest on npm as of 2026-09-06: `0.9.12` (still installable)
 - Aliases: MAL-2026-5789
 - References: https://osv.dev/vulnerability/MAL-2026-5789; https://www.npmjs.com/package/claude-cup
 
@@ -150,7 +155,7 @@ The npm package claude-cup presents itself as a Claude Code usage leaderboard. O
 
 ### mangomind-agent (MCPA-2026-0078, critical)
 
-- Latest on npm as of 2026-08-16: `0.2.2` (still installable)
+- Latest on npm as of 2026-09-06: `0.2.2` (still installable)
 - Aliases: MAL-2026-13611, GHSA-34vp-2pw6-g7f3
 - References: https://osv.dev/vulnerability/MAL-2026-13611; https://github.com/advisories/GHSA-34vp-2pw6-g7f3; https://www.npmjs.com/package/mangomind-agent
 
@@ -158,7 +163,7 @@ mangomind-agent installs a background daemon (hidden via a temp VBS launcher on 
 
 ### aclade-agent (MCPA-2026-0079, critical)
 
-- Latest on npm as of 2026-08-16: `1.0.6` (still installable)
+- Latest on npm as of 2026-09-06: `1.2.0` (still installable)
 - Aliases: MAL-2026-13614, GHSA-45jx-7hwc-cx43
 - References: https://osv.dev/vulnerability/MAL-2026-13614; https://github.com/advisories/GHSA-45jx-7hwc-cx43; https://www.npmjs.com/package/aclade-agent
 
@@ -166,7 +171,7 @@ aclade-agent installs a daemon that re-spawns itself detached and polls `https:/
 
 ### agenthub-ai (MCPA-2026-0080, critical)
 
-- Latest on npm as of 2026-08-16: `1.3.0` (still installable)
+- Latest on npm as of 2026-09-06: `1.7.0` (still installable)
 - Aliases: MAL-2026-13615, GHSA-hw95-mqx2-4pg5
 - References: https://osv.dev/vulnerability/MAL-2026-13615; https://github.com/advisories/GHSA-hw95-mqx2-4pg5; https://www.npmjs.com/package/agenthub-ai
 
@@ -174,7 +179,7 @@ agenthub-ai ships a bundled daemon (dist-publish/main.js) that installs itself a
 
 ### claude-remote-agent (MCPA-2026-0081, high)
 
-- Latest on npm as of 2026-08-16: `0.7.1` (still installable)
+- Latest on npm as of 2026-09-06: `0.7.1` (still installable)
 - Aliases: MAL-2026-13376, GHSA-vmfr-7cqr-9wc8
 - References: https://osv.dev/vulnerability/MAL-2026-13376; https://github.com/advisories/GHSA-vmfr-7cqr-9wc8; https://www.npmjs.com/package/claude-remote-agent
 
@@ -182,7 +187,7 @@ claude-remote-agent runs a daemon that connects to a WebSocket relay and, on rel
 
 ### @atom8n/inspector (MCPA-2026-0082, critical)
 
-- Latest on npm as of 2026-08-16: `0.17.32` (still installable)
+- Latest on npm as of 2026-09-06: `0.17.32` (still installable)
 - Aliases: MAL-2026-13414, GHSA-9836-cprf-5xxq
 - References: https://osv.dev/vulnerability/MAL-2026-13414; https://github.com/advisories/GHSA-9836-cprf-5xxq; https://www.npmjs.com/package/@atom8n/inspector
 
@@ -190,7 +195,7 @@ claude-remote-agent runs a daemon that connects to a WebSocket relay and, on rel
 
 ### trimprompt (MCPA-2026-0083, high)
 
-- Latest on npm as of 2026-08-16: `1.0.49` (still installable)
+- Latest on npm as of 2026-09-06: `1.0.49` (still installable)
 - Aliases: MAL-2026-13462, GHSA-cvm3-f6xv-h47p
 - References: https://osv.dev/vulnerability/MAL-2026-13462; https://github.com/advisories/GHSA-cvm3-f6xv-h47p; https://www.npmjs.com/package/trimprompt
 
@@ -198,7 +203,7 @@ trimprompt markets itself as a token-saving proxy for AI coding agents, but near
 
 ### @addai/node (MCPA-2026-0084, critical)
 
-- Latest on npm as of 2026-08-16: `0.27.1` (still installable)
+- Latest on npm as of 2026-09-06: `0.30.7` (still installable)
 - Aliases: MAL-2026-13411, GHSA-w4g2-j72c-g28r
 - References: https://osv.dev/vulnerability/MAL-2026-13411; https://github.com/advisories/GHSA-w4g2-j72c-g28r; https://www.npmjs.com/package/@addai/node
 
@@ -206,7 +211,7 @@ trimprompt markets itself as a token-saving proxy for AI coding agents, but near
 
 ### @xiaohhhh1/canvas-agent (MCPA-2026-0085, critical)
 
-- Latest on npm as of 2026-08-16: `0.4.35` (still installable)
+- Latest on npm as of 2026-09-06: `0.4.80` (still installable)
 - Aliases: MAL-2026-13398, GHSA-29wq-c378-jw6v
 - References: https://osv.dev/vulnerability/MAL-2026-13398; https://github.com/advisories/GHSA-29wq-c378-jw6v; https://www.npmjs.com/package/@xiaohhhh1/canvas-agent
 
@@ -220,7 +225,7 @@ trimprompt markets itself as a token-saving proxy for AI coding agents, but near
    shipped code (see each advisory's summary for the concrete mechanism —
    hardcoded C2 endpoints, `--dangerously-skip-permissions` remote driving,
    postinstall persistence, credential harvesting).
-3. "Still installable" was re-checked on 2026-08-16 via
+3. "Still installable" was re-checked on 2026-09-06 (`scripts/launch-live-check.mjs`) via
    `GET https://registry.npmjs.org/<name>` — a package counts as live when it
    has a `latest` dist-tag and is not an npm security-holder placeholder.
 
