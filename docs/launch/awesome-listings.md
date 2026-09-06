@@ -21,21 +21,19 @@
 | 8 | [rohitg00/awesome-devops-mcp-servers](https://github.com/rohitg00/awesome-devops-mcp-servers) | 1,014 | CI/CD tooling | DevOps angle (Action + gate) |
 | 9 | [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | 52,424 | Tooling | **No PRs accepted.** Recommendations only via the web issue form (`gh` CLI explicitly forbidden), one resource at a time, and the maintainer states that submissions used as a promotion strategy are usually rejected. Eligible on the objective criteria (repo >14 days old, active commits). Owner action — see draft below. |
 
-## Submission state (2026-08-16)
+## Submission state (checked via GitHub API 2026-09-06)
 
 | Target | Branch | Compare URL (one click opens the PR form) | State |
 |---|---|---|---|
-| Puliczek/awesome-mcp-security | `wookat:add-agentgate` | https://github.com/Puliczek/awesome-mcp-security/pull/273 | PR opened (2026-08-16) |
-| punkpeye/awesome-mcp-devtools | `wookat:add-agentgate` | https://github.com/punkpeye/awesome-mcp-devtools/pull/282 | PR opened (2026-08-16) |
-| yzfly/Awesome-MCP-ZH | `wookat:add-agentgate` | https://github.com/yzfly/Awesome-MCP-ZH/pull/464 | PR opened (2026-08-16) |
-| rohitg00/awesome-devops-mcp-servers | `wookat:add-agentgate` | https://github.com/rohitg00/awesome-devops-mcp-servers/pull/315 | PR opened (2026-08-16) |
+| Puliczek/awesome-mcp-security | `wookat:add-agentgate` | https://github.com/Puliczek/awesome-mcp-security/pull/273 | open since 2026-08-16, no maintainer response |
+| punkpeye/awesome-mcp-devtools | `wookat:add-agentgate` | https://github.com/punkpeye/awesome-mcp-devtools/pull/282 | open; description reworded to a noun phrase per Copilot review (head 741b375, 2026-09-06) |
+| yzfly/Awesome-MCP-ZH | `wookat:add-agentgate` | https://github.com/yzfly/Awesome-MCP-ZH/pull/464 | **merged 2026-08-19** — first directory listing |
+| rohitg00/awesome-devops-mcp-servers | `wookat:add-agentgate` | https://github.com/rohitg00/awesome-devops-mcp-servers/pull/315 | open since 2026-08-16, no maintainer response |
 | appcypher/awesome-mcp-servers | `wookat:add-agentgate` | (repository archived, PRs impossible) | skipped (archived) |
 | mcp.so | — | https://mcp.so/submit | owner action (login required) |
 | awesome-claude-code | — | https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml | owner action (web form, human required) |
 
-Unblocking option: a classic PAT with the `public_repo` scope allows
-`POST /repos/{owner}/{repo}/pulls` from the pushed fork branches; the
-fine-grained token does not, regardless of its repository permissions.
+Re-check: `gh api repos/<owner>/<repo>/pulls/<n> --jq '.state, .merged_at'` — update this table only on state changes.
 
 ## awesome-claude-code recommendation text (paste into the issue form)
 
